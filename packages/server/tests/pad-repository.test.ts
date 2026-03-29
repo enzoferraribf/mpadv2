@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { Y_TEXT_KEY, padPath } from '@mmpad/shared'
 import { Doc, applyUpdate, encodeStateAsUpdate, mergeUpdates } from 'yjs'
-import { ensurePad, listRelatedPads } from '../src/pad-tree/repository'
-import { appendPadDocChunk, compactPadDoc, loadPadDoc } from '../src/pad-doc/repository'
-import { migrate, sql } from '../src/shared/db'
+import { ensurePad, listRelatedPads } from '../src/pad-tree/infrastructure/repository'
+import { appendPadDocChunk, compactPadDoc, loadPadDoc } from '../src/pad-doc/infrastructure/repository'
+import { migrate, sql } from '../src/infrastructure/db'
 
 beforeAll(async () => {
     await migrate()

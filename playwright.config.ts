@@ -13,13 +13,13 @@ export default defineConfig({
         {
             command: 'cd packages/server && PORT=4000 DATABASE_URL=' + databaseUrl + ' bun run start',
             port: 4000,
-            reuseExistingServer: true,
+            reuseExistingServer: false,
             timeout: 120_000,
         },
         {
             command: 'cd packages/client && VITE_E2E=1 VITE_API_URL=http://127.0.0.1:4000 VITE_WS_URL=ws://127.0.0.1:4000 bun run build && bun run preview',
             port: 4173,
-            reuseExistingServer: true,
+            reuseExistingServer: false,
             timeout: 120_000,
         },
     ],

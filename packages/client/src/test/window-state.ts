@@ -1,6 +1,4 @@
-import { Y_DRAWING_ELEMENTS_KEY, Y_TEXT_KEY } from '@mmpad/shared'
-import { writeDrawingScene } from '@/pad-drawing/drawing-scene'
-import type { ReadyPadPageState } from '@/app/use-pad-page'
+import type { PadWorkspaceModel } from '@/workspace/use-pad-workspace'
 
 declare global {
     interface Window {
@@ -21,50 +19,43 @@ declare global {
     }
 }
 
-export function publishWindowState(input: {
-    page: ReadyPadPageState | null
-    openDrawing: () => void
-}) {
-    if (!input.page) {
+export function publishWindowState(workspace: PadWorkspaceModel) {
+    if (workspace.state.kind !== 'ready') {
         delete window.__mmpad__
         return
     }
 
-    const { page } = input
+    const { actions, state } = workspace
 
     window.__mmpad__ = {
         appendText: (content: string) => {
-            const text = page.text.room.doc.getText(Y_TEXT_KEY)
-            text.insert(text.length, content)
+            state.text.editor.appendText(content)
         },
-        getText: () => page.text.room.doc.getText(Y_TEXT_KEY).toString(),
-        getFileCount: () => page.files.length,
-        getDrawingConnection: () => page.drawing.kind === 'ready' ? page.drawing.room.status : 'closed',
+        getText: () => state.text.editor.readContent(),
+        getFileCount: () => state.status.files.length,
+        getDrawingConnection: () => state.drawing.kind === 'ready' ? state.drawing.connection : 'closed',
         getDrawingElementCount: () =>
-            page.drawing.kind === 'ready'
-                ? page.drawing.room.doc.getMap(Y_DRAWING_ELEMENTS_KEY).size
+            state.drawing.kind === 'ready'
+                ? state.drawing.drawing.getElements().length
                 : 0,
-        getConnection: () => page.view.connection,
-        hasLocalFile: (name: string) => page.files.some((file) => file.meta.name === name && file.isLocal),
-        openDrawing: () => input.openDrawing(),
+        getConnection: () => state.status.connection,
+        hasLocalFile: (name: string) => state.status.files.some((file) => file.meta.name === name && file.isLocal),
+        openDrawing: () => actions.openTab('drawing'),
         insertTestRectangle: async () => {
-            if (page.drawing.kind !== 'ready') throw new Error('Drawing is closed')
+            if (state.drawing.kind !== 'ready') throw new Error('Drawing is closed')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
-            writeDrawingScene(
-                page.drawing.room.doc,
-                convertToExcalidrawElements([{ type: 'rectangle', x: 80, y: 80, width: 160, height: 120 }]),
-            )
+            state.drawing.drawing.writeScene(convertToExcalidrawElements([{ type: 'rectangle', x: 80, y: 80, width: 160, height: 120 }]))
         },
         uploadTestFile: async () => {
-            page.uploadFile(new File(['hello file'], 'readme.txt', { type: 'text/plain' }))
+            actions.uploadFile(new File(['hello file'], 'readme.txt', { type: 'text/plain' }))
         },
         requestFile: (name: string) => {
-            const file = page.files.find((value) => value.meta.name === name)
-            if (file) page.downloadFile(file)
+            const file = state.status.files.find((value) => value.meta.name === name)
+            if (file) actions.downloadFile(file)
         },
         deleteLocalFile: (name: string) => {
-            const file = page.files.find((value) => value.meta.name === name && value.isLocal)
-            if (file) page.deleteFile(file.meta.id)
+            const file = state.status.files.find((value) => value.meta.name === name && value.isLocal)
+            if (file) actions.deleteFile(file.meta.id)
         },
     }
 }

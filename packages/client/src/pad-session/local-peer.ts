@@ -12,9 +12,27 @@ export function loadLocalPeer(): LocalPeer {
         { background: '#a855f7', stroke: '#581c87', text: '#9333ea', textLight: '#d8b4fe33' },
     ]
 
+    if (import.meta.env.VITE_E2E === '1') {
+        const peer = createPeer('peer-e2e', palette[4]!)
+        window.localStorage.setItem('mmpad.peer', JSON.stringify(peer))
+        return peer
+    }
+
     const color = palette[Math.floor(Math.random() * palette.length)]!
-    const peer = {
-        name: `peer-${crypto.randomUUID().slice(0, 4)}`,
+    const peer = createPeer(`peer-${crypto.randomUUID().slice(0, 4)}`, color)
+
+    window.localStorage.setItem('mmpad.peer', JSON.stringify(peer))
+    return peer
+}
+
+function createPeer(name: string, color: {
+    background: string
+    stroke: string
+    text: string
+    textLight: string
+}): LocalPeer {
+    return {
+        name,
         color: {
             background: color.background,
             stroke: color.stroke,
@@ -22,7 +40,4 @@ export function loadLocalPeer(): LocalPeer {
         textColor: color.text,
         textColorLight: color.textLight,
     }
-
-    window.localStorage.setItem('mmpad.peer', JSON.stringify(peer))
-    return peer
 }

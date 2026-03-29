@@ -94,7 +94,7 @@ test('keeps the same pad stable across two tabs in one browser context', async (
 })
 
 test('renders the pad shell', async ({ browser }) => {
-    const path = `notes/${Date.now()}-shell`
+    const path = 'visuals/pad-shell'
     const context = await browser.newContext()
     const page = await context.newPage()
 
@@ -127,37 +127,19 @@ test('syncs the drawing surface between two pads', async ({ browser }) => {
     await contextB.close()
 })
 
-test('saves and reopens the drawing title', async ({ browser }) => {
-    const path = `notes/${Date.now()}-drawing-title`
+test('renders the drawing workspace', async ({ browser }) => {
+    const path = 'visuals/drawing-workspace'
     const context = await browser.newContext()
     const page = await context.newPage()
 
     await openPad(page, path)
     await openDrawingRoom(page)
-
-    await page.getByPlaceholder('Drawing name').fill('System map')
-    await page.getByRole('button', { name: 'Save' }).click()
-    await page.getByRole('button', { name: 'Close' }).click()
-
-    await openDrawingRoom(page)
-    await expect(page.getByPlaceholder('Drawing name')).toHaveValue('System map')
+    await expect(page.getByTestId('workspace-shell')).toHaveScreenshot('drawing-workspace.png', { maxDiffPixels: 600 })
 
     await context.close()
 })
 
-test('renders the drawing dialog', async ({ browser }) => {
-    const path = `notes/${Date.now()}-drawing-visual`
-    const context = await browser.newContext()
-    const page = await context.newPage()
-
-    await openPad(page, path)
-    await openDrawingRoom(page)
-    await expect(page.getByRole('dialog')).toHaveScreenshot('drawing-dialog.png')
-
-    await context.close()
-})
-
-test('opens the drawing dialog from the command menu', async ({ browser }) => {
+test('opens the drawing workspace from the command menu', async ({ browser }) => {
     const path = `notes/${Date.now()}-drawing-menu`
     const context = await browser.newContext()
     const page = await context.newPage()
@@ -167,13 +149,13 @@ test('opens the drawing dialog from the command menu', async ({ browser }) => {
     await page.keyboard.press('Control+,')
     await page.getByRole('dialog').getByText('Excalidraw', { exact: true }).click()
     await page.waitForFunction(() => (window as any).__mmpad__?.getDrawingConnection() === 'connected')
-    await expect(page.getByRole('heading', { name: 'Excalidraw' })).toBeVisible()
+    await expect(page.getByTestId('drawing-workspace')).toBeVisible()
 
     await context.close()
 })
 
 test('renders the command menu', async ({ browser }) => {
-    const path = `notes/${Date.now()}-command-menu`
+    const path = 'visuals/command-menu'
     const context = await browser.newContext()
     const page = await context.newPage()
 
@@ -262,6 +244,25 @@ test('removes a live file when the last seeder leaves the room', async ({ browse
     await contextB.close()
 })
 
+test('removes a live file when the owner deletes it', async ({ browser }) => {
+    const path = `notes-${Date.now()}-files-delete`
+    const contextA = await browser.newContext()
+    const contextB = await browser.newContext()
+    const pageA = await contextA.newPage()
+    const pageB = await contextB.newPage()
+
+    await openPad(pageA, path)
+    await openPad(pageB, path)
+
+    await pageA.evaluate(() => (window as any).__mmpad__.uploadTestFile())
+    await pageB.waitForFunction(() => (window as any).__mmpad__?.getFileCount() === 1)
+    await pageA.evaluate(() => (window as any).__mmpad__.deleteLocalFile('readme.txt'))
+    await pageB.waitForFunction(() => (window as any).__mmpad__?.getFileCount() === 0)
+
+    await contextA.close()
+    await contextB.close()
+})
+
 test('shows related pads from the real tree', async ({ browser }) => {
     const root = `docs-${Date.now()}`
     const context = await browser.newContext()
@@ -322,6 +323,36 @@ test('keeps the shell height stable when switching layouts', async ({ browser })
     await context.close()
 })
 
+test('keeps the shell height stable when switching tabs', async ({ browser }) => {
+    const path = `notes/${Date.now()}-tabs`
+    const padName = path.split('/').at(-1)!
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+
+    const before = await page.locator('main').boundingBox()
+    expect(before).not.toBeNull()
+
+    await openDrawingRoom(page)
+    const drawing = await page.locator('main').boundingBox()
+    expect(drawing).not.toBeNull()
+
+    await page.getByRole('button', { name: 'Files', exact: true }).click()
+    const files = await page.locator('main').boundingBox()
+    expect(files).not.toBeNull()
+
+    await page.getByRole('button', { name: padName, exact: true }).click()
+    const text = await page.locator('main').boundingBox()
+    expect(text).not.toBeNull()
+
+    expect(Math.round(drawing!.height)).toBe(Math.round(before!.height))
+    expect(Math.round(files!.height)).toBe(Math.round(before!.height))
+    expect(Math.round(text!.height)).toBe(Math.round(before!.height))
+
+    await context.close()
+})
+
 test('keeps drawings split by exact pad path', async ({ browser }) => {
     const root = `drawings-${Date.now()}`
     const contextA = await browser.newContext()
@@ -364,6 +395,7 @@ async function waitForPad(page: Page) {
 async function openDrawingRoom(page: Page) {
     await page.evaluate(() => (window as any).__mmpad__.openDrawing())
     await page.waitForFunction(() => (window as any).__mmpad__?.getDrawingConnection() === 'connected')
+    await expect(page.getByTestId('drawing-workspace')).toBeVisible()
 }
 
 async function waitForText(page: Page, text: string) {

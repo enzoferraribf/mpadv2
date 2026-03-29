@@ -1,1 +1,1 @@
-export type DialogName = 'tree' | 'files' | 'drawing-settings' | null
+export type DialogName = 'command' | 'tree' | 'files' | 'drawing-settings' | null

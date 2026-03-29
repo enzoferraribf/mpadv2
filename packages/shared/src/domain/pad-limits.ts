@@ -11,4 +11,3 @@ export const MAX_DRAWING_BYTES = 2 * 1024 * 1024
 
 export const Y_TEXT_KEY = 'text'
 export const Y_DRAWING_ELEMENTS_KEY = 'elements'
-export const Y_DRAWING_APP_STATE_KEY = 'appState'

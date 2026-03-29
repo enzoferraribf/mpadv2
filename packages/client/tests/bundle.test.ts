@@ -23,7 +23,7 @@ describe('client bundle', () => {
 
         for (const file of files) {
             expect(file).not.toContain('drawing-core')
-            expect(file).not.toContain('drawing-dialog')
+            expect(file).not.toContain('drawing-workspace')
             expect(file).not.toContain('drawing-scene')
             expect(file).not.toContain('drawing-mermaid')
         }

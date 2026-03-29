@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { Y_TEXT_KEY } from '@mmpad/shared'
 import { Doc, applyUpdate, encodeStateAsUpdate } from 'yjs'
-import { mergePadDoc } from '../src/pad-doc/repository'
+import { mergePadDoc } from '../src/pad-doc/infrastructure/repository'
 
 describe('pad doc compaction', () => {
     test('merges snapshot and updates into one document state', () => {

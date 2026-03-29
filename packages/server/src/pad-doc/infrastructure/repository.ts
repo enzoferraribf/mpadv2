@@ -1,7 +1,6 @@
-import type { PadDocKind, PadPath } from '@mmpad/shared'
+import { type PadDocKind, type PadPath, assert } from '@mmpad/shared'
 import { mergeUpdates } from 'yjs'
-import { assert } from '../shared/assert'
-import { sql } from '../shared/db'
+import { sql } from '../../infrastructure/db'
 
 type SnapshotRow = {
     snapshot: Uint8Array
@@ -52,12 +51,7 @@ export async function appendPadDocChunk(path: PadPath, kind: PadDocKind, update:
     return row.id
 }
 
-export async function compactPadDoc(
-    path: PadPath,
-    kind: PadDocKind,
-    snapshot: Uint8Array,
-    version: number,
-) {
+export async function compactPadDoc(path: PadPath, kind: PadDocKind, snapshot: Uint8Array, version: number) {
     await sql.begin(async (tx: typeof sql) => {
         await tx`
             INSERT INTO pad_doc_snapshots (pad_path, kind, snapshot, version)

@@ -1,4 +1,4 @@
-import type { PadPath } from './path'
+import type { PadPath } from './pad-path'
 
 export type PadTreeItem = {
     path: PadPath

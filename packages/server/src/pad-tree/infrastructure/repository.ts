@@ -1,6 +1,6 @@
 import type { PadPath, PadTreeItem } from '@mmpad/shared'
 import { padPathName, parentPadPath, rootPadPath } from '@mmpad/shared'
-import { sql } from '../shared/db'
+import { sql } from '../../infrastructure/db'
 
 type PadRow = {
     path: string

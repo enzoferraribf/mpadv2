@@ -1,5 +1,5 @@
 import { assert } from './assert'
-import type { PadPath } from './path'
+import type { PadPath } from './pad-path'
 
 export type PadDocKind = 'text' | 'drawing'
 export type PadRoomKind = PadDocKind | 'files'

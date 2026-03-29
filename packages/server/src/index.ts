@@ -1,6 +1,6 @@
 import { WS_IDLE_TIMEOUT_S, WS_MAX_PAYLOAD } from '@mmpad/shared'
 import type { ServerWebSocket } from 'bun'
-import { migrate } from './shared/db'
+import { migrate } from './infrastructure/db'
 import { handleRequest } from './transport/http-router'
 import { closeSocket, flushPadDocRooms, handleSocketMessage, openSocket } from './transport/ws-router'
 import type { WsData } from './transport/ws-data'

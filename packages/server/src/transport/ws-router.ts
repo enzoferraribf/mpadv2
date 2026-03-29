@@ -1,7 +1,7 @@
 import type { ServerWebSocket } from 'bun'
 import { readClientRoomMessage } from '@mmpad/shared'
-import { handleLiveFileMessage, joinLiveFileRoom, leaveLiveFileRoom } from '../live-file/service'
-import { flushPadDocRooms, handlePadDocMessage, joinPadDocRoom, leavePadDocRoom } from '../pad-doc/service'
+import { handleLiveFileMessage, joinLiveFileRoom, leaveLiveFileRoom } from '../live-file/application/service'
+import { flushPadDocRooms, handlePadDocMessage, joinPadDocRoom, leavePadDocRoom } from '../pad-doc/application/service'
 import type { WsData } from './ws-data'
 
 export async function openSocket(ws: ServerWebSocket<WsData>) {
