@@ -1,0 +1,19 @@
+{
+    "name": "@mmpad/shared",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "lib0": "^0.2",
+        "y-protocols": "^1.0",
+        "yjs": "^13.6"
+    },
+    "devDependencies": {
+        "typescript": "^5.9"
+    }
+}

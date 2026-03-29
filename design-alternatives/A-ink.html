@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mmpad — Ink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :root {
+    --bg: #1a1a1e;
+    --surface: #222226;
+    --elevated: #2a2a2f;
+    --text-primary: #e8e4df;
+    --text-secondary: #7a7772;
+    --text-dim: #4a4844;
+    --text-body: #b0aca6;
+    --accent: #8b9fbe;
+    --accent-warm: #bea48b;
+    --border: #2e2e33;
+    --selection: rgba(139,159,190,0.15);
+    --code-bg: #1e1e22;
+    --active-line: rgba(139,159,190,0.04);
+
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-sans: 'Inter Tight', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+
+  /* ===== LAYOUT SHELL ===== */
+  .app {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 1fr 32px;
+    height: 100vh;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    grid-row: 1 / 3;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .sidebar-brand {
+    padding: 20px 20px 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-brand h1 {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .sidebar-body {
+    flex: 1;
+    padding: 16px 0 0 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-section-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0 20px;
+    margin-bottom: 8px;
+  }
+
+  .tree-list {
+    list-style: none;
+    margin-bottom: 24px;
+  }
+
+  .tree-item {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 20px 0 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 120ms ease;
+    position: relative;
+  }
+
+  .tree-item:hover {
+    background: var(--elevated);
+  }
+
+  .tree-item.active {
+    color: var(--text-primary);
+    background: var(--elevated);
+  }
+
+  .tree-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--accent);
+  }
+
+  .tree-item .chevron {
+    display: inline-block;
+    width: 16px;
+    flex-shrink: 0;
+    color: var(--text-dim);
+    font-size: 10px;
+  }
+
+  .tree-item .label {
+    flex: 1;
+  }
+
+  .tree-item.nested {
+    padding-left: 28px;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .peer-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .peer-dot.self { background: var(--accent); }
+  .peer-dot.other { background: var(--accent-warm); }
+
+  .peer-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 2px;
+  }
+
+  /* ===== MAIN AREA ===== */
+  .main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .breadcrumb {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .breadcrumb .sep {
+    margin: 0 6px;
+    color: var(--text-dim);
+  }
+
+  .breadcrumb .current {
+    color: var(--text-primary);
+  }
+
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .view-toggle button {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 0 2px 0;
+    position: relative;
+    transition: color 120ms ease;
+    line-height: 36px;
+  }
+
+  .view-toggle button:hover {
+    color: var(--text-secondary);
+  }
+
+  .view-toggle button.active {
+    color: var(--text-primary);
+  }
+
+  .view-toggle button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: var(--accent);
+  }
+
+  /* ===== WORKSPACE ===== */
+  .workspace {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    overflow: hidden;
+  }
+
+  .workspace-divider {
+    background: var(--border);
+  }
+
+  /* ===== EDITOR PANE ===== */
+  .editor {
+    background: var(--code-bg);
+    overflow-y: auto;
+    padding: 32px 0;
+  }
+
+  .editor-line {
+    display: flex;
+    min-height: 22px;
+    line-height: 22px;
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    position: relative;
+  }
+
+  .editor-line.active-line {
+    background: var(--active-line);
+  }
+
+  .gutter {
+    width: 36px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 22px;
+    user-select: none;
+  }
+
+  .line-content {
+    flex: 1;
+    padding-right: 40px;
+    padding-left: 12px;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .line-content .md-hash { color: var(--accent); }
+  .line-content .md-punct { color: var(--text-secondary); }
+  .line-content .md-bold { font-weight: 600; color: var(--text-primary); }
+  .line-content .md-bold-markers { font-weight: 400; color: var(--text-secondary); }
+  .line-content .md-italic { font-style: italic; color: var(--text-primary); }
+  .line-content .md-italic-marker { color: var(--text-secondary); }
+  .line-content .md-quote { color: var(--text-secondary); }
+  .line-content .md-em-text { font-style: italic; }
+
+  /* Cursor */
+  .cursor {
+    display: inline-block;
+    width: 1.5px;
+    height: 17px;
+    background: var(--accent);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    margin-left: -1px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ===== PREVIEW PANE ===== */
+  .preview {
+    background: var(--bg);
+    overflow-y: auto;
+    padding: 32px 40px;
+  }
+
+  .preview h1 {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 36px;
+    font-weight: 400;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .preview h2 {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    margin-top: 40px;
+    margin-bottom: 16px;
+  }
+
+  .preview h3 {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-top: 32px;
+    margin-bottom: 12px;
+  }
+
+  .preview p {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--text-body);
+    line-height: 1.75;
+    margin-bottom: 16px;
+  }
+
+  .preview p strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .preview blockquote {
+    border-left: 2px solid var(--accent);
+    padding-left: 20px;
+    margin: 24px 0;
+  }
+
+  .preview blockquote p {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 0;
+  }
+
+  .preview ul {
+    list-style: none;
+    margin: 8px 0 16px 0;
+  }
+
+  .preview ul li {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--text-body);
+    line-height: 1.75;
+    padding-left: 20px;
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  .preview ul li::before {
+    content: '\2014';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .preview ul li strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* ===== STATUS BAR ===== */
+  .statusbar {
+    grid-column: 2;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-dim);
+    user-select: none;
+  }
+
+  .statusbar-version {
+    /* sits under sidebar area — we use the sidebar footer for that */
+  }
+
+  .statusbar-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .statusbar-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .statusbar-right .saved-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Sidebar version at bottom-left of status bar area */
+  .sidebar-version {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 220px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 0;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-dim);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--selection);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>mmpad</h1>
+    </div>
+    <div class="sidebar-body">
+      <div class="sidebar-section-label">Pads</div>
+      <ul class="tree-list">
+        <li class="tree-item">
+          <span class="chevron">&#9656;</span>
+          <span class="label">design</span>
+        </li>
+        <li class="tree-item nested active">
+          <span class="chevron"></span>
+          <span class="label">notes</span>
+        </li>
+        <li class="tree-item nested">
+          <span class="chevron"></span>
+          <span class="label">sketches</span>
+        </li>
+        <li class="tree-item nested">
+          <span class="chevron"></span>
+          <span class="label">references</span>
+        </li>
+        <li class="tree-item">
+          <span class="chevron">&#9656;</span>
+          <span class="label">engineering</span>
+        </li>
+        <li class="tree-item">
+          <span class="chevron">&#9656;</span>
+          <span class="label">journal</span>
+        </li>
+      </ul>
+
+      <div class="sidebar-section-label">Recent</div>
+      <ul class="tree-list">
+        <li class="tree-item">
+          <span class="chevron"></span>
+          <span class="label">journal/march</span>
+        </li>
+        <li class="tree-item">
+          <span class="chevron"></span>
+          <span class="label">project/roadmap</span>
+        </li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">
+      <span class="peer-dot self"></span>
+      <span class="peer-dot other"></span>
+      <span class="peer-label">2 active</span>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="breadcrumb">
+        <span>design</span><span class="sep">/</span><span class="current">notes</span>
+      </div>
+      <div class="view-toggle">
+        <button>Editor</button>
+        <button class="active">Split</button>
+        <button>Preview</button>
+      </div>
+    </header>
+
+    <!-- WORKSPACE -->
+    <div class="workspace">
+
+      <!-- EDITOR -->
+      <div class="editor">
+        <div class="editor-line">
+          <span class="gutter">1</span>
+          <span class="line-content"><span class="md-hash">#</span> The Architecture of Collaboration</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">2</span>
+          <span class="line-content"></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">3</span>
+          <span class="line-content">Real-time editing changes how we think about</span>
+        </div>
+        <div class="editor-line active-line">
+          <span class="gutter">4</span>
+          <span class="line-content">documents. A pad is not a file — it is a <span class="md-italic-marker">*</span><span class="md-italic">living surface</span><span class="md-italic-marker">*</span></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">5</span>
+          <span class="line-content">where ideas converge.<span class="cursor"></span></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">6</span>
+          <span class="line-content"></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">7</span>
+          <span class="line-content"><span class="md-hash">##</span> Shared Surfaces</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">8</span>
+          <span class="line-content"></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">9</span>
+          <span class="line-content">When two people write in the same space,</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">10</span>
+          <span class="line-content">the boundary between author and editor</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">11</span>
+          <span class="line-content">dissolves. Each keystroke is a conversation.</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">12</span>
+          <span class="line-content"></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">13</span>
+          <span class="line-content"><span class="md-punct">&gt;</span><span class="md-quote"> "The medium is the message."</span></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">14</span>
+          <span class="line-content"><span class="md-punct">&gt;</span><span class="md-quote"> — Marshall McLuhan</span></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">15</span>
+          <span class="line-content"></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">16</span>
+          <span class="line-content"><span class="md-hash">###</span> What makes a good pad</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">17</span>
+          <span class="line-content"></span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">18</span>
+          <span class="line-content"><span class="md-punct">-</span> <span class="md-bold-markers">**</span><span class="md-bold">Simplicity</span><span class="md-bold-markers">**</span> — no accounts, no friction</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">19</span>
+          <span class="line-content"><span class="md-punct">-</span> <span class="md-bold-markers">**</span><span class="md-bold">Persistence</span><span class="md-bold-markers">**</span> — your words survive</span>
+        </div>
+        <div class="editor-line">
+          <span class="gutter">20</span>
+          <span class="line-content"><span class="md-punct">-</span> <span class="md-bold-markers">**</span><span class="md-bold">Presence</span><span class="md-bold-markers">**</span> — you feel the others</span>
+        </div>
+      </div>
+
+      <!-- DIVIDER -->
+      <div class="workspace-divider"></div>
+
+      <!-- PREVIEW -->
+      <div class="preview">
+        <h1>The Architecture of Collaboration</h1>
+
+        <p>Real-time editing changes how we think about documents. A pad is not a file — it is a <em>living surface</em> where ideas converge.</p>
+
+        <h2>Shared Surfaces</h2>
+
+        <p>When two people write in the same space, the boundary between author and editor dissolves. Each keystroke is a conversation.</p>
+
+        <blockquote>
+          <p>"The medium is the message." — Marshall McLuhan</p>
+        </blockquote>
+
+        <h3>What makes a good pad</h3>
+
+        <ul>
+          <li><strong>Simplicity</strong> — no accounts, no friction</li>
+          <li><strong>Persistence</strong> — your words survive</li>
+          <li><strong>Presence</strong> — you feel the others</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== STATUS BAR ===== -->
+  <div class="statusbar">
+    <span></span>
+    <span>Ln 5 &middot; Col 28</span>
+    <span class="statusbar-right">
+      <span class="saved-dot"></span>
+      saved
+    </span>
+  </div>
+
+  <!-- Sidebar version (fixed bottom-left) -->
+  <div class="sidebar-version">v0.1</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+    "name": "mmpad",
+    "private": true,
+    "packageManager": "bun@1.3.11",
+    "workspaces": ["packages/*"],
+    "scripts": {
+        "dev": "turbo dev",
+        "build": "turbo build",
+        "typecheck": "turbo typecheck",
+        "test:client": "cd packages/client && bun test tests",
+        "test:server": "./scripts/with-test-db.sh bun test packages/server/tests",
+        "test:e2e": "./scripts/with-test-db.sh playwright test"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.54.2",
+        "turbo": "^2.5",
+        "typescript": "^5.9"
+    }
+}
