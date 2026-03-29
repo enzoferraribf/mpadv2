@@ -90,6 +90,46 @@ test('shows persisted anime peer identity on remote text and drawing cursors', a
     await contextB.close()
 })
 
+test('keeps remote text badges out of text replacement', async ({ browser }) => {
+    const path = `notes/${Date.now()}-peer-badge-leak`
+    const contextA = await createPeerContext(browser, narutoPeer)
+    const contextB = await createPeerContext(browser, sailorMoonPeer)
+    const pageA = await contextA.newPage()
+    const pageB = await contextB.newPage()
+
+    await openPad(pageA, path)
+    await openPad(pageB, path)
+
+    await pageA.locator('.cm-content').first().click()
+    await pageA.keyboard.type('alpha beta gamma')
+    for (let step = 0; step < 5; step += 1) {
+        await pageA.keyboard.press('ArrowLeft')
+    }
+
+    await waitForText(pageB, 'alpha beta gamma')
+    const remoteCaret = pageB.locator('.cm-ySelectionCaret').first()
+    const remoteBadge = pageB.locator('.cm-ySelectionInfo').filter({ hasText: 'Naruto Uzumaki' }).first()
+
+    await expect(remoteBadge).toBeVisible()
+    await expect(remoteCaret).toHaveAttribute('contenteditable', 'false')
+    await expect(remoteCaret).toHaveAttribute('aria-hidden', 'true')
+    await expect(remoteCaret).toHaveAttribute('draggable', 'false')
+    await expect(remoteCaret).toHaveAttribute('translate', 'no')
+    await expect(remoteBadge).toHaveAttribute('contenteditable', 'false')
+    await expect(remoteBadge).toHaveAttribute('aria-hidden', 'true')
+
+    await replaceFirstEditorLine(pageB, 'clean')
+    await waitForText(pageA, 'clean')
+    await waitForText(pageB, 'clean')
+
+    const sharedText = await pageB.evaluate(() => (window as any).__mmpad__?.getText() ?? '')
+    expect(sharedText).toBe('clean')
+    expect(sharedText).not.toContain('Naruto Uzumaki')
+
+    await contextA.close()
+    await contextB.close()
+})
+
 test('keeps text after a reload', async ({ browser }) => {
     const path = `notes/${Date.now()}-reload`
     const context = await browser.newContext()
@@ -466,6 +506,20 @@ async function moveDrawingPointer(page: Page) {
     const box = await canvas.boundingBox()
     expect(box).not.toBeNull()
     await page.mouse.move(box!.x + 240, box!.y + 180)
+}
+
+async function replaceFirstEditorLine(page: Page, value: string) {
+    const line = page.locator('.cm-line').first()
+    await expect(line).toBeVisible()
+    const box = await line.boundingBox()
+    expect(box).not.toBeNull()
+
+    const y = box!.y + box!.height / 2
+    await page.mouse.move(box!.x + 1, y)
+    await page.mouse.down()
+    await page.mouse.move(box!.x + box!.width + 120, y, { steps: 16 })
+    await page.mouse.up()
+    await page.keyboard.type(value)
 }
 
 async function waitForText(page: Page, text: string) {
