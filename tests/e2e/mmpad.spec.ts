@@ -1,7 +1,9 @@
-import type { Page } from '@playwright/test'
+import type { Browser, Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
 const demoText = '# alpha\n\nint a = 1;\nint b = 2;\n\n```cpp\nvector<int> v(2) = {3, 4};\n```'
+const narutoPeer = createPeerSeed('Naruto Uzumaki', '#f97316', '#7c2d12', '#ea580c', '#fdba7433')
+const sailorMoonPeer = createPeerSeed('Sailor Moon', '#0ea5e9', '#164e63', '#0284c7', '#7dd3fc33')
 
 test.use({
     colorScheme: 'dark',
@@ -52,6 +54,37 @@ test('syncs edits from both clients in the same pad', async ({ browser }) => {
 
     await expect(pageA.getByRole('heading', { name: 'alpha' })).toBeVisible()
     await expect(pageB.getByRole('heading', { name: 'beta' })).toBeVisible()
+
+    await contextA.close()
+    await contextB.close()
+})
+
+test('shows persisted anime peer identity on remote text and drawing cursors', async ({ browser }) => {
+    const path = `notes/${Date.now()}-peer-identity`
+    const contextA = await createPeerContext(browser, narutoPeer)
+    const contextB = await createPeerContext(browser, sailorMoonPeer)
+    const pageA = await contextA.newPage()
+    const pageB = await contextB.newPage()
+
+    await openPad(pageA, path)
+    await openPad(pageB, path)
+
+    await pageA.locator('.cm-content').first().click()
+    await pageA.keyboard.type('# badge test')
+
+    await pageB.waitForFunction(() => (window as any).__mmpad__?.getText() === '# badge test')
+    await expect(pageB.locator('.cm-ySelectionInfo').filter({ hasText: 'Naruto Uzumaki' })).toBeVisible()
+    await expect.poll(() => pageA.evaluate(() => JSON.parse(window.localStorage.getItem('mmpad.peer')!).name)).toBe('Naruto Uzumaki')
+
+    await pageA.reload()
+    await waitForPad(pageA)
+    await expect.poll(() => pageA.evaluate(() => JSON.parse(window.localStorage.getItem('mmpad.peer')!).name)).toBe('Naruto Uzumaki')
+
+    await openDrawingRoom(pageA)
+    await openDrawingRoom(pageB)
+    await moveDrawingPointer(pageA)
+    await pageB.waitForTimeout(250)
+    await expect(pageB.getByTestId('workspace-shell')).toHaveScreenshot('drawing-remote-cursor.png', { maxDiffPixels: 600 })
 
     await contextA.close()
     await contextB.close()
@@ -125,6 +158,34 @@ test('syncs the drawing surface between two pads', async ({ browser }) => {
 
     await contextA.close()
     await contextB.close()
+})
+
+test('persists a local Excalidraw arrow change', async ({ browser }) => {
+    const path = `notes/${Date.now()}-drawing-persist`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await openDrawingRoom(page)
+    await page.evaluate(() => (window as any).__mmpad__.insertTestArrow())
+    await moveDrawingPointer(page)
+    await expect.poll(async () =>
+        page.evaluate(() => (window as any).__mmpad__?.getDrawingElementCount() ?? -1),
+    ).toBe(1)
+
+    await page.waitForTimeout(250)
+    await expect.poll(async () =>
+        page.evaluate(() => (window as any).__mmpad__?.getDrawingElementCount() ?? -1),
+    ).toBe(1)
+
+    await page.reload()
+    await waitForPad(page)
+    await openDrawingRoom(page)
+    await expect.poll(async () =>
+        page.evaluate(() => (window as any).__mmpad__?.getDrawingElementCount() ?? -1),
+    ).toBe(1)
+
+    await context.close()
 })
 
 test('renders the drawing workspace', async ({ browser }) => {
@@ -396,6 +457,15 @@ async function openDrawingRoom(page: Page) {
     await page.evaluate(() => (window as any).__mmpad__.openDrawing())
     await page.waitForFunction(() => (window as any).__mmpad__?.getDrawingConnection() === 'connected')
     await expect(page.getByTestId('drawing-workspace')).toBeVisible()
+    await page.waitForFunction(() => Boolean(window.__mmpadDrawingApi__))
+}
+
+async function moveDrawingPointer(page: Page) {
+    const canvas = page.locator('canvas').last()
+    await expect(canvas).toBeVisible()
+    const box = await canvas.boundingBox()
+    expect(box).not.toBeNull()
+    await page.mouse.move(box!.x + 240, box!.y + 180)
 }
 
 async function waitForText(page: Page, text: string) {
@@ -426,4 +496,21 @@ function layoutDescription(name: 'Editor' | 'Preview' | 'Split') {
     if (name === 'Editor') return 'Focus the editor.'
     if (name === 'Preview') return 'Focus the preview.'
     return 'Show editor and preview together.'
+}
+
+function createPeerSeed(name: string, background: string, stroke: string, textColor: string, textColorLight: string) {
+    return {
+        name,
+        color: { background, stroke },
+        textColor,
+        textColorLight,
+    }
+}
+
+async function createPeerContext(browser: Browser, peer: ReturnType<typeof createPeerSeed>) {
+    const context = await browser.newContext()
+    await context.addInitScript((value) => {
+        window.localStorage.setItem('mmpad.peer', JSON.stringify(value))
+    }, peer)
+    return context
 }

@@ -7,6 +7,12 @@ import type { DrawingHandle } from './drawing-handle'
 
 const ExcalidrawEditor = lazy(() => import('@excalidraw/excalidraw').then((mod) => ({ default: mod.Excalidraw })))
 
+declare global {
+    interface Window {
+        __mmpadDrawingApi__?: ExcalidrawImperativeAPI | null
+    }
+}
+
 export function DrawingPane(input: { drawing: DrawingHandle | null; theme: DrawingTheme }) {
     const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null)
     const localOriginRef = useRef({})
@@ -23,7 +29,7 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
     }
 
     function getCurrentElements() {
-        return api?.getSceneElementsIncludingDeleted() ?? pendingElementsRef.current
+        return pendingElementsRef.current ?? api?.getSceneElementsIncludingDeleted()
     }
 
     function flushScene(drawing: DrawingHandle) {
@@ -52,18 +58,25 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
 
     useEffect(() => {
         if (!api) return
+        pendingElementsRef.current = elements
         applyingRemoteRef.current = true
         api.updateScene({
             elements,
+        })
+        queueMicrotask(() => {
+            applyingRemoteRef.current = false
+        })
+    }, [api, elements])
+
+    useEffect(() => {
+        if (!api) return
+        api.updateScene({
             appState: {
                 collaborators,
                 theme: input.theme,
             },
         })
-        queueMicrotask(() => {
-            applyingRemoteRef.current = false
-        })
-    }, [collaborators, elements, input.theme])
+    }, [api, collaborators, input.theme])
 
     useEffect(() => {
         return () => {
@@ -74,6 +87,34 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
             input.drawing.writeScene(nextElements, localOriginRef.current)
         }
     }, [input.drawing])
+
+    useEffect(() => {
+        if (!input.drawing) return
+
+        const clearPointer = () => input.drawing?.clearPointer()
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') return
+            clearPointer()
+        }
+
+        window.addEventListener('blur', clearPointer)
+        document.addEventListener('visibilitychange', onVisibilityChange)
+
+        return () => {
+            window.removeEventListener('blur', clearPointer)
+            document.removeEventListener('visibilitychange', onVisibilityChange)
+            clearPointer()
+        }
+    }, [input.drawing])
+
+    useEffect(() => {
+        if (import.meta.env.VITE_E2E !== '1') return
+        window.__mmpadDrawingApi__ = api
+        return () => {
+            if (window.__mmpadDrawingApi__ !== api) return
+            delete window.__mmpadDrawingApi__
+        }
+    }, [api])
 
     if (!input.drawing) {
         return <div className="flex h-full items-center justify-center text-sm text-[--stone-text-dim]">Connecting drawing…</div>
@@ -86,8 +127,10 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
             <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-[--stone-text-dim]">Loading drawing…</div>}>
                 <ExcalidrawEditor
                     excalidrawAPI={setApi}
+                    isCollaborating
                     onChange={(nextElements, appState) => {
                         if (applyingRemoteRef.current) return
+                        if (sameElements(pendingElementsRef.current ?? [], nextElements)) return
                         pendingElementsRef.current = nextElements
 
                         if (pointerActiveRef.current) {
@@ -106,6 +149,9 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
                         }
 
                         flushScene(drawing)
+                    }}
+                    onPointerUpdate={({ button, pointer }) => {
+                        drawing.setPointer(pointer, button)
                     }}
                     onPointerDown={() => {
                         pointerActiveRef.current = true
@@ -160,4 +206,20 @@ function useDrawingState(drawing: DrawingHandle | null, ignoredOrigin: unknown) 
     }, [drawing, ignoredOrigin])
 
     return { elements, collaborators }
+}
+
+function sameElements(left: readonly ExcalidrawElement[], right: readonly ExcalidrawElement[]) {
+    if (left.length !== right.length) return false
+
+    return left.every((element, index) => {
+        const other = right[index]
+        if (!other) return false
+        return (
+            element.id === other.id &&
+            element.version === other.version &&
+            element.versionNonce === other.versionNonce &&
+            element.updated === other.updated &&
+            element.isDeleted === other.isDeleted
+        )
+    })
 }

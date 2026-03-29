@@ -18,7 +18,11 @@ export function usePadDrawingRoom(path: PadPath, localPeer: LocalPeer, open: boo
         name: localPeer.name,
         color: localPeer.color,
     }), [localPeer.color, localPeer.name])
-    const localState = useMemo<DrawingAwarenessState>(() => ({ user: awarenessUser }), [awarenessUser])
+    const localState = useMemo<DrawingAwarenessState>(() => ({
+        user: awarenessUser,
+        pointer: null,
+        button: 'up',
+    }), [awarenessUser])
     const room = usePadRoomSession({
         path,
         kind: 'drawing',

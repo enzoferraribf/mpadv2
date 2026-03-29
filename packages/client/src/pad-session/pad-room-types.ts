@@ -39,6 +39,12 @@ export type DrawingAwarenessUser = {
     }
 }
 
+export type DrawingAwarenessPointer = {
+    x: number
+    y: number
+    tool: 'pointer' | 'laser'
+}
+
 export type TextAwarenessState = {
     user: TextAwarenessUser
 }
@@ -50,6 +56,8 @@ export type FileAwarenessState = {
 
 export type DrawingAwarenessState = {
     user: DrawingAwarenessUser
+    pointer: DrawingAwarenessPointer | null
+    button: 'up' | 'down'
 }
 
 type FileSignalListener = (signal: InboundFileSignal) => void

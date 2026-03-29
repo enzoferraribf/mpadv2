@@ -11,6 +11,7 @@ declare global {
             getConnection: () => string
             hasLocalFile: (name: string) => boolean
             openDrawing: () => void
+            insertTestArrow: () => Promise<void>
             insertTestRectangle: () => Promise<void>
             uploadTestFile: () => Promise<void>
             requestFile: (name: string) => void
@@ -41,6 +42,13 @@ export function publishWindowState(workspace: PadWorkspaceModel) {
         getConnection: () => state.status.connection,
         hasLocalFile: (name: string) => state.status.files.some((file) => file.meta.name === name && file.isLocal),
         openDrawing: () => actions.openTab('drawing'),
+        insertTestArrow: async () => {
+            if (!window.__mmpadDrawingApi__) throw new Error('Drawing API is unavailable')
+            const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
+            window.__mmpadDrawingApi__.updateScene({
+                elements: convertToExcalidrawElements([{ type: 'arrow', x: 80, y: 80, width: 220, height: 120 }]),
+            })
+        },
         insertTestRectangle: async () => {
             if (state.drawing.kind !== 'ready') throw new Error('Drawing is closed')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')

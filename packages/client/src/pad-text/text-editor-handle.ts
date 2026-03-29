@@ -69,6 +69,34 @@ const editorTheme = EditorView.theme({
     '.cm-selectionBackground': {
         backgroundColor: 'rgba(201, 168, 124, 0.15) !important',
     },
+    '.cm-ySelectionInfo': {
+        top: '-1.9em',
+        left: '-2px',
+        opacity: '1',
+        padding: '2px 7px',
+        borderRadius: '999px',
+        fontFamily: "'Assistant', sans-serif",
+        fontSize: '11px',
+        fontWeight: '700',
+        letterSpacing: '0.02em',
+        lineHeight: '1.2',
+        boxShadow: '0 1px 0 rgba(12, 12, 12, 0.35)',
+        transition: 'none',
+    },
+    '.cm-ySelectionCaret': {
+        marginLeft: '-1px',
+        marginRight: '-1px',
+    },
+    '.cm-ySelectionCaretDot': {
+        width: '0.5em',
+        height: '0.5em',
+        top: '-0.25em',
+        left: '-0.25em',
+        boxShadow: '0 0 0 2px #201f1b',
+    },
+    '.cm-ySelectionCaret:hover > .cm-ySelectionInfo': {
+        opacity: '1',
+    },
 })
 
 export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEditorHandle {
