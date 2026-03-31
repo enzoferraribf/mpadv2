@@ -1,7 +1,9 @@
 import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
 import RemarkGfm from 'remark-gfm'
 
 const remarkPlugins = [RemarkGfm]
+const rehypePlugins = [rehypeHighlight]
 
 export function MarkdownPreviewPane({ content }: { content: string }) {
     if (!content.trim()) {
@@ -13,7 +15,7 @@ export function MarkdownPreviewPane({ content }: { content: string }) {
     }
 
     return (
-        <ReactMarkdown className="markdown-body" remarkPlugins={remarkPlugins}>
+        <ReactMarkdown className="markdown-body" rehypePlugins={rehypePlugins} remarkPlugins={remarkPlugins}>
             {content}
         </ReactMarkdown>
     )

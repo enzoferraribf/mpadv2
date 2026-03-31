@@ -117,7 +117,7 @@
 .command-scroll::-webkit-scrollbar,
 .dialog-scroll::-webkit-scrollbar,
 .diff-history-list::-webkit-scrollbar,
-.diff-table-scroll::-webkit-scrollbar,
+.diff-merge-root::-webkit-scrollbar,
 .cm-scroller::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -127,7 +127,7 @@
 .command-scroll::-webkit-scrollbar-track,
 .dialog-scroll::-webkit-scrollbar-track,
 .diff-history-list::-webkit-scrollbar-track,
-.diff-table-scroll::-webkit-scrollbar-track,
+.diff-merge-root::-webkit-scrollbar-track,
 .cm-scroller::-webkit-scrollbar-track {
     background: transparent;
 }
@@ -136,7 +136,7 @@
 .command-scroll::-webkit-scrollbar-thumb,
 .dialog-scroll::-webkit-scrollbar-thumb,
 .diff-history-list::-webkit-scrollbar-thumb,
-.diff-table-scroll::-webkit-scrollbar-thumb,
+.diff-merge-root::-webkit-scrollbar-thumb,
 .cm-scroller::-webkit-scrollbar-thumb {
     background: var(--stone-border);
     border-radius: 3px;
@@ -146,7 +146,7 @@
 .command-scroll::-webkit-scrollbar-thumb:hover,
 .dialog-scroll::-webkit-scrollbar-thumb:hover,
 .diff-history-list::-webkit-scrollbar-thumb:hover,
-.diff-table-scroll::-webkit-scrollbar-thumb:hover,
+.diff-merge-root::-webkit-scrollbar-thumb:hover,
 .cm-scroller::-webkit-scrollbar-thumb:hover {
     background: var(--stone-text-dim);
 }
@@ -246,6 +246,53 @@
     padding: 0;
     border: 0;
     background: transparent !important;
+}
+
+.markdown-body pre code.hljs {
+    display: block;
+    color: #e6e0d6;
+}
+
+.markdown-body .hljs-comment,
+.markdown-body .hljs-quote {
+    color: #6f685d;
+    font-style: italic;
+}
+
+.markdown-body .hljs-keyword,
+.markdown-body .hljs-selector-tag,
+.markdown-body .hljs-literal,
+.markdown-body .hljs-operator {
+    color: #c9a87c;
+}
+
+.markdown-body .hljs-string,
+.markdown-body .hljs-title,
+.markdown-body .hljs-section,
+.markdown-body .hljs-attribute,
+.markdown-body .hljs-template-tag,
+.markdown-body .hljs-template-variable {
+    color: #7c9c8a;
+}
+
+.markdown-body .hljs-number,
+.markdown-body .hljs-symbol,
+.markdown-body .hljs-bullet,
+.markdown-body .hljs-variable,
+.markdown-body .hljs-regexp,
+.markdown-body .hljs-link {
+    color: #d8a06b;
+}
+
+.markdown-body .hljs-built_in,
+.markdown-body .hljs-type,
+.markdown-body .hljs-class,
+.markdown-body .hljs-function {
+    color: #8fb7c7;
+}
+
+.markdown-body .hljs-meta {
+    color: #9a8f80;
 }
 
 .markdown-body blockquote {
@@ -731,6 +778,9 @@
     }
 
     .diff-history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
         flex: 1;
         overflow-y: auto;
         padding: 8px;
@@ -739,13 +789,13 @@
     .diff-history-item {
         width: 100%;
         display: flex;
-        flex-direction: column;
-        gap: 4px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
         padding: 10px 12px;
         border: 1px solid transparent;
         border-radius: 6px;
         background: transparent;
-        text-align: left;
         transition: background 120ms ease, border-color 120ms ease;
     }
 
@@ -753,9 +803,27 @@
         background: rgba(255, 255, 255, 0.03);
     }
 
-    .diff-history-item.active {
-        background: rgba(201, 168, 124, 0.06);
+    .diff-history-item.active-left {
+        background: rgba(176, 112, 112, 0.08);
+        border-color: rgba(176, 112, 112, 0.28);
+    }
+
+    .diff-history-item.active-right {
+        background: rgba(124, 156, 138, 0.08);
+        border-color: rgba(124, 156, 138, 0.28);
+    }
+
+    .diff-history-item.active-left.active-right {
+        background: rgba(201, 168, 124, 0.08);
         border-color: var(--stone-border-strong);
+    }
+
+    .diff-history-item-copy {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        text-align: left;
     }
 
     .diff-history-item-number {
@@ -770,33 +838,61 @@
         color: var(--stone-text-dim);
     }
 
+    .diff-history-item-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .diff-history-toggle {
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--stone-border);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--stone-text-secondary);
+        font-size: 11px;
+        font-family: 'Nunito Sans', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .diff-history-toggle.active {
+        border-color: var(--stone-border-strong);
+        background: rgba(201, 168, 124, 0.08);
+        color: var(--stone-text);
+    }
+
+    .diff-history-toggle:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
     .diff-main-pane {
         display: flex;
+        flex-direction: column;
         min-width: 0;
     }
 
-    .diff-table-scroll {
+    .diff-merge-root {
         flex: 1;
+        min-height: 0;
         overflow: auto;
     }
 
-    .diff-table {
-        min-width: 0;
+    .diff-merge-root .cm-mergeView {
+        height: 100%;
+        overflow: auto;
+        background: var(--stone-bg);
+    }
+
+    .diff-merge-root .cm-mergeViewEditors {
         min-height: 100%;
     }
 
-    .diff-table-header,
-    .diff-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
-
-    .diff-table-header {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-        background: var(--stone-bg);
-        border-bottom: 1px solid var(--stone-border);
+    .diff-merge-root .cm-mergeViewEditor {
+        min-width: 0;
     }
 
     .diff-table-title {
@@ -812,75 +908,56 @@
         border-right: 1px solid var(--stone-border);
     }
 
-    .diff-row {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    .diff-merge-root .cm-editor {
+        height: 100%;
+        background: var(--stone-bg);
     }
 
-    .diff-cell {
-        min-width: 0;
-        display: grid;
-        grid-template-columns: 54px minmax(0, 1fr);
-        align-items: start;
-        padding: 0;
-        border-right: 1px solid var(--stone-border);
+    .diff-merge-root .cm-scroller {
+        overflow: auto;
     }
 
-    .diff-cell:last-child {
-        border-right: none;
+    .diff-merge-root .cm-content {
+        padding-top: 20px;
+        padding-bottom: 24px;
     }
 
-    .diff-cell-context {
-        background: transparent;
+    .diff-merge-root .cm-line {
+        padding-left: 8px;
+        padding-right: 24px;
     }
 
-    .diff-cell-removed {
-        background: rgba(176, 112, 112, 0.12);
+    .diff-merge-root .cm-merge-a .cm-changedLine,
+    .diff-merge-root .cm-deletedChunk {
+        background: rgba(176, 112, 112, 0.12) !important;
     }
 
-    .diff-cell-added {
-        background: rgba(124, 156, 138, 0.14);
+    .diff-merge-root .cm-merge-b .cm-changedLine {
+        background: rgba(124, 156, 138, 0.14) !important;
     }
 
-    .diff-cell-empty {
-        background: rgba(255, 255, 255, 0.01);
+    .diff-merge-root .cm-merge-a .cm-changedText,
+    .diff-merge-root .cm-deletedChunk .cm-deletedText {
+        background: rgba(176, 112, 112, 0.24) !important;
+        color: #f0d0d0 !important;
     }
 
-    .diff-line-number {
-        display: flex;
-        align-items: flex-start;
-        justify-content: flex-end;
-        min-height: 100%;
-        padding: 8px 10px 8px 8px;
-        border-right: 1px solid rgba(255, 255, 255, 0.04);
-        font-size: 11px;
-        font-family: 'Fira Code', monospace;
-        color: var(--stone-text-dim);
-        user-select: none;
+    .diff-merge-root .cm-merge-b .cm-changedText {
+        background: rgba(124, 156, 138, 0.28) !important;
+        color: #d9efe0 !important;
     }
 
-    .diff-line-text {
-        min-width: 0;
-        padding: 8px 12px;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font-size: 12px;
-        line-height: 1.6;
-        font-family: 'Fira Code', monospace;
-        color: var(--stone-text);
+    .diff-merge-root .cm-merge-a .cm-changedLineGutter,
+    .diff-merge-root .cm-deletedLineGutter {
+        background: #b07070 !important;
     }
 
-    .diff-part-context {
-        color: inherit;
+    .diff-merge-root .cm-merge-b .cm-changedLineGutter {
+        background: #7c9c8a !important;
     }
 
-    .diff-part-removed {
-        background: rgba(176, 112, 112, 0.24);
-        color: #f0d0d0;
-    }
-
-    .diff-part-added {
-        background: rgba(124, 156, 138, 0.28);
-        color: #d9efe0;
+    .diff-merge-root .cm-mergeSpacer {
+        background: rgba(255, 255, 255, 0.02);
     }
 
     .diff-empty {
@@ -892,11 +969,6 @@
         text-align: center;
         font-size: 13px;
         color: var(--stone-text-dim);
-    }
-
-    .diff-empty.compact {
-        min-height: 96px;
-        flex: none;
     }
 
     /* ---- MPAD Logo (shared) ---- */
@@ -965,14 +1037,9 @@
             padding: 0 10px;
         }
 
-        .diff-table-header,
-        .diff-row {
-            grid-template-columns: minmax(0, 1fr);
-        }
-
-        .diff-table-title:first-child,
-        .diff-cell {
-            border-right: none;
+        .diff-history-item {
+            align-items: flex-start;
+            flex-direction: column;
         }
     }
 

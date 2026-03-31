@@ -15,6 +15,8 @@ describe('client bundle', () => {
 
         const entry = manifest['index.html']
         expect(entry).toBeDefined()
+        expect(entry?.dynamicImports).toContain('src/pad-drawing/drawing-workspace.tsx')
+        expect(entry?.dynamicImports).toContain('src/pad-text/text-diff-merge-view.tsx')
 
         const files = Array.from(collectFiles(manifest, 'index.html'))
         const contents = files.map((file) =>

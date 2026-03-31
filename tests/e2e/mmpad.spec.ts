@@ -191,7 +191,13 @@ test('renders the pad shell', async ({ browser }) => {
     await hideEditorCaret(page)
     await hideSidebarEntries(page)
 
-    await expect(page).toHaveScreenshot('pad-shell.png')
+    await expect(page).toHaveScreenshot('pad-shell.png', {
+        mask: [
+            page.locator('.pad-statusbar-conn'),
+            page.getByTestId('status-cursor'),
+            page.getByTestId('status-clock'),
+        ],
+    })
 
     await context.close()
 })
@@ -285,10 +291,12 @@ test('shows text diffs from the top tab', async ({ browser }) => {
     await waitForHistoryItems(page, 3)
 
     await expect(page.locator('.markdown-body')).toHaveCount(0)
-    await expect(page.locator('.cm-editor')).toHaveCount(0)
     await expect(page.getByTestId('text-diff-workspace')).toBeVisible()
     await expect(page.locator('.diff-history-item-number').filter({ hasText: 'Snapshot 2' })).toHaveCount(1)
-    await expect(page.locator('.diff-table-title').filter({ hasText: 'Current' })).toHaveCount(1)
+    await expect(readSnapshotSideButton(page, 2, 'left')).toHaveAttribute('aria-pressed', 'true')
+    await expect(readCurrentRightButton(page)).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('text-diff-merge')).toBeVisible()
+    await expect(page.locator('.cm-changedLine').first()).toBeVisible()
 
     await context.close()
 })
@@ -323,6 +331,50 @@ test('renders the diff workspace', async ({ browser }) => {
     await waitForHistoryItems(page, 3)
 
     await expect(page.getByTestId('workspace-shell')).toHaveScreenshot('diff-workspace.png')
+
+    await context.close()
+})
+
+test('lets you choose older left and newer right snapshots', async ({ browser }) => {
+    const path = `notes/${Date.now()}-diffs-pickers`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await persistTextRevision(page, '# alpha')
+    await persistTextRevision(page, '\n## beta')
+    await persistTextRevision(page, '\n### gamma')
+    await openDiffsTab(page)
+    await waitForHistoryItems(page, 3)
+
+    await readSnapshotSideButton(page, 1, 'left').click()
+    await expect(readSnapshotSideButton(page, 1, 'left')).toHaveAttribute('aria-pressed', 'true')
+    await expect(readSnapshotSideButton(page, 1, 'right')).toBeDisabled()
+
+    await readSnapshotSideButton(page, 2, 'right').click()
+    await expect(readSnapshotSideButton(page, 2, 'right')).toHaveAttribute('aria-pressed', 'true')
+    await expect(readCurrentRightButton(page)).toHaveAttribute('aria-pressed', 'false')
+    await expect(page.locator('.cm-changedText').first()).toBeVisible()
+
+    await context.close()
+})
+
+test('forces the right side to stay newer than the left', async ({ browser }) => {
+    const path = `notes/${Date.now()}-diffs-order`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await persistTextRevision(page, '# alpha')
+    await persistTextRevision(page, '\n## beta')
+    await persistTextRevision(page, '\n### gamma')
+    await openDiffsTab(page)
+    await waitForHistoryItems(page, 3)
+
+    await readSnapshotSideButton(page, 3, 'right').click()
+    await expect(readSnapshotSideButton(page, 3, 'right')).toHaveAttribute('aria-pressed', 'true')
+    await expect(readSnapshotSideButton(page, 3, 'left')).toBeDisabled()
+    await expect(readSnapshotSideButton(page, 2, 'left')).toBeEnabled()
 
     await context.close()
 })
@@ -608,6 +660,14 @@ async function waitForText(page: Page, text: string) {
 
 async function waitForHistoryItems(page: Page, count: number) {
     await expect(page.locator('[data-testid="diff-history-item"]')).toHaveCount(count)
+}
+
+function readSnapshotSideButton(page: Page, revisionNumber: number, side: 'left' | 'right') {
+    return page.getByRole('button', { name: `Select snapshot ${revisionNumber} as ${side}` })
+}
+
+function readCurrentRightButton(page: Page) {
+    return page.getByRole('button', { name: 'Select current text as right' })
 }
 
 async function persistTextRevision(page: Page, content: string) {

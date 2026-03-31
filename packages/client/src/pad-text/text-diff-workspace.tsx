@@ -1,24 +1,40 @@
 import { PERSIST_DEBOUNCE_MS, type PadPath } from '@mmpad/shared'
-import { diffLines, diffWordsWithSpace } from 'diff'
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { fetchPadTextHistory, fetchPadTextRevision, type PadTextHistoryEntry, type PadTextHistoryRevision } from '@/pad-session/api'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 
-type DiffCell = {
-    kind: 'added' | 'context' | 'empty' | 'removed'
-    lineNumber: number | null
-    parts: DiffPart[]
+const LazyTextDiffMergeView = lazy(() => import('./text-diff-merge-view').then((mod) => ({ default: mod.TextDiffMergeView })))
+
+type CompareSource =
+    | { kind: 'current' }
+    | { kind: 'revision'; revisionId: number }
+
+type DiffSelection = {
+    leftRevisionId: number | null
+    rightSource: CompareSource
 }
 
-type DiffPart = {
-    kind: 'added' | 'context' | 'removed'
-    text: string
+type RevisionLoadState =
+    | { kind: 'idle' }
+    | { kind: 'loading' }
+    | { kind: 'error'; message: string }
+    | { kind: 'ready'; revision: PadTextHistoryRevision }
+
+type DiffReadyState = {
+    kind: 'ready'
+    leftContent: string
+    leftLabel: string
+    rightContent: string
+    rightLabel: string
 }
 
-type DiffRow = {
-    left: DiffCell
-    right: DiffCell
-}
+type DiffMainState =
+    | { kind: 'loading'; label: string }
+    | { kind: 'empty'; label: string }
+    | { kind: 'error'; label: string }
+    | DiffReadyState
+
+const currentSource: CompareSource = { kind: 'current' }
 
 export function TextDiffWorkspace(input: {
     currentContent: string
@@ -28,18 +44,20 @@ export function TextDiffWorkspace(input: {
     const [entries, setEntries] = useState<PadTextHistoryEntry[]>([])
     const [historyError, setHistoryError] = useState<string | null>(null)
     const [loadingHistory, setLoadingHistory] = useState(true)
-    const [loadingRevision, setLoadingRevision] = useState(false)
     const [refreshToken, setRefreshToken] = useState(0)
-    const [selectedRevision, setSelectedRevision] = useState<PadTextHistoryRevision | null>(null)
-    const [selectedRevisionId, setSelectedRevisionId] = useState<number | null>(null)
-    const [revisionError, setRevisionError] = useState<string | null>(null)
+    const [selection, setSelection] = useState<DiffSelection>({
+        leftRevisionId: null,
+        rightSource: currentSource,
+    })
 
     useEffect(() => {
         setEntries([])
-        setSelectedRevision(null)
-        setSelectedRevisionId(null)
         setHistoryError(null)
-        setRevisionError(null)
+        setLoadingHistory(true)
+        setSelection({
+            leftRevisionId: null,
+            rightSource: currentSource,
+        })
         setRefreshToken((value) => value + 1)
     }, [input.path])
 
@@ -58,13 +76,16 @@ export function TextDiffWorkspace(input: {
                 if (!active) return
                 setEntries(nextEntries)
                 setHistoryError(null)
-                setSelectedRevisionId((current) => chooseRevisionId(nextEntries, current))
+                setSelection((current) => reconcileSelection(nextEntries, current))
             })
             .catch((error: Error) => {
                 if (error.name === 'AbortError' || !active) return
-                setHistoryError(error.message)
                 setEntries([])
-                setSelectedRevisionId(null)
+                setHistoryError(error.message)
+                setSelection({
+                    leftRevisionId: null,
+                    rightSource: currentSource,
+                })
             })
             .finally(() => {
                 if (!active) return
@@ -77,44 +98,23 @@ export function TextDiffWorkspace(input: {
         }
     }, [input.path, refreshToken])
 
-    useEffect(() => {
-        if (selectedRevisionId === null) {
-            setSelectedRevision(null)
-            setRevisionError(null)
-            setLoadingRevision(false)
-            return
-        }
-
-        let active = true
-        const controller = new AbortController()
-        setLoadingRevision(true)
-
-        void fetchPadTextRevision(input.path, selectedRevisionId, controller.signal)
-            .then((revision) => {
-                if (!active) return
-                setSelectedRevision(revision)
-                setRevisionError(null)
-            })
-            .catch((error: Error) => {
-                if (error.name === 'AbortError' || !active) return
-                setRevisionError(error.message)
-                setSelectedRevision(null)
-            })
-            .finally(() => {
-                if (!active) return
-                setLoadingRevision(false)
-            })
-
-        return () => {
-            active = false
-            controller.abort()
-        }
-    }, [input.path, selectedRevisionId])
-
-    const rows = useMemo(
-        () => selectedRevision ? buildDiffRows(selectedRevision.content, input.currentContent) : [],
-        [input.currentContent, selectedRevision],
+    const leftEntry = readEntry(entries, selection.leftRevisionId)
+    const rightEntry = selection.rightSource.kind === 'revision'
+        ? readEntry(entries, selection.rightSource.revisionId)
+        : null
+    const leftRevision = usePadTextRevision(input.path, selection.leftRevisionId)
+    const rightRevision = usePadTextRevision(
+        input.path,
+        selection.rightSource.kind === 'revision' ? selection.rightSource.revisionId : null,
     )
+    const mainState = readMainState({
+        currentContent: input.currentContent,
+        leftEntry,
+        leftRevision,
+        rightEntry,
+        rightRevision,
+        rightSource: selection.rightSource,
+    })
 
     return (
         <section className="workspace-shell min-h-0" data-testid="workspace-shell">
@@ -129,16 +129,67 @@ export function TextDiffWorkspace(input: {
                         ) : null}
                         {!loadingHistory && !historyError && entries.length > 0 ? (
                             <div className="diff-history-list">
+                                <div className={`diff-history-item diff-history-item-current${selection.rightSource.kind === 'current' ? ' active-right' : ''}`}>
+                                    <div className="diff-history-item-copy">
+                                        <span className="diff-history-item-number">Current</span>
+                                        <span className="diff-history-item-time">Live text</span>
+                                    </div>
+                                    <div className="diff-history-item-actions">
+                                        <button
+                                            aria-label="Select current text as right"
+                                            aria-pressed={selection.rightSource.kind === 'current'}
+                                            className={`diff-history-toggle${selection.rightSource.kind === 'current' ? ' active' : ''}`}
+                                            onClick={() => setSelection((current) => reconcileSelection(entries, {
+                                                leftRevisionId: current.leftRevisionId,
+                                                rightSource: currentSource,
+                                            }))}
+                                            type="button"
+                                        >
+                                            Right
+                                        </button>
+                                    </div>
+                                </div>
                                 {entries.map((entry) => (
-                                    <button
+                                    <div
                                         key={entry.id}
-                                        className={`diff-history-item${entry.id === selectedRevisionId ? ' active' : ''}`}
+                                        className={readHistoryItemClassName(entry, selection)}
                                         data-testid="diff-history-item"
-                                        onClick={() => setSelectedRevisionId(entry.id)}
                                     >
-                                        <span className="diff-history-item-number">Snapshot {entry.revisionNumber}</span>
-                                        <span className="diff-history-item-time">{formatRevisionTime(entry.createdAt)}</span>
-                                    </button>
+                                        <div className="diff-history-item-copy">
+                                            <span className="diff-history-item-number">Snapshot {entry.revisionNumber}</span>
+                                            <span className="diff-history-item-time">{formatRevisionTime(entry.createdAt)}</span>
+                                        </div>
+                                        <div className="diff-history-item-actions">
+                                            <button
+                                                aria-label={`Select snapshot ${entry.revisionNumber} as left`}
+                                                aria-pressed={entry.id === selection.leftRevisionId}
+                                                className={`diff-history-toggle${entry.id === selection.leftRevisionId ? ' active' : ''}`}
+                                                disabled={!canSelectLeft(entries, entry, selection.rightSource)}
+                                                onClick={() => setSelection((current) =>
+                                                    reconcileSelection(entries, {
+                                                        leftRevisionId: entry.id,
+                                                        rightSource: current.rightSource,
+                                                    }),
+                                                )}
+                                                type="button"
+                                            >
+                                                Left
+                                            </button>
+                                            <button
+                                                aria-label={`Select snapshot ${entry.revisionNumber} as right`}
+                                                aria-pressed={selection.rightSource.kind === 'revision' && selection.rightSource.revisionId === entry.id}
+                                                className={`diff-history-toggle${selection.rightSource.kind === 'revision' && selection.rightSource.revisionId === entry.id ? ' active' : ''}`}
+                                                disabled={!canSelectRight(leftEntry, entry)}
+                                                onClick={() => setSelection((current) => reconcileSelection(entries, {
+                                                    leftRevisionId: current.leftRevisionId,
+                                                    rightSource: { kind: 'revision', revisionId: entry.id },
+                                                }))}
+                                                type="button"
+                                            >
+                                                Right
+                                            </button>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         ) : null}
@@ -147,18 +198,7 @@ export function TextDiffWorkspace(input: {
                 <ResizableHandle className="mx-0 bg-[--stone-border]" />
                 <ResizablePanel defaultSize={76} minSize={40}>
                     <div className="diff-main-pane" data-testid="text-diff-workspace">
-                        {loadingRevision ? <DiffEmpty label="Loading diff…" /> : null}
-                        {!loadingRevision && revisionError ? <DiffEmpty label={revisionError} /> : null}
-                        {!loadingRevision && !revisionError && !selectedRevision ? (
-                            <DiffEmpty label="Select a snapshot to compare it with the current text." />
-                        ) : null}
-                        {!loadingRevision && !revisionError && selectedRevision ? (
-                            <DiffTable
-                                rows={rows}
-                                leftLabel={`Snapshot ${selectedRevision.revisionNumber}`}
-                                rightLabel="Current"
-                            />
-                        ) : null}
+                        <DiffMainView state={mainState} />
                     </div>
                 </ResizablePanel>
             </ResizablePanelGroup>
@@ -166,204 +206,155 @@ export function TextDiffWorkspace(input: {
     )
 }
 
-function DiffTable(input: { rows: DiffRow[]; leftLabel: string; rightLabel: string }) {
+function DiffMainView(input: { state: DiffMainState }) {
+    if (input.state.kind === 'loading') return <DiffEmpty label={input.state.label} />
+    if (input.state.kind === 'error') return <DiffEmpty label={input.state.label} />
+    if (input.state.kind === 'empty') return <DiffEmpty label={input.state.label} />
+
     return (
-        <div className="diff-table-scroll">
-            <div className="diff-table">
-                <div className="diff-table-header">
-                    <div className="diff-table-title">{input.leftLabel}</div>
-                    <div className="diff-table-title">{input.rightLabel}</div>
-                </div>
-                {input.rows.length === 0 ? <DiffEmpty label="No visible changes." compact /> : null}
-                {input.rows.map((row, index) => (
-                    <div key={index} className="diff-row">
-                        <DiffCellView cell={row.left} />
-                        <DiffCellView cell={row.right} />
-                    </div>
-                ))}
-            </div>
-        </div>
+        <Suspense fallback={<DiffEmpty label="Loading diff…" />}>
+            <LazyTextDiffMergeView
+                leftContent={input.state.leftContent}
+                rightContent={input.state.rightContent}
+            />
+        </Suspense>
     )
 }
 
-function DiffCellView(input: { cell: DiffCell }) {
-    return (
-        <div className={`diff-cell diff-cell-${input.cell.kind}`}>
-            <span className="diff-line-number">{input.cell.lineNumber ?? ''}</span>
-            <span className="diff-line-text">
-                {input.cell.parts.length === 0 ? '\u00A0' : input.cell.parts.map((part, index) => (
-                    <span key={index} className={`diff-part diff-part-${part.kind}`}>
-                        {part.text || '\u00A0'}
-                    </span>
-                ))}
-            </span>
-        </div>
-    )
+function DiffEmpty(input: { label: string }) {
+    return <div className="diff-empty">{input.label}</div>
 }
 
-function DiffEmpty(input: { compact?: boolean; label: string }) {
-    return <div className={`diff-empty${input.compact ? ' compact' : ''}`}>{input.label}</div>
-}
+function usePadTextRevision(path: PadPath, revisionId: number | null): RevisionLoadState {
+    const [state, setState] = useState<RevisionLoadState>({ kind: 'idle' })
 
-function buildDiffRows(previous: string, current: string) {
-    const rows: DiffRow[] = []
-    const parts = diffLines(previous, current)
-    let leftLine = 1
-    let rightLine = 1
-
-    for (let index = 0; index < parts.length; index += 1) {
-        const part = parts[index]!
-
-        if (part.removed && parts[index + 1]?.added) {
-            const removedLines = splitLines(part.value)
-            const addedLines = splitLines(parts[index + 1]!.value)
-            const lineCount = Math.max(removedLines.length, addedLines.length)
-
-            for (let lineIndex = 0; lineIndex < lineCount; lineIndex += 1) {
-                const removedLine = removedLines[lineIndex]
-                const addedLine = addedLines[lineIndex]
-
-                if (removedLine !== undefined && addedLine !== undefined) {
-                    const inline = buildInlineParts(removedLine, addedLine)
-                    rows.push({
-                        left: {
-                            kind: 'removed',
-                            lineNumber: leftLine,
-                            parts: inline.left,
-                        },
-                        right: {
-                            kind: 'added',
-                            lineNumber: rightLine,
-                            parts: inline.right,
-                        },
-                    })
-                    leftLine += 1
-                    rightLine += 1
-                    continue
-                }
-
-                if (removedLine !== undefined) {
-                    rows.push({
-                        left: {
-                            kind: 'removed',
-                            lineNumber: leftLine,
-                            parts: [{ kind: 'removed', text: removedLine }],
-                        },
-                        right: emptyCell(),
-                    })
-                    leftLine += 1
-                    continue
-                }
-
-                rows.push({
-                    left: emptyCell(),
-                    right: {
-                        kind: 'added',
-                        lineNumber: rightLine,
-                        parts: [{ kind: 'added', text: addedLine ?? '' }],
-                    },
-                })
-                rightLine += 1
-            }
-
-            index += 1
-            continue
+    useEffect(() => {
+        if (revisionId === null) {
+            setState({ kind: 'idle' })
+            return
         }
 
-        if (part.removed) {
-            for (const line of splitLines(part.value)) {
-                rows.push({
-                    left: {
-                        kind: 'removed',
-                        lineNumber: leftLine,
-                        parts: [{ kind: 'removed', text: line }],
-                    },
-                    right: emptyCell(),
-                })
-                leftLine += 1
-            }
-            continue
-        }
+        let active = true
+        const controller = new AbortController()
+        setState({ kind: 'loading' })
 
-        if (part.added) {
-            for (const line of splitLines(part.value)) {
-                rows.push({
-                    left: emptyCell(),
-                    right: {
-                        kind: 'added',
-                        lineNumber: rightLine,
-                        parts: [{ kind: 'added', text: line }],
-                    },
-                })
-                rightLine += 1
-            }
-            continue
-        }
-
-        for (const line of splitLines(part.value)) {
-            rows.push({
-                left: {
-                    kind: 'context',
-                    lineNumber: leftLine,
-                    parts: [{ kind: 'context', text: line }],
-                },
-                right: {
-                    kind: 'context',
-                    lineNumber: rightLine,
-                    parts: [{ kind: 'context', text: line }],
-                },
+        void fetchPadTextRevision(path, revisionId, controller.signal)
+            .then((revision) => {
+                if (!active) return
+                setState({ kind: 'ready', revision })
             })
-            leftLine += 1
-            rightLine += 1
+            .catch((error: Error) => {
+                if (error.name === 'AbortError' || !active) return
+                setState({ kind: 'error', message: error.message })
+            })
+
+        return () => {
+            active = false
+            controller.abort()
+        }
+    }, [path, revisionId])
+
+    return state
+}
+
+function readMainState(input: {
+    currentContent: string
+    leftEntry: PadTextHistoryEntry | null
+    leftRevision: RevisionLoadState
+    rightEntry: PadTextHistoryEntry | null
+    rightRevision: RevisionLoadState
+    rightSource: CompareSource
+}): DiffMainState {
+    if (!input.leftEntry) {
+        return {
+            kind: 'empty',
+            label: 'No older snapshot is selected. Save at least twice or choose a snapshot on the left.',
         }
     }
 
-    return rows
+    if (input.leftRevision.kind === 'loading') return { kind: 'loading', label: 'Loading left snapshot…' }
+    if (input.leftRevision.kind === 'error') return { kind: 'error', label: input.leftRevision.message }
+    if (input.leftRevision.kind !== 'ready') return { kind: 'empty', label: 'Select a snapshot on the left.' }
+
+    if (input.rightSource.kind === 'current') {
+        return {
+            kind: 'ready',
+            leftContent: input.leftRevision.revision.content,
+            leftLabel: `Snapshot ${input.leftRevision.revision.revisionNumber}`,
+            rightContent: input.currentContent,
+            rightLabel: 'Current',
+        }
+    }
+
+    if (!input.rightEntry) return { kind: 'empty', label: 'Choose a newer snapshot on the right.' }
+    if (input.rightRevision.kind === 'loading') return { kind: 'loading', label: 'Loading right snapshot…' }
+    if (input.rightRevision.kind === 'error') return { kind: 'error', label: input.rightRevision.message }
+    if (input.rightRevision.kind !== 'ready') return { kind: 'empty', label: 'Choose a newer snapshot on the right.' }
+
+    return {
+        kind: 'ready',
+        leftContent: input.leftRevision.revision.content,
+        leftLabel: `Snapshot ${input.leftRevision.revision.revisionNumber}`,
+        rightContent: input.rightRevision.revision.content,
+        rightLabel: `Snapshot ${input.rightRevision.revision.revisionNumber}`,
+    }
 }
 
-function buildInlineParts(left: string, right: string) {
-    const leftParts: DiffPart[] = []
-    const rightParts: DiffPart[] = []
+function reconcileSelection(entries: PadTextHistoryEntry[], current: DiffSelection): DiffSelection {
+    const leftRevisionId = entries.some((entry) => entry.id === current.leftRevisionId)
+        ? current.leftRevisionId
+        : chooseDefaultLeftRevisionId(entries)
+    const leftEntry = readEntry(entries, leftRevisionId)
 
-    for (const part of diffWordsWithSpace(left, right)) {
-        if (part.added) {
-            rightParts.push({ kind: 'added', text: part.value })
-            continue
+    if (!leftEntry) {
+        return {
+            leftRevisionId: null,
+            rightSource: currentSource,
         }
+    }
 
-        if (part.removed) {
-            leftParts.push({ kind: 'removed', text: part.value })
-            continue
+    if (current.rightSource.kind === 'revision') {
+        const rightEntry = readEntry(entries, current.rightSource.revisionId)
+        if (rightEntry && rightEntry.revisionNumber > leftEntry.revisionNumber) {
+            return {
+                leftRevisionId,
+                rightSource: current.rightSource,
+            }
         }
-
-        leftParts.push({ kind: 'context', text: part.value })
-        rightParts.push({ kind: 'context', text: part.value })
     }
 
     return {
-        left: leftParts,
-        right: rightParts,
+        leftRevisionId,
+        rightSource: currentSource,
     }
 }
 
-function splitLines(value: string) {
-    if (!value) return []
-    const lines = value.split('\n')
-    if (value.endsWith('\n')) lines.pop()
-    return lines
+function chooseDefaultLeftRevisionId(entries: PadTextHistoryEntry[]) {
+    return entries.find((entry) => !entry.isHead)?.id ?? null
 }
 
-function emptyCell(): DiffCell {
-    return {
-        kind: 'empty',
-        lineNumber: null,
-        parts: [],
-    }
+function readEntry(entries: PadTextHistoryEntry[], revisionId: number | null) {
+    if (revisionId === null) return null
+    return entries.find((entry) => entry.id === revisionId) ?? null
 }
 
-function chooseRevisionId(entries: PadTextHistoryEntry[], current: number | null) {
-    if (current !== null && entries.some((entry) => entry.id === current)) return current
-    return entries.find((entry) => !entry.isHead)?.id ?? entries[0]?.id ?? null
+function canSelectLeft(entries: PadTextHistoryEntry[], entry: PadTextHistoryEntry, rightSource: CompareSource) {
+    if (rightSource.kind === 'current') return true
+    const rightEntry = readEntry(entries, rightSource.revisionId)
+    if (!rightEntry) return false
+    return entry.revisionNumber < rightEntry.revisionNumber
+}
+
+function canSelectRight(leftEntry: PadTextHistoryEntry | null, entry: PadTextHistoryEntry) {
+    if (!leftEntry) return false
+    return entry.revisionNumber > leftEntry.revisionNumber
+}
+
+function readHistoryItemClassName(entry: PadTextHistoryEntry, selection: DiffSelection) {
+    const classes = ['diff-history-item']
+    if (entry.id === selection.leftRevisionId) classes.push('active-left')
+    if (selection.rightSource.kind === 'revision' && selection.rightSource.revisionId === entry.id) classes.push('active-right')
+    return classes.join(' ')
 }
 
 function formatRevisionTime(value: string) {
