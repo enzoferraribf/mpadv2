@@ -1,6 +1,6 @@
 import type { LiveFileState, PadPath, PadTreeItem } from '@mmpad/shared'
 import { padPathName } from '@mmpad/shared'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { DragEvent, ReactNode } from 'react'
 import { Settings2 } from 'lucide-react'
 import { DrawingSettingsDialog } from '@/pad-drawing/drawing-settings-dialog'
@@ -254,6 +254,7 @@ function FilesPane(input: {
     onUploadFile: (file: File) => void
 }) {
     const [dragging, setDragging] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const handleDragOver = (event: DragEvent) => {
         event.preventDefault()
@@ -266,6 +267,11 @@ function FilesPane(input: {
         const file = event.dataTransfer.files[0]
         if (file) input.onUploadFile(file)
     }
+    const handleFileSelect = () => {
+        const file = fileInputRef.current?.files?.[0]
+        if (file) input.onUploadFile(file)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
 
     return (
         <section
@@ -275,6 +281,7 @@ function FilesPane(input: {
             onDrop={handleDrop}
             data-testid="workspace-shell"
         >
+            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
             {input.files.length > 0 ? (
                 <div className="files-grid">
                     {input.files.map((file) => (
@@ -299,9 +306,15 @@ function FilesPane(input: {
                             ) : null}
                         </div>
                     ))}
+                    <button className="files-card files-card-add" onClick={() => fileInputRef.current?.click()}>
+                        <div className="files-card-icon">&#x2B;</div>
+                        <div className="files-card-name">Add file</div>
+                    </button>
                 </div>
             ) : (
-                <div className="files-empty">Drop files to share</div>
+                <div className="files-empty" role="button" tabIndex={0} onClick={() => fileInputRef.current?.click()}>
+                    Tap or drop files to share
+                </div>
             )}
         </section>
     )

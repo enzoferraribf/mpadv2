@@ -98,7 +98,7 @@ export function usePadWorkspace(path: PadPath): PadWorkspaceModel {
     const [drawingThemePreference, setDrawingThemePreference] = useState<DrawingThemePreference>(readDrawingThemePreference)
     const [layout, setLayout] = useState<PadWorkspaceLayout>('split')
     const [phrase] = useState(getRandomPhrase)
-    const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [sidebarOpen, setSidebarOpen] = useState(readSidebarDefault)
     const clockLabel = useClockLabel()
     const splitDirection = usePadWorkspaceDirection()
     const text = usePadTextRoom(path, localPeer)
@@ -239,6 +239,10 @@ function usePadWorkspaceDirection(): PadWorkspaceDirection {
 
 function readPadWorkspaceDirection(): PadWorkspaceDirection {
     return window.innerWidth >= 1024 ? 'horizontal' : 'vertical'
+}
+
+function readSidebarDefault(): boolean {
+    return window.innerWidth > 640
 }
 
 function useClockLabel() {

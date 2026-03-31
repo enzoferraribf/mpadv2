@@ -1,5 +1,7 @@
 import { Y_TEXT_KEY } from '@mmpad/shared'
 import { EditorView, ViewPlugin, drawSelection, highlightActiveLine, highlightActiveLineGutter, lineNumbers } from '@codemirror/view'
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { tags } from '@lezer/highlight'
 import { markdown } from '@codemirror/lang-markdown'
 import type { Awareness } from 'y-protocols/awareness'
 import { yCollab } from 'y-codemirror.next'
@@ -34,7 +36,7 @@ const editorTheme = EditorView.theme({
     },
     '.cm-content': {
         minHeight: '100%',
-        paddingTop: '28px',
+        paddingTop: '36px',
         paddingBottom: '28px',
     },
     '.cm-line': {
@@ -52,7 +54,7 @@ const editorTheme = EditorView.theme({
         fontSize: '11px',
     },
     '.cm-activeLineGutter': {
-        backgroundColor: 'rgba(201, 168, 124, 0.06)',
+        backgroundColor: 'transparent',
     },
     '.cm-activeLine': {
         backgroundColor: 'rgba(201, 168, 124, 0.04)',
@@ -108,6 +110,25 @@ const editorTheme = EditorView.theme({
     },
 })
 
+const editorHighlight = syntaxHighlighting(HighlightStyle.define([
+    { tag: tags.heading1, color: '#e6e0d6', fontWeight: '700', fontSize: '1.4em' },
+    { tag: tags.heading2, color: '#e6e0d6', fontWeight: '600', fontSize: '1.2em' },
+    { tag: tags.heading3, color: '#c9a87c', fontWeight: '600', fontSize: '1.05em' },
+    { tag: [tags.heading4, tags.heading5, tags.heading6], color: '#c9a87c', fontWeight: '600' },
+    { tag: tags.strong, color: '#e6e0d6', fontWeight: '600' },
+    { tag: tags.emphasis, color: '#b5afa5', fontStyle: 'italic' },
+    { tag: tags.strikethrough, textDecoration: 'line-through', color: '#8a8279' },
+    { tag: tags.link, color: '#c9a87c', textDecoration: 'underline' },
+    { tag: tags.url, color: '#8a8279' },
+    { tag: [tags.processingInstruction, tags.inserted], color: '#7c9c8a' },
+    { tag: tags.monospace, color: '#e6e0d6', backgroundColor: 'rgba(255,255,255,0.03)' },
+    { tag: [tags.meta, tags.comment], color: '#524e47' },
+    { tag: tags.labelName, color: '#c9a87c' },
+    { tag: tags.quote, color: '#8a8279', fontStyle: 'italic' },
+    { tag: tags.list, color: '#c9a87c' },
+    { tag: tags.contentSeparator, color: '#524e47' },
+]))
+
 const remoteCursorGuard = ViewPlugin.fromClass(class {
     constructor(view: EditorView) {
         scheduleRemoteCursorProtection(view.dom)
@@ -132,6 +153,7 @@ export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEdit
                     highlightActiveLine(),
                     highlightActiveLineGutter(),
                     editorTheme,
+                    editorHighlight,
                     remoteCursorGuard,
                     yCollab(ytext, awareness),
                     EditorView.updateListener.of((update) => {

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>mmpad — Hearth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300,0;9..144,400,0;9..144,500,0;9..144,600,0;9..144,700,0&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --bg: #1c1b18;
+  --surface: #24231f;
+  --elevated: #2e2d28;
+  --text-primary: #e6e0d6;
+  --text-secondary: #8a8279;
+  --text-dim: #524e47;
+  --accent: #c9a87c;
+  --accent-glow: rgba(201,168,124,0.08);
+  --accent-secondary: #7c9c8a;
+  --border: #33322d;
+  --warm: #2a2520;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Nunito Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---- GRAIN OVERLAY ---- */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 512px 512px;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ---- NAV ---- */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 64px;
+}
+
+nav::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+  z-index: -1;
+}
+
+.nav-wordmark {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.nav-link {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 200ms;
+}
+
+.nav-link:hover { color: var(--text-secondary); }
+
+.nav-cta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  padding: 7px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 200ms, color 200ms;
+}
+
+.nav-cta:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ---- HERO ---- */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 140px 64px 100px;
+  position: relative;
+}
+
+/* Warm orb behind hero */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+  height: 600px;
+  transform: translate(-50%, -55%);
+  background: radial-gradient(circle, rgba(201,168,124,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-wordmark {
+  font-family: 'Fraunces', serif;
+  font-size: 72px;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+  margin-bottom: 8px;
+  opacity: 0;
+  animation: warmFade 1.2s ease 0.3s forwards;
+}
+
+.hero-wordmark em {
+  font-style: normal;
+  font-weight: 300;
+  color: var(--text-dim);
+  font-size: 48px;
+  vertical-align: baseline;
+}
+
+.hero-tagline {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  max-width: 500px;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: warmFade 1.2s ease 0.6s forwards;
+}
+
+.hero-desc {
+  font-size: 15px;
+  color: var(--text-dim);
+  max-width: 380px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: warmFade 1.2s ease 0.8s forwards;
+}
+
+.hero-btn {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Nunito Sans', sans-serif;
+  color: var(--bg);
+  background: var(--accent);
+  padding: 14px 40px;
+  border-radius: 5px;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: transform 250ms ease, box-shadow 250ms ease;
+  opacity: 0;
+  animation: warmFade 1.2s ease 1s forwards;
+}
+
+.hero-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(201,168,124,0.2);
+}
+
+/* ---- DESK / PRODUCT SHOTS ---- */
+.desk {
+  padding: 40px 64px 140px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.desk-inner {
+  position: relative;
+  width: 900px;
+  height: 520px;
+}
+
+.desk-shot {
+  position: absolute;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+  transition: transform 400ms ease, box-shadow 400ms ease;
+}
+
+.desk-shot:hover {
+  z-index: 2;
+  box-shadow: 0 16px 60px rgba(0,0,0,0.6);
+}
+
+.desk-shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.desk-shot-1 {
+  width: 720px;
+  top: 0;
+  left: 0;
+  transform: rotate(-2deg);
+  z-index: 1;
+}
+
+.desk-shot-1:hover {
+  transform: rotate(-2deg) translateY(-4px);
+}
+
+.desk-shot-2 {
+  width: 420px;
+  bottom: 0;
+  right: 0;
+  transform: rotate(3deg);
+  z-index: 0;
+}
+
+.desk-shot-2:hover {
+  transform: rotate(3deg) translateY(-4px);
+}
+
+/* ---- STORY SECTION ---- */
+.story {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 64px 140px;
+}
+
+.story-label {
+  font-size: 10px;
+  font-family: 'Fira Code', monospace;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.6s ease;
+}
+
+.story-label.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.story p {
+  font-size: 17px;
+  color: var(--text-secondary);
+  line-height: 2;
+  margin-bottom: 28px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.6s ease;
+}
+
+.story p.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.story p strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.story p em {
+  color: var(--accent);
+  font-style: italic;
+}
+
+/* ---- DIVIDER ---- */
+.divider {
+  width: 40px;
+  height: 1px;
+  background: var(--accent);
+  margin: 0 auto 80px;
+  opacity: 0.4;
+}
+
+/* ---- FEATURES AS GENTLE LIST ---- */
+.gentle-features {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 64px 120px;
+}
+
+.gentle-feature {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 24px;
+  align-items: baseline;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.5s ease;
+}
+
+.gentle-feature.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gentle-feature-num {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  width: 24px;
+}
+
+.gentle-feature-body {
+  flex: 1;
+}
+
+.gentle-feature-title {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.gentle-feature-desc {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+/* ---- BOTTOM CTA ---- */
+.bottom {
+  padding: 100px 64px 120px;
+  text-align: center;
+  position: relative;
+}
+
+.bottom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 400px;
+  height: 400px;
+  transform: translate(-50%, -30%);
+  background: radial-gradient(circle, rgba(201,168,124,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.bottom h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 36px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.bottom p {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+.bottom a {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Nunito Sans', sans-serif;
+  color: var(--bg);
+  background: var(--accent);
+  padding: 14px 40px;
+  border-radius: 5px;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: transform 250ms, box-shadow 250ms;
+}
+
+.bottom a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(201,168,124,0.2);
+}
+
+/* ---- FOOTER ---- */
+footer {
+  padding: 32px 64px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-left {
+  font-family: 'Fraunces', serif;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.footer-right {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+}
+
+.footer-right a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 200ms;
+}
+
+.footer-right a:hover { color: var(--text-secondary); }
+
+/* ---- ANIMATIONS ---- */
+@keyframes warmFade {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-wordmark">mmpad</div>
+  <div class="nav-right">
+    <a href="#story" class="nav-link">About</a>
+    <a href="https://github.com" class="nav-link">Source</a>
+    <button class="nav-cta">Open a pad</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-wordmark">mm<em>pad</em></div>
+  <h1 class="hero-tagline">A quiet place to think,<br>together.</h1>
+  <p class="hero-desc">Real-time markdown, drawing, and file sharing. No accounts. Just open a pad and start writing.</p>
+  <a href="#" class="hero-btn">Open a pad</a>
+</section>
+
+<!-- Desk -->
+<section class="desk">
+  <div class="desk-inner">
+    <div class="desk-shot desk-shot-1">
+      <img src="../../screenshots/Screenshot 2026-03-31 at 07.25.10.png" alt="mmpad editor">
+    </div>
+    <div class="desk-shot desk-shot-2">
+      <img src="../../screenshots/Screenshot 2026-03-31 at 07.25.45.png" alt="mmpad files">
+    </div>
+  </div>
+</section>
+
+<!-- Story -->
+<section class="story" id="story">
+  <div class="story-label">How it works</div>
+  <p>You open a URL. That's it. There's <strong>no sign-up</strong>, no onboarding, no permissions dialog. The pad is yours the moment you arrive.</p>
+  <p>Write in <strong>markdown</strong> and watch it render beside you. Sketch on the <strong>shared drawing surface</strong>. Drop in <em>files</em> that anyone in the room can grab.</p>
+  <p>Your text and drawings <strong>persist</strong> — come back tomorrow and everything is still there. Files live only as long as the session, keeping things clean.</p>
+  <p>Every pad lives at a <strong>path</strong>. Paths create trees. Trees create structure. No folders to manage — just <em>natural hierarchy</em> from the URL.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- Gentle Features -->
+<section class="gentle-features">
+  <div class="gentle-feature">
+    <div class="gentle-feature-num">01</div>
+    <div class="gentle-feature-body">
+      <div class="gentle-feature-title">Markdown with live preview</div>
+      <div class="gentle-feature-desc">Split editor with syntax highlighting. Write on the left, read on the right.</div>
+    </div>
+  </div>
+  <div class="gentle-feature">
+    <div class="gentle-feature-num">02</div>
+    <div class="gentle-feature-body">
+      <div class="gentle-feature-title">Shared drawing surface</div>
+      <div class="gentle-feature-desc">One canvas per pad. Every stroke syncs to every peer in real time.</div>
+    </div>
+  </div>
+  <div class="gentle-feature">
+    <div class="gentle-feature-num">03</div>
+    <div class="gentle-feature-body">
+      <div class="gentle-feature-title">Peer-to-peer files</div>
+      <div class="gentle-feature-desc">Drop files in, grab them out. No upload limits, no storage. Files live with the session.</div>
+    </div>
+  </div>
+  <div class="gentle-feature">
+    <div class="gentle-feature-num">04</div>
+    <div class="gentle-feature-body">
+      <div class="gentle-feature-title">Presence and awareness</div>
+      <div class="gentle-feature-desc">See who's here. Cursors, names, connection dots. No setup required.</div>
+    </div>
+  </div>
+  <div class="gentle-feature">
+    <div class="gentle-feature-num">05</div>
+    <div class="gentle-feature-body">
+      <div class="gentle-feature-title">Path-based pad trees</div>
+      <div class="gentle-feature-desc">Every pad knows its neighbors. Navigate related pads through natural URL hierarchy.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Bottom CTA -->
+<section class="bottom">
+  <h2>Sit down and write.</h2>
+  <p>No ceremony. Just a pad.</p>
+  <a href="#">Open a pad</a>
+</section>
+
+<footer>
+  <div class="footer-left">mmpad</div>
+  <div class="footer-right">
+    <a href="#">GitHub</a>
+    <a href="#">About</a>
+  </div>
+</footer>
+
+<script>
+const els = document.querySelectorAll('.story-label, .story p, .gentle-feature');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      entry.target.style.transitionDelay = `${i * 60}ms`;
+      entry.target.classList.add('visible');
+      obs.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.2 });
+els.forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
