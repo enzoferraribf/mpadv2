@@ -28,8 +28,9 @@ export type PadDocRoom = {
     awareness: Awareness
     clients: Set<ServerWebSocket<WsData>>
     pendingUpdates: Uint8Array[]
-    latestChunkId: number
-    storedChunkCount: number
+    latestChunkSeq: number
+    headRevisionId: number | null
+    headRevisionNumber: number
     flushTimer: ReturnType<typeof setTimeout> | null
     docBytes: number
 }
@@ -54,8 +55,9 @@ export function createPadDocRoom(input: {
         awareness: new Awareness(doc),
         clients: new Set(),
         pendingUpdates: [],
-        latestChunkId: input.stored.latestUpdateId,
-        storedChunkCount: input.stored.updates.length,
+        latestChunkSeq: input.stored.latestChunkSeq,
+        headRevisionId: input.stored.headRevisionId,
+        headRevisionNumber: input.stored.headRevisionNumber,
         flushTimer: null,
         docBytes: encodeStateAsUpdate(doc).byteLength,
     }

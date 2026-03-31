@@ -1,4 +1,4 @@
-import type { LocalPeer } from './pad-room-types'
+import type { LocalPeer } from '@mmpad/shared'
 
 const LOCAL_PEER_STORAGE_KEY = 'mmpad.peer'
 
@@ -44,11 +44,11 @@ export const ANIME_PEER_NAMES = [
 ] as const
 
 const animePeerNames = new Set<string>(ANIME_PEER_NAMES)
-const E2E_PEER = createPeer('Goku', PEER_PALETTE[4])
+const e2ePeer = createPeer('Goku', PEER_PALETTE[4])
 
 export function loadLocalPeer(): LocalPeer {
     if (import.meta.env.VITE_E2E === '1') {
-        const peer = readStoredLocalPeer(window.localStorage.getItem(LOCAL_PEER_STORAGE_KEY)) ?? E2E_PEER
+        const peer = readStoredLocalPeer(window.localStorage.getItem(LOCAL_PEER_STORAGE_KEY)) ?? e2ePeer
         window.localStorage.setItem(LOCAL_PEER_STORAGE_KEY, JSON.stringify(peer))
         return peer
     }

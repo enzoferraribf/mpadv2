@@ -12,7 +12,17 @@ test.use({
 
 test('renders the landing shell', async ({ page }) => {
     await openLanding(page)
-    await expect(page.getByTestId('landing-page')).toHaveScreenshot('landing-page.png')
+    await expect(page).toHaveScreenshot('landing-page.png')
+})
+
+test('opens a pad from the landing input', async ({ page }) => {
+    const path = `landing-${Date.now()}`
+
+    await openLanding(page)
+    await page.getByPlaceholder('your-pad-name').fill(path)
+    await page.keyboard.press('Enter')
+    await waitForPad(page)
+    await expect(page).toHaveURL(new RegExp(`/${path}$`))
 })
 
 test('syncs markdown between two pads', async ({ browser }) => {
@@ -83,8 +93,13 @@ test('shows persisted anime peer identity on remote text and drawing cursors', a
     await openDrawingRoom(pageA)
     await openDrawingRoom(pageB)
     await moveDrawingPointer(pageA)
-    await pageB.waitForTimeout(250)
-    await expect(pageB.getByTestId('workspace-shell')).toHaveScreenshot('drawing-remote-cursor.png', { maxDiffPixels: 600 })
+    await pageB.waitForFunction(() => {
+        const appState = window.__mmpadDrawingApi__?.getAppState()
+        if (!appState) return false
+        return Array.from(appState.collaborators.values()).some((value) =>
+            value.username === 'Naruto Uzumaki' && Boolean(value.pointer),
+        )
+    })
 
     await contextA.close()
     await contextB.close()
@@ -174,6 +189,7 @@ test('renders the pad shell', async ({ browser }) => {
     await openPad(page, path)
     await seedDocument(page)
     await hideEditorCaret(page)
+    await hideSidebarEntries(page)
 
     await expect(page).toHaveScreenshot('pad-shell.png')
 
@@ -255,6 +271,62 @@ test('opens the drawing workspace from the command menu', async ({ browser }) =>
     await context.close()
 })
 
+test('shows text diffs from the top tab', async ({ browser }) => {
+    const path = `notes/${Date.now()}-diffs-tab`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await persistTextRevision(page, '# alpha')
+    await persistTextRevision(page, '\n## beta')
+    await persistTextRevision(page, '\n### gamma')
+
+    await openDiffsTab(page)
+    await waitForHistoryItems(page, 3)
+
+    await expect(page.locator('.markdown-body')).toHaveCount(0)
+    await expect(page.locator('.cm-editor')).toHaveCount(0)
+    await expect(page.getByTestId('text-diff-workspace')).toBeVisible()
+    await expect(page.locator('.diff-history-item-number').filter({ hasText: 'Snapshot 2' })).toHaveCount(1)
+    await expect(page.locator('.diff-table-title').filter({ hasText: 'Current' })).toHaveCount(1)
+
+    await context.close()
+})
+
+test('opens the diff workspace from the command menu', async ({ browser }) => {
+    const path = `notes/${Date.now()}-diffs-menu`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await persistTextRevision(page, '# alpha')
+    await persistTextRevision(page, '\n## beta')
+
+    await page.keyboard.press('Control+,')
+    await page.getByRole('dialog').getByText('Compare saved snapshots with the current text.').click()
+    await waitForHistoryItems(page, 2)
+    await expect(page.getByTestId('text-diff-workspace')).toBeVisible()
+
+    await context.close()
+})
+
+test('renders the diff workspace', async ({ browser }) => {
+    const path = `visuals/diff-workspace-${Date.now()}`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await persistTextRevision(page, '# alpha')
+    await persistTextRevision(page, '\n## beta')
+    await persistTextRevision(page, '\n### gamma')
+    await openDiffsTab(page)
+    await waitForHistoryItems(page, 3)
+
+    await expect(page.getByTestId('workspace-shell')).toHaveScreenshot('diff-workspace.png')
+
+    await context.close()
+})
+
 test('renders the command menu', async ({ browser }) => {
     const path = 'visuals/command-menu'
     const context = await browser.newContext()
@@ -307,7 +379,7 @@ test('downloads a live file from another peer', async ({ browser }) => {
     await contextB.close()
 })
 
-test('shares live files across child pads in the same root', async ({ browser }) => {
+test('keeps live files split by exact pad path', async ({ browser }) => {
     const root = `files-${Date.now()}`
     const contextA = await browser.newContext()
     const contextB = await browser.newContext()
@@ -318,9 +390,12 @@ test('shares live files across child pads in the same root', async ({ browser })
     await openPad(pageB, `${root}/two`)
 
     await pageA.evaluate(() => (window as any).__mmpad__.uploadTestFile())
-    await pageB.waitForFunction(() => (window as any).__mmpad__?.getFileCount() === 1)
-    await pageB.evaluate(() => (window as any).__mmpad__.requestFile('readme.txt'))
-    await pageB.waitForFunction(() => (window as any).__mmpad__?.hasLocalFile('readme.txt') === true)
+    await expect.poll(async () =>
+        pageB.evaluate(() => (window as any).__mmpad__?.getFileCount() ?? -1),
+    ).toBe(0)
+
+    await pageB.keyboard.press('Control+;')
+    await expect(pageB.getByText(`No live files in /${root}/two.`)).toBeVisible()
 
     await contextA.close()
     await contextB.close()
@@ -500,6 +575,11 @@ async function openDrawingRoom(page: Page) {
     await page.waitForFunction(() => Boolean(window.__mmpadDrawingApi__))
 }
 
+async function openDiffsTab(page: Page) {
+    await page.getByRole('button', { name: 'Diffs', exact: true }).click()
+    await expect(page.getByTestId('text-diff-workspace')).toBeVisible()
+}
+
 async function moveDrawingPointer(page: Page) {
     const canvas = page.locator('canvas').last()
     await expect(canvas).toBeVisible()
@@ -526,13 +606,22 @@ async function waitForText(page: Page, text: string) {
     await page.waitForFunction((value) => (window as any).__mmpad__?.getText() === value, text)
 }
 
+async function waitForHistoryItems(page: Page, count: number) {
+    await expect(page.locator('[data-testid="diff-history-item"]')).toHaveCount(count)
+}
+
+async function persistTextRevision(page: Page, content: string) {
+    await page.evaluate((value) => (window as any).__mmpad__.appendText(value), content)
+    await page.waitForTimeout(3_500)
+}
+
 async function setLayout(page: Page, name: 'Editor' | 'Preview' | 'Split') {
     await page.keyboard.press('Control+,')
     await page.getByRole('dialog').getByText(layoutDescription(name)).click()
 }
 
 async function seedDocument(page: Page) {
-    await page.evaluate((value) => (window as any).__mmpad__.appendText(value), demoText)
+    await page.evaluate((value) => (window as any).__mmpad__.setText(value), demoText)
     await expect(page.getByRole('heading', { name: 'alpha' })).toBeVisible()
 }
 
@@ -541,6 +630,18 @@ async function hideEditorCaret(page: Page) {
         content: `
             .cm-cursor, .cm-dropCursor, .cm-selectionLayer {
                 display: none !important;
+            }
+        `,
+    })
+}
+
+async function hideSidebarEntries(page: Page) {
+    await page.addStyleTag({
+        content: `
+            .pad-explorer-item {
+                color: transparent !important;
+                background: transparent !important;
+                text-shadow: none !important;
             }
         `,
     })

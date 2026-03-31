@@ -19,6 +19,7 @@ export type TextEditorHandle = {
     }) => () => void
     appendText: (content: string) => void
     readContent: () => string
+    setText: (content: string) => void
     subscribe: (listener: () => void) => () => void
 }
 
@@ -174,6 +175,11 @@ export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEdit
         },
         readContent() {
             return doc.getText(Y_TEXT_KEY).toString()
+        },
+        setText(content) {
+            const text = doc.getText(Y_TEXT_KEY)
+            text.delete(0, text.length)
+            text.insert(0, content)
         },
         subscribe(listener) {
             doc.on('update', listener)

@@ -1,4 +1,4 @@
-import type { PadWorkspaceModel } from '@/workspace/use-pad-workspace'
+import type { PadPageModel } from '@/workspace-shell/model/use-pad-page-model'
 
 declare global {
     interface Window {
@@ -13,6 +13,7 @@ declare global {
             openDrawing: () => void
             insertTestArrow: () => Promise<void>
             insertTestRectangle: () => Promise<void>
+            setText: (content: string) => void
             uploadTestFile: () => Promise<void>
             requestFile: (name: string) => void
             deleteLocalFile: (name: string) => void
@@ -20,7 +21,7 @@ declare global {
     }
 }
 
-export function publishWindowState(workspace: PadWorkspaceModel) {
+export function publishWindowState(workspace: PadPageModel) {
     if (workspace.state.kind !== 'ready') {
         delete window.__mmpad__
         return
@@ -53,6 +54,9 @@ export function publishWindowState(workspace: PadWorkspaceModel) {
             if (state.drawing.kind !== 'ready') throw new Error('Drawing is closed')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
             state.drawing.drawing.writeScene(convertToExcalidrawElements([{ type: 'rectangle', x: 80, y: 80, width: 160, height: 120 }]))
+        },
+        setText: (content: string) => {
+            state.text.editor.setText(content)
         },
         uploadTestFile: async () => {
             actions.uploadFile(new File(['hello file'], 'readme.txt', { type: 'text/plain' }))

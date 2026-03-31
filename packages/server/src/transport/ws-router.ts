@@ -1,12 +1,12 @@
 import type { ServerWebSocket } from 'bun'
 import { readClientRoomMessage } from '@mmpad/shared'
-import { handleLiveFileMessage, joinLiveFileRoom, leaveLiveFileRoom } from '../live-file/application/service'
+import { applyFileSessionClientMessage, closeFileSessionClient, openFileSessionClient } from '../file-session/application/service'
 import { flushPadDocRooms, handlePadDocMessage, joinPadDocRoom, leavePadDocRoom } from '../pad-doc/application/service'
 import type { WsData } from './ws-data'
 
 export async function openSocket(ws: ServerWebSocket<WsData>) {
     if (ws.data.roomKind === 'files') {
-        await joinLiveFileRoom(ws)
+        await openFileSessionClient(ws)
         return
     }
     await joinPadDocRoom(ws)
@@ -14,7 +14,7 @@ export async function openSocket(ws: ServerWebSocket<WsData>) {
 
 export async function closeSocket(ws: ServerWebSocket<WsData>) {
     if (ws.data.roomKind === 'files') {
-        await leaveLiveFileRoom(ws)
+        await closeFileSessionClient(ws)
         return
     }
     await leavePadDocRoom(ws)
@@ -24,7 +24,7 @@ export function handleSocketMessage(ws: ServerWebSocket<WsData>, data: Uint8Arra
     const message = readClientRoomMessage(data)
 
     if (ws.data.roomKind === 'files') {
-        handleLiveFileMessage(ws, message)
+        applyFileSessionClientMessage(ws, message)
         return
     }
 

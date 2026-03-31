@@ -4,7 +4,7 @@ import * as syncProtocol from 'y-protocols/sync'
 import type { Doc } from 'yjs'
 import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
-import type { InboundFileSignal, OutboundFileSignal } from '../domain/pad-file'
+import type { InboundFileSignal, OutboundFileSignal } from '../domain/file-session'
 import { assert, assertNever } from '../domain/assert'
 
 const MESSAGE_SYNC = 0

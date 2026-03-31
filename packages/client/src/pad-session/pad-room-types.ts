@@ -2,6 +2,7 @@ import type {
     ClientRoomMessage,
     InboundFileSignal,
     LiveFileMeta,
+    LocalPeer,
     OutboundFileSignal,
     PadRoomKind,
     ServerRoomMessage,
@@ -10,16 +11,6 @@ import type { Awareness } from 'y-protocols/awareness'
 import type { Doc } from 'yjs'
 
 export type PadConnection = 'connecting' | 'connected' | 'disconnected'
-
-export type LocalPeer = {
-    name: string
-    color: {
-        background: string
-        stroke: string
-    }
-    textColor: string
-    textColorLight: string
-}
 
 export type TextAwarenessUser = {
     name: string

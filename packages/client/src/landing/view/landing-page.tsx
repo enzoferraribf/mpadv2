@@ -1,66 +1,69 @@
-import { useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
-import { padPath } from '@mmpad/shared'
-import { useLandingEffects } from '@/hooks/use-landing-effects'
+import { useRef, useState, type FormEvent } from 'react'
 import heroImg from '@/assets/landing-hero.png'
 import featuresImg from '@/assets/landing-features.png'
+import { useLandingPageModel } from '@/landing/model/use-landing-page-model'
+import { useLandingEffects } from './use-landing-effects'
+
+const FEATURES = [
+    { idx: '01', name: 'Markdown', desc: 'Write in markdown with live split preview. Syntax highlighting, headings, lists, blockquotes.' },
+    { idx: '02', name: 'Drawing', desc: 'One shared canvas per pad. Every stroke syncs in real time to every connected peer.' },
+    { idx: '03', name: 'Live files', desc: 'Drop files into a pad. Everyone grabs them. No upload, no storage. Files live with the session.' },
+    { idx: '04', name: 'Presence', desc: 'See who is editing. Cursors, names, connection status. You feel the collaboration.' },
+    { idx: '05', name: 'Persistence', desc: 'Text and drawings auto-save. Come back later, everything is still there. No save button.' },
+    { idx: '06', name: 'Pad trees', desc: 'Pads live at paths. Paths create natural hierarchy. Navigate related pads by structure.' },
+] as const
+
+const STEPS = [
+    { num: '1', text: <><strong>Open a URL.</strong> Any path becomes a pad. No sign-up, no install, no waiting.</> },
+    { num: '2', text: <><strong>Write and draw.</strong> Markdown on the left, preview on the right. Switch to the canvas to sketch.</> },
+    { num: '3', text: <><strong>Share the link.</strong> Anyone with the URL joins instantly. You see their cursor, they see yours.</> },
+    { num: '4', text: <><strong>Drop files.</strong> Drag a file in and everyone connected can download it. No cloud, no limits.</> },
+] as const
 
 export function LandingPage() {
-    const pageRef = useRef<HTMLDivElement>(null)
-    const navigate = useNavigate()
-    const host = useMemo(() => window.location.host, [])
+    const ref = useRef<HTMLDivElement>(null)
+    const model = useLandingPageModel()
 
-    useEffect(() => {
-        document.title = 'MPAD'
-    }, [])
-
-    useLandingEffects(pageRef)
-
-    const goToPad = (name: string) => {
-        if (!name.trim()) return
-        navigate({ to: '/$', params: { _splat: padPath(name.trim()).slice(1) } })
-    }
+    useLandingEffects(ref)
 
     return (
-        <div ref={pageRef}>
-            <LandingNav host={host} onGo={goToPad} />
-            <LandingHero host={host} onGo={goToPad} />
+        <div ref={ref} data-testid="landing-page">
+            <LandingNav host={model.host} onGo={model.openPad} />
+            <LandingHero host={model.host} onGo={model.openPad} />
             <LandingStats />
             <LandingFeatures />
             <LandingHow />
-            <LandingCTA host={host} onGo={goToPad} />
+            <LandingCTA host={model.host} onGo={model.openPad} />
             <LandingFooter />
         </div>
     )
 }
 
-/* ---- Shared pad input ---- */
-
-function PadInput(input: {
+function LandingPadInput(input: {
+    autoFocus?: boolean
     host: string
     onGo: (name: string) => void
+    placeholder: string
     variant: 'nav' | 'full'
-    placeholder?: string
-    autoFocus?: boolean
 }) {
     const [value, setValue] = useState('')
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault()
+
+    function onSubmit(event: FormEvent) {
+        event.preventDefault()
         input.onGo(value)
     }
 
     return (
-        <form className={input.variant === 'nav' ? 'landing-nav-pad-input' : 'landing-pad-input'} onSubmit={handleSubmit}>
+        <form className={input.variant === 'nav' ? 'landing-nav-pad-input' : 'landing-pad-input'} onSubmit={onSubmit}>
             <span className="landing-pip-prefix">{input.host}/</span>
             <input
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder={input.placeholder ?? 'pad-name'}
-                spellCheck={false}
                 autoComplete="off"
                 autoFocus={input.autoFocus}
+                onChange={(event) => setValue(event.target.value)}
+                placeholder={input.placeholder}
+                spellCheck={false}
+                type="text"
+                value={value}
             />
             <button type="submit" className="landing-pip-go" aria-label="Open pad">
                 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -69,9 +72,7 @@ function PadInput(input: {
     )
 }
 
-/* ---- Nav ---- */
-
-function LandingNav(props: { host: string; onGo: (name: string) => void }) {
+function LandingNav(input: { host: string; onGo: (name: string) => void }) {
     return (
         <nav className="landing-nav">
             <div className="landing-nav-left">
@@ -81,15 +82,13 @@ function LandingNav(props: { host: string; onGo: (name: string) => void }) {
             </div>
             <div className="landing-nav-right">
                 <a href="#features" className="landing-nav-link">Features</a>
-                <PadInput host={props.host} onGo={props.onGo} variant="nav" />
+                <LandingPadInput host={input.host} onGo={input.onGo} placeholder="pad-name" variant="nav" />
             </div>
         </nav>
     )
 }
 
-/* ---- Hero ---- */
-
-function LandingHero(props: { host: string; onGo: (name: string) => void }) {
+function LandingHero(input: { host: string; onGo: (name: string) => void }) {
     return (
         <section className="landing-hero">
             <div className="landing-hero-text">
@@ -97,7 +96,7 @@ function LandingHero(props: { host: string; onGo: (name: string) => void }) {
                 <h1 className="landing-hero-h1">Write.<br />Draw.<br /><span>Share.</span></h1>
                 <p className="landing-hero-desc">A real-time collaborative pad for markdown, drawing, and file sharing. No accounts, no friction. Open a URL and start.</p>
                 <div className="landing-hero-actions">
-                    <PadInput host={props.host} onGo={props.onGo} variant="full" placeholder="your-pad-name" autoFocus />
+                    <LandingPadInput autoFocus host={input.host} onGo={input.onGo} placeholder="your-pad-name" variant="full" />
                     <div className="landing-pad-input-hint">Press <kbd>Enter</kbd> to open</div>
                 </div>
                 <a href="#features" className="landing-hero-secondary">See features</a>
@@ -110,8 +109,6 @@ function LandingHero(props: { host: string; onGo: (name: string) => void }) {
         </section>
     )
 }
-
-/* ---- Stats ---- */
 
 function LandingStats() {
     return (
@@ -136,17 +133,6 @@ function LandingStats() {
     )
 }
 
-/* ---- Features ---- */
-
-const FEATURES = [
-    { idx: '01', name: 'Markdown', desc: 'Write in markdown with live split preview. Syntax highlighting, headings, lists, blockquotes.' },
-    { idx: '02', name: 'Drawing', desc: 'One shared canvas per pad. Every stroke syncs in real time to every connected peer.' },
-    { idx: '03', name: 'Live files', desc: 'Drop files into a pad. Everyone grabs them. No upload, no storage. Files live with the session.' },
-    { idx: '04', name: 'Presence', desc: 'See who\'s editing. Cursors, names, connection status. You feel the collaboration.' },
-    { idx: '05', name: 'Persistence', desc: 'Text and drawings auto-save. Come back later, everything is still there. No save button.' },
-    { idx: '06', name: 'Pad trees', desc: 'Pads live at paths. Paths create natural hierarchy. Navigate related pads by structure.' },
-] as const
-
 function LandingFeatures() {
     return (
         <section className="landing-features-section" id="features">
@@ -156,11 +142,11 @@ function LandingFeatures() {
             </div>
             <div className="landing-features-body">
                 <div className="landing-features-grid">
-                    {FEATURES.map((f) => (
-                        <div key={f.idx} className="landing-feature-cell">
-                            <div className="landing-feature-idx">{f.idx}</div>
-                            <div className="landing-feature-name">{f.name}</div>
-                            <div className="landing-feature-desc">{f.desc}</div>
+                    {FEATURES.map((feature) => (
+                        <div key={feature.idx} className="landing-feature-cell">
+                            <div className="landing-feature-idx">{feature.idx}</div>
+                            <div className="landing-feature-name">{feature.name}</div>
+                            <div className="landing-feature-desc">{feature.desc}</div>
                         </div>
                     ))}
                 </div>
@@ -175,25 +161,16 @@ function LandingFeatures() {
     )
 }
 
-/* ---- How it works ---- */
-
-const STEPS = [
-    { num: '1', text: <><strong>Open a URL.</strong> Any path becomes a pad. No sign-up, no install, no waiting.</> },
-    { num: '2', text: <><strong>Write and draw.</strong> Markdown on the left, preview on the right. Switch to the canvas to sketch.</> },
-    { num: '3', text: <><strong>Share the link.</strong> Anyone with the URL joins instantly. You see their cursor, they see yours.</> },
-    { num: '4', text: <><strong>Drop files.</strong> Drag a file in and everyone connected can download it. No cloud, no limits.</> },
-] as const
-
 function LandingHow() {
     return (
         <section className="landing-how">
             <div className="landing-how-inner">
                 <div className="landing-how-label">How it works</div>
                 <div className="landing-how-steps">
-                    {STEPS.map((s) => (
-                        <div key={s.num} className="landing-how-step">
-                            <div className="landing-how-num">{s.num}</div>
-                            <div className="landing-how-text">{s.text}</div>
+                    {STEPS.map((step) => (
+                        <div key={step.num} className="landing-how-step">
+                            <div className="landing-how-num">{step.num}</div>
+                            <div className="landing-how-text">{step.text}</div>
                         </div>
                     ))}
                 </div>
@@ -202,20 +179,16 @@ function LandingHow() {
     )
 }
 
-/* ---- Bottom CTA ---- */
-
-function LandingCTA(props: { host: string; onGo: (name: string) => void }) {
+function LandingCTA(input: { host: string; onGo: (name: string) => void }) {
     return (
         <section className="landing-cta">
             <h2 className="landing-cta-h2">Open. Write. <span>Done.</span></h2>
             <p className="landing-cta-p">Name your pad and go.</p>
-            <PadInput host={props.host} onGo={props.onGo} variant="full" placeholder="meeting-notes" />
+            <LandingPadInput host={input.host} onGo={input.onGo} placeholder="meeting-notes" variant="full" />
             <div className="landing-pad-input-hint">Press <kbd>Enter</kbd> to open</div>
         </section>
     )
 }
-
-/* ---- Footer ---- */
 
 function LandingFooter() {
     return (

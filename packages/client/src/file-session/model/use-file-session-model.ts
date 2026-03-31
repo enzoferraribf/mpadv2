@@ -3,22 +3,22 @@ import {
     MAX_PEER_FILE_BYTES,
     MAX_PEER_FILE_COUNT,
     assertLiveFileAllowed,
-    rootPadPath,
     type LiveFileState,
+    type LocalPeer,
     type PadPath,
 } from '@mmpad/shared'
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import type { FileAwarenessUser, PadFileRoom } from '@/pad-session/pad-room-types'
 import { createFileAwarenessState, readFileAwarenessStates } from '@/pad-session/file-awareness'
-import type { FileAwarenessUser, LocalPeer, PadFileRoom } from '@/pad-session/pad-room-types'
 import { usePadRoomSession } from '@/pad-session/use-pad-room-session'
 import {
     buildLiveFileList,
     createFileMachineState,
     reduceFileMachine,
     totalLocalFileBytes,
-} from './file-machine'
-import type { LocalFile } from './local-file'
-import type { FilePeerSession } from './file-peer'
+} from '@/pad-files/file-machine'
+import type { FilePeerSession } from '@/pad-files/file-peer'
+import type { LocalFile } from '@/pad-files/local-file'
 import {
     clearLocalFiles,
     closeAllTransferSessions,
@@ -26,28 +26,30 @@ import {
     deleteLocalLiveFile,
     downloadLiveFile,
     handleIncomingFileSignal,
-} from './file-transfer-controller'
+} from '@/pad-files/file-transfer-controller'
 
-export function usePadFiles(path: PadPath, localPeer: LocalPeer) {
+export type FileSessionModel = {
+    files: LiveFileState[]
+    deleteFile: (id: string) => void
+    downloadFile: (file: LiveFileState) => void
+    uploadFile: (file: File) => void
+}
+
+export function useFileSessionModel(path: PadPath, localPeer: LocalPeer): FileSessionModel {
     const [state, dispatch] = useReducer(reduceFileMachine, undefined, createFileMachineState)
-    const roomPath = rootPadPath(path)
-    const [stateScopePath, setStateScopePath] = useState(roomPath)
     const [awarenessVersion, setAwarenessVersion] = useState(0)
-    const scopedState = useMemo(
-        () => stateScopePath === roomPath ? state : createFileMachineState(),
-        [roomPath, state, stateScopePath],
-    )
-    const stateRef = useRef(scopedState)
+    const stateRef = useRef(state)
     const sessionsRef = useRef<Record<string, FilePeerSession>>({})
     const awarenessUser = useMemo<FileAwarenessUser>(() => ({ name: localPeer.name }), [localPeer.name])
     const localState = useMemo(
-        () => createFileAwarenessState(awarenessUser, Object.values(scopedState.localFiles).map((file) => file.meta)),
-        [awarenessUser, scopedState.localFiles],
+        () => createFileAwarenessState(awarenessUser, Object.values(state.localFiles).map((file) => file.meta)),
+        [awarenessUser, state.localFiles],
     )
     const session = usePadRoomSession({
-        path: roomPath,
+        path,
         kind: 'files',
         localState,
+        open: true,
     })
     const room = useMemo<PadFileRoom | null>(() => {
         if (!session) return null
@@ -70,27 +72,22 @@ export function usePadFiles(path: PadPath, localPeer: LocalPeer) {
     }, [awarenessUser, session])
 
     useEffect(() => {
-        stateRef.current = scopedState
-    }, [scopedState])
-
-    useEffect(() => {
-        if (stateScopePath === roomPath) return
-        closeAllTransferSessions(sessionsRef.current)
-        void clearLocalFiles(stateRef.current.localFiles)
-        dispatch({ kind: 'reset' })
-        setStateScopePath(roomPath)
-    }, [roomPath, stateScopePath])
+        stateRef.current = state
+    }, [state])
 
     useEffect(() => {
         if (!room) return
-        const onAwareness = () => setAwarenessVersion((value) => value + 1)
-        room.awareness.on('change', onAwareness)
-        onAwareness()
-        return () => room.awareness.off('change', onAwareness)
+
+        const syncAwareness = () => setAwarenessVersion((value) => value + 1)
+        room.awareness.on('change', syncAwareness)
+        syncAwareness()
+
+        return () => room.awareness.off('change', syncAwareness)
     }, [room])
 
     useEffect(() => {
         if (!room) return
+
         return room.onFileSignal((message) => {
             handleIncomingFileSignal({
                 room,
@@ -111,40 +108,34 @@ export function usePadFiles(path: PadPath, localPeer: LocalPeer) {
     const files = useMemo(() => {
         if (!room) return []
         const awarenessStates = readFileAwarenessStates(room.awareness.getStates())
-        return buildLiveFileList(awarenessStates, scopedState.localFiles, scopedState.transfers)
-    }, [awarenessVersion, room, scopedState.localFiles, scopedState.transfers])
-
-    function uploadFile(file: File) {
-        assertFileAllowed(stateRef.current.localFiles, file.size)
-        dispatch({ kind: 'local-file-added', localFile: createPendingLocalFile(file) })
-    }
-
-    function deleteFile(fileId: string) {
-        deleteLocalLiveFile({
-            room,
-            sessions: sessionsRef.current,
-            state: stateRef.current,
-            dispatch,
-            fileId,
-        })
-    }
-
-    function downloadFile(file: LiveFileState) {
-        assertFileAllowed(stateRef.current.localFiles, file.meta.sizeBytes)
-        downloadLiveFile({
-            room,
-            sessions: sessionsRef.current,
-            state: stateRef.current,
-            dispatch,
-            file,
-        })
-    }
+        return buildLiveFileList(awarenessStates, state.localFiles, state.transfers)
+    }, [awarenessVersion, room, state.localFiles, state.transfers])
 
     return {
         files,
-        deleteFile,
-        downloadFile,
-        uploadFile,
+        deleteFile(fileId) {
+            deleteLocalLiveFile({
+                room,
+                sessions: sessionsRef.current,
+                state: stateRef.current,
+                dispatch,
+                fileId,
+            })
+        },
+        downloadFile(file) {
+            assertFileAllowed(stateRef.current.localFiles, file.meta.sizeBytes)
+            downloadLiveFile({
+                room,
+                sessions: sessionsRef.current,
+                state: stateRef.current,
+                dispatch,
+                file,
+            })
+        },
+        uploadFile(file) {
+            assertFileAllowed(stateRef.current.localFiles, file.size)
+            dispatch({ kind: 'local-file-added', localFile: createPendingLocalFile(file) })
+        },
     }
 }
 

@@ -25,6 +25,7 @@
         "class-variance-authority": "^0.7",
         "clsx": "^2.1",
         "cmdk": "^1.1",
+        "diff": "^8.0.4",
         "github-markdown-css": "^5.8",
         "lib0": "^0.2",
         "lucide-react": "^0.468",

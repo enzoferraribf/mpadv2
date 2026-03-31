@@ -1,10 +1,10 @@
-import type { PadPath } from '@mmpad/shared'
+import type { LocalPeer, PadPath } from '@mmpad/shared'
 import { useMemo } from 'react'
-import type { DrawingAwarenessState, DrawingAwarenessUser, LocalPeer, PadDrawingRoom } from './pad-room-types'
+import type { DrawingAwarenessState, DrawingAwarenessUser, PadDrawingRoom } from '@/pad-session/pad-room-types'
+import { usePadRoomSession } from '@/pad-session/use-pad-room-session'
 import { createDrawingHandle } from '@/pad-drawing/drawing-handle'
-import { usePadRoomSession } from './use-pad-room-session'
 
-export type PadDrawingState =
+export type DrawingPadModel =
     | { kind: 'closed' }
     | { kind: 'loading'; connection: 'connecting' }
     | {
@@ -13,7 +13,7 @@ export type PadDrawingState =
         drawing: ReturnType<typeof createDrawingHandle>
     }
 
-export function usePadDrawingRoom(path: PadPath, localPeer: LocalPeer, open: boolean) {
+export function useDrawingPadModel(path: PadPath, localPeer: LocalPeer, open: boolean): DrawingPadModel {
     const awarenessUser = useMemo<DrawingAwarenessUser>(() => ({
         name: localPeer.name,
         color: localPeer.color,
@@ -34,13 +34,12 @@ export function usePadDrawingRoom(path: PadPath, localPeer: LocalPeer, open: boo
         return createDrawingHandle(room.doc, room.awareness)
     }, [room])
 
-    if (!open) return { kind: 'closed' } satisfies PadDrawingState
-    if (!room) return { kind: 'loading', connection: 'connecting' } satisfies PadDrawingState
-    if (!drawing) return { kind: 'loading', connection: 'connecting' } satisfies PadDrawingState
+    if (!open) return { kind: 'closed' }
+    if (!room || !drawing) return { kind: 'loading', connection: 'connecting' }
 
     return {
         kind: 'ready',
         connection: room.status,
         drawing,
-    } satisfies PadDrawingState
+    }
 }

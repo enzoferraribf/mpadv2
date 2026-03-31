@@ -1,9 +1,13 @@
 import { assert, padPath, parsePadRoomName, type PadPath, type PadRoomKind } from '@mmpad/shared'
 import { listRelatedPads } from '../pad-tree/infrastructure/repository'
+import { listPadDocRevisions, readPadDocRevisionText } from '../pad-doc/application/service'
 
 type ApiRoute =
     | { kind: 'health' }
     | { kind: 'related'; path: PadPath }
+    | { kind: 'text-history'; path: PadPath }
+    | { kind: 'text-history-revision'; path: PadPath; revisionId: number }
+    | { kind: 'not-found' }
     | { kind: 'room'; roomName: string; roomKind: PadRoomKind; awarenessClientId: number }
 
 export async function handleRequest(req: Request) {
@@ -18,6 +22,21 @@ export async function handleRequest(req: Request) {
         return withCors(Response.json(tree))
     }
 
+    if (route.kind === 'text-history') {
+        const revisions = await listPadDocRevisions(route.path, 'text')
+        return withCors(Response.json(revisions))
+    }
+
+    if (route.kind === 'text-history-revision') {
+        const revision = await readPadDocRevisionText(route.path, route.revisionId)
+        if (!revision) return withCors(new Response('Revision not found', { status: 404 }))
+        return withCors(Response.json(revision))
+    }
+
+    if (route.kind === 'not-found') {
+        return withCors(new Response('Not found', { status: 404 }))
+    }
+
     return route
 }
 
@@ -29,9 +48,33 @@ export function parseRoute(rawUrl: string): ApiRoute {
     if (url.pathname.startsWith('/api/pads/')) {
         const suffix = url.pathname.slice('/api/pads'.length)
 
+        const detailMatch = suffix.match(/^(\/.*)\/text\/history\/(\d+)$/)
+        if (detailMatch) {
+            const [, rawPath, rawRevisionId] = detailMatch
+            assert(rawPath !== undefined, 'Missing history path')
+            assert(rawRevisionId !== undefined, 'Missing revision id')
+            return {
+                kind: 'text-history-revision',
+                path: decodePadPath(rawPath),
+                revisionId: Number(rawRevisionId),
+            }
+        }
+
+        const historyMatch = suffix.match(/^(\/.*)\/text\/history$/)
+        if (historyMatch) {
+            const [, rawPath] = historyMatch
+            assert(rawPath !== undefined, 'Missing history path')
+            return {
+                kind: 'text-history',
+                path: decodePadPath(rawPath),
+            }
+        }
+
         if (suffix.endsWith('/related')) {
             return { kind: 'related', path: decodePadPath(suffix.slice(0, -'/related'.length)) }
         }
+
+        return { kind: 'not-found' }
     }
 
     const awarenessClientId = Number(url.searchParams.get('client'))

@@ -1,5 +1,5 @@
 export const PERSIST_DEBOUNCE_MS = 3000
-export const COMPACTION_THRESHOLD = 500
+export const CHECKPOINT_INTERVAL = 200
 export const WS_IDLE_TIMEOUT_S = 30
 export const WS_MAX_PAYLOAD = 6 * 1024 * 1024
 

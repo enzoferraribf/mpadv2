@@ -7,7 +7,9 @@ export type {
     LiveFileState,
     LiveFileTransfer,
     OutboundFileSignal,
-} from './domain/pad-file'
+} from './domain/file-session'
+export type { LocalPeer, PeerColor } from './domain/peer'
+export type { PadDocRevisionSummary, PadTextRevision } from './domain/pad-doc'
 export type { PadPath } from './domain/pad-path'
 export type {
     AwarenessRoomMessage,
@@ -30,7 +32,7 @@ export {
 
 export {
     assertLiveFileAllowed,
-} from './domain/pad-file'
+} from './domain/file-session'
 
 export {
     MAX_DRAWING_BYTES,
@@ -38,7 +40,7 @@ export {
     MAX_PEER_FILE_BYTES,
     MAX_PEER_FILE_COUNT,
     MAX_TEXT_BYTES,
-    COMPACTION_THRESHOLD,
+    CHECKPOINT_INTERVAL,
     PERSIST_DEBOUNCE_MS,
     WS_IDLE_TIMEOUT_S,
     WS_MAX_PAYLOAD,

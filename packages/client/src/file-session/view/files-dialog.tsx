@@ -1,9 +1,9 @@
-import { rootPadPath, type LiveFileState, type PadPath } from '@mmpad/shared'
+import type { LiveFileState, PadPath } from '@mmpad/shared'
 import { Download, HardDrive, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command'
 import { formatFileSize } from '@/lib/file'
-import { FileTransferProgress } from './file-transfer-progress'
+import { FileTransferProgress } from '@/pad-files/file-transfer-progress'
 
 export function FilesDialog(input: {
     open: boolean
@@ -13,14 +13,12 @@ export function FilesDialog(input: {
     onDelete: (id: string) => void
     onDownload: (file: LiveFileState) => void
 }) {
-    const scopePath = rootPadPath(input.path)
-
     return (
         <CommandDialog open={input.open} onOpenChange={input.onOpenChange}>
-            <CommandInput placeholder={`Search live files in ${scopePath}`} />
+            <CommandInput placeholder={`Search live files in ${input.path}`} />
             <CommandList>
                 {input.files.length === 0 ? (
-                    <CommandEmpty>No live files in {scopePath}.</CommandEmpty>
+                    <CommandEmpty>No live files in {input.path}.</CommandEmpty>
                 ) : (
                     <CommandGroup heading={`Files (${input.files.length})`}>
                         <div className="dialog-scroll max-h-[36rem] overflow-y-auto px-2 pb-2">
@@ -32,13 +30,13 @@ export function FilesDialog(input: {
                                             <span className="truncate text-sm font-medium text-[--stone-text]">{file.meta.name}</span>
                                             <span className="text-xs text-[--stone-text-dim]">{formatFileSize(file.meta.sizeBytes)}</span>
                                             <span className="text-xs text-[--stone-text-dim]">
-                                            {file.owners.length} seeder{file.owners.length === 1 ? '' : 's'}
-                                            {file.kind === 'transferring' && file.transfer.kind === 'downloading'
-                                                ? ` · receiving ${formatFileSize(file.transfer.receivedBytes)}`
-                                                : null}
-                                            {file.kind === 'transferring' && file.transfer.kind === 'uploading'
-                                                ? ` · sending ${formatFileSize(file.transfer.sentBytes)}`
-                                                : null}
+                                                {file.owners.length} seeder{file.owners.length === 1 ? '' : 's'}
+                                                {file.kind === 'transferring' && file.transfer.kind === 'downloading'
+                                                    ? ` · receiving ${formatFileSize(file.transfer.receivedBytes)}`
+                                                    : null}
+                                                {file.kind === 'transferring' && file.transfer.kind === 'uploading'
+                                                    ? ` · sending ${formatFileSize(file.transfer.sentBytes)}`
+                                                    : null}
                                             </span>
                                             <FileTransferProgress file={file} />
                                         </div>
@@ -52,7 +50,7 @@ export function FilesDialog(input: {
                                             className="border-[--stone-border] bg-[--stone-elevated] text-[--stone-text] hover:bg-[--stone-elevated]/80"
                                         >
                                             <Download className="h-4 w-4" />
-                                            {downloadLabel(file)}
+                                            {readDownloadLabel(file)}
                                         </Button>
                                         {file.isLocal ? (
                                             <Button onClick={() => input.onDelete(file.meta.id)} variant="destructive" size="sm">
@@ -71,7 +69,7 @@ export function FilesDialog(input: {
     )
 }
 
-function downloadLabel(file: LiveFileState) {
+function readDownloadLabel(file: LiveFileState) {
     if (file.kind === 'transferring') {
         return file.transfer.kind === 'downloading' ? 'Downloading' : 'Sending'
     }

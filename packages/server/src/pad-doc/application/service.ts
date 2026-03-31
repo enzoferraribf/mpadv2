@@ -1,6 +1,6 @@
 import type { ServerWebSocket } from 'bun'
 import {
-    COMPACTION_THRESHOLD,
+    CHECKPOINT_INTERVAL,
     PERSIST_DEBOUNCE_MS,
     assert,
     parsePadRoomName,
@@ -10,10 +10,11 @@ import { mergeUpdates } from 'yjs'
 import { ensurePad } from '../../pad-tree/infrastructure/repository'
 import type { WsData } from '../../transport/ws-data'
 import {
-    appendPadDocChunk,
-    compactPadDoc,
+    appendPadDocRevision,
+    createPadDocCheckpoint,
+    listPadDocRevisions,
     loadPadDoc,
-    mergePadDoc,
+    readPadDocRevisionText,
 } from '../infrastructure/repository'
 import {
     applyPadDocAwareness,
@@ -96,10 +97,6 @@ async function loadPadDocRoom(roomName: string) {
     })
 
     rooms.set(roomName, room)
-    if (room.storedChunkCount >= COMPACTION_THRESHOLD) {
-        const snapshot = mergePadDoc(stored.snapshot, stored.updates)
-        void compactPadDoc(parsedRoom.path, parsedRoom.kind, snapshot, stored.latestUpdateId)
-    }
     return room
 }
 
@@ -122,18 +119,21 @@ async function flushPadDocRoom(room: PadDocRoom) {
     const updates = takePadDocUpdates(room)
     if (updates.length === 0) return
 
-    room.latestChunkId = await appendPadDocChunk(room.path, room.kind, mergeUpdates(updates), updates.length)
-    room.storedChunkCount += 1
+    const result = await appendPadDocRevision(room.path, room.kind, mergeUpdates(updates), updates.length)
+    room.latestChunkSeq = result.chunkSeq
+    room.headRevisionId = result.revisionId
+    room.headRevisionNumber = result.revisionNumber
     room.docBytes = readPadDocSnapshotBytes(room).byteLength
 
-    if (room.storedChunkCount < COMPACTION_THRESHOLD) return
+    if (result.revisionNumber % CHECKPOINT_INTERVAL !== 0) return
 
     const snapshot = readPadDocSnapshotBytes(room)
-    await compactPadDoc(room.path, room.kind, snapshot, room.latestChunkId)
-    room.storedChunkCount = 0
+    await createPadDocCheckpoint(room.path, room.kind, result.revisionId, result.chunkSeq, snapshot)
     room.docBytes = snapshot.byteLength
 }
 
 function sendRoomMessage(ws: ServerWebSocket<WsData>, message: { data: Uint8Array }) {
     ws.sendBinary(Buffer.from(message.data))
 }
+
+export { listPadDocRevisions, readPadDocRevisionText }

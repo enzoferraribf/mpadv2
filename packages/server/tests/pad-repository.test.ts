@@ -1,8 +1,14 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { Y_TEXT_KEY, padPath } from '@mmpad/shared'
+import { CHECKPOINT_INTERVAL, Y_TEXT_KEY, padPath } from '@mmpad/shared'
 import { Doc, applyUpdate, encodeStateAsUpdate, mergeUpdates } from 'yjs'
 import { ensurePad, listRelatedPads } from '../src/pad-tree/infrastructure/repository'
-import { appendPadDocChunk, compactPadDoc, loadPadDoc } from '../src/pad-doc/infrastructure/repository'
+import {
+    appendPadDocRevision,
+    createPadDocCheckpoint,
+    listPadDocRevisions,
+    loadPadDoc,
+    loadPadDocRevisionBytes,
+} from '../src/pad-doc/infrastructure/repository'
 import { migrate, sql } from '../src/infrastructure/db'
 
 beforeAll(async () => {
@@ -10,8 +16,8 @@ beforeAll(async () => {
 })
 
 describe('pad doc repository', () => {
-    test('stores one merged chunk per flush', async () => {
-        const root = uniqueRoot('chunks')
+    test('stores one merged chunk and one saved revision per flush', async () => {
+        const root = uniqueRoot('revisions')
         const path = padPath(`${root}/doc`)
         await cleanupRoot(root)
         await ensurePad(path)
@@ -24,10 +30,20 @@ describe('pad doc repository', () => {
         text.insert(0, 'hello')
         text.insert(5, ' world')
 
-        const chunkId = await appendPadDocChunk(path, 'text', mergeUpdates(updates), updates.length)
+        const revision = await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
         const stored = await loadPadDoc(path, 'text')
+        const history = await listPadDocRevisions(path, 'text')
 
+        expect(stored.headRevisionNumber).toBe(1)
+        expect(stored.headRevisionId).toBe(revision.revisionId)
         expect(stored.updates).toHaveLength(1)
+        expect(history).toEqual([
+            expect.objectContaining({
+                id: revision.revisionId,
+                revisionNumber: 1,
+                isHead: true,
+            }),
+        ])
 
         const restored = new Doc()
         applyUpdate(restored, stored.updates[0]!)
@@ -36,15 +52,17 @@ describe('pad doc repository', () => {
         const [chunk] = await sql<{ event_count: number }[]>`
             SELECT event_count
             FROM pad_doc_chunks
-            WHERE id = ${chunkId}
+            WHERE seq = ${revision.chunkSeq}
         `
 
         expect(chunk?.event_count).toBe(2)
+        doc.destroy()
+        restored.destroy()
         await cleanupRoot(root)
     })
 
-    test('compacts stored chunks into the snapshot', async () => {
-        const root = uniqueRoot('compact')
+    test('creates stable per-pad revision numbers and keeps old history after a checkpoint', async () => {
+        const root = uniqueRoot('checkpoint')
         const path = padPath(`${root}/doc`)
         await cleanupRoot(root)
         await ensurePad(path)
@@ -53,21 +71,66 @@ describe('pad doc repository', () => {
         const updates: Uint8Array[] = []
         doc.on('update', (update) => updates.push(update))
 
-        doc.getText(Y_TEXT_KEY).insert(0, 'hello world')
+        let firstRevisionId = 0
+        let latestRevisionId = 0
 
-        const chunkId = await appendPadDocChunk(path, 'text', mergeUpdates(updates), updates.length)
-        const snapshot = encodeStateAsUpdate(doc)
+        for (let index = 1; index <= CHECKPOINT_INTERVAL + 2; index += 1) {
+            doc.getText(Y_TEXT_KEY).insert(doc.getText(Y_TEXT_KEY).length, `${index}\n`)
+            const revision = await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
+            updates.length = 0
 
-        await compactPadDoc(path, 'text', snapshot, chunkId)
+            if (revision.revisionNumber % CHECKPOINT_INTERVAL === 0) {
+                await createPadDocCheckpoint(path, 'text', revision.revisionId, revision.chunkSeq, encodeStateAsUpdate(doc))
+            }
 
+            if (index === 1) firstRevisionId = revision.revisionId
+            latestRevisionId = revision.revisionId
+        }
+
+        const history = await listPadDocRevisions(path, 'text')
         const stored = await loadPadDoc(path, 'text')
+        const [checkpointCount] = await sql<{ count: number }[]>`
+            SELECT COUNT(*)::int AS count
+            FROM pad_doc_checkpoints
+            WHERE pad_path = ${path} AND kind = 'text'
+        `
+        const [chunkCount] = await sql<{ count: number }[]>`
+            SELECT COUNT(*)::int AS count
+            FROM pad_doc_chunks
+            WHERE pad_path = ${path} AND kind = 'text'
+        `
+
+        expect(history).toHaveLength(CHECKPOINT_INTERVAL + 2)
+        expect(history[0]).toEqual(expect.objectContaining({
+            id: latestRevisionId,
+            revisionNumber: CHECKPOINT_INTERVAL + 2,
+            isHead: true,
+        }))
+        expect(history.at(-1)).toEqual(expect.objectContaining({
+            id: firstRevisionId,
+            revisionNumber: 1,
+            isHead: false,
+        }))
+        expect(checkpointCount?.count).toBe(1)
+        expect(chunkCount?.count).toBe(CHECKPOINT_INTERVAL + 2)
         expect(stored.snapshot).not.toBeNull()
-        expect(stored.updates).toHaveLength(0)
+        expect(stored.updates).toHaveLength(2)
 
-        const restored = new Doc()
-        applyUpdate(restored, stored.snapshot!)
-        expect(restored.getText(Y_TEXT_KEY).toString()).toBe('hello world')
+        const oldBytes = await loadPadDocRevisionBytes(path, 'text', firstRevisionId)
+        const latestBytes = await loadPadDocRevisionBytes(path, 'text', latestRevisionId)
+        const oldDoc = new Doc()
+        const latestDoc = new Doc()
+        applyUpdate(oldDoc, oldBytes)
+        applyUpdate(latestDoc, latestBytes)
 
+        expect(oldDoc.getText(Y_TEXT_KEY).toString()).toBe('1\n')
+        expect(latestDoc.getText(Y_TEXT_KEY).toString()).toBe(
+            Array.from({ length: CHECKPOINT_INTERVAL + 2 }, (_, index) => `${index + 1}\n`).join(''),
+        )
+
+        doc.destroy()
+        oldDoc.destroy()
+        latestDoc.destroy()
         await cleanupRoot(root)
     })
 })

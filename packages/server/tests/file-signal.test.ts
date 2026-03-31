@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readServerRoomMessage, type OutboundFileSignal } from '@mmpad/shared'
 import type { ServerWebSocket } from 'bun'
-import { routeLiveFileSignal } from '../src/live-file/application/service'
+import { routeLiveFileSignal } from '../src/file-session/application/service'
 import type { WsData } from '../src/transport/ws-data'
 
 describe('file signal routing', () => {

@@ -9,7 +9,6 @@ import {
     replyToSyncMessage,
     type AwarenessRoomMessage,
     type ClientRoomMessage,
-    type OutboundFileSignal,
     type SyncRoomMessage,
 } from '@mmpad/shared'
 import { Awareness } from 'y-protocols/awareness'
@@ -17,28 +16,30 @@ import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc, encodeStateAsUpdate } from 'yjs'
 import type { WsData } from '../../transport/ws-data'
 
-export type LiveFileRoom = {
+export type FileSessionRoom = {
     roomName: string
     doc: Doc
     awareness: Awareness
     clients: Set<ServerWebSocket<WsData>>
 }
 
-type LiveFileDocReply = {
+type FileSessionDocResult = {
+    kind: 'doc'
     reply: SyncRoomMessage | null
     broadcast: SyncRoomMessage | AwarenessRoomMessage
 }
 
-type LiveFileSignalRelay = {
-    relay: Uint8Array
+type FileSessionSignalResult = {
+    kind: 'signal'
     targetPeerId: number
+    relayBytes: Uint8Array
 }
 
-export function createLiveFileRoom(roomName: string): LiveFileRoom {
+export function createFileSessionRoom(roomName: string): FileSessionRoom {
     const room = parsePadRoomName(roomName)
-    assert(room.kind === 'files', 'Live file room must use the files kind')
-    const doc = new Doc()
+    assert(room.kind === 'files', 'File session room must use the files kind')
 
+    const doc = new Doc()
     return {
         roomName,
         doc,
@@ -47,8 +48,9 @@ export function createLiveFileRoom(roomName: string): LiveFileRoom {
     }
 }
 
-export function connectLiveFileClient(room: LiveFileRoom, ws: ServerWebSocket<WsData>) {
+export function connectFileSessionClient(room: FileSessionRoom, ws: ServerWebSocket<WsData>) {
     room.clients.add(ws)
+
     const messages: Array<SyncRoomMessage | AwarenessRoomMessage> = [
         createDocUpdateMessage(encodeStateAsUpdate(room.doc)),
     ]
@@ -57,9 +59,10 @@ export function connectLiveFileClient(room: LiveFileRoom, ws: ServerWebSocket<Ws
     return messages
 }
 
-export function disconnectLiveFileClient(room: LiveFileRoom, ws: ServerWebSocket<WsData>) {
+export function disconnectFileSessionClient(room: FileSessionRoom, ws: ServerWebSocket<WsData>) {
     room.clients.delete(ws)
     awarenessProtocol.removeAwarenessStates(room.awareness, [ws.data.awarenessClientId], null)
+
     const awarenessMessage = room.awareness.meta.has(ws.data.awarenessClientId)
         ? createAwarenessMessage(room.awareness, [ws.data.awarenessClientId])
         : null
@@ -70,46 +73,48 @@ export function disconnectLiveFileClient(room: LiveFileRoom, ws: ServerWebSocket
     }
 }
 
-export function applyLiveFileDocMessage(
-    room: LiveFileRoom,
+export function applyFileSessionMessage(
+    room: FileSessionRoom,
     sender: ServerWebSocket<WsData>,
     message: ClientRoomMessage,
-): LiveFileDocReply | LiveFileSignalRelay {
+): FileSessionDocResult | FileSessionSignalResult {
     if (message.kind === 'sync') {
-        const reply = replyToSyncMessage(room.doc, message.data, null)
         return {
-            reply,
-            broadcast: { kind: 'sync', data: message.data } satisfies SyncRoomMessage,
+            kind: 'doc',
+            reply: replyToSyncMessage(room.doc, message.data, null),
+            broadcast: { kind: 'sync', data: message.data },
         }
     }
 
     if (message.kind === 'awareness') {
         applyAwarenessMessage(room.awareness, message.data, sender)
         return {
+            kind: 'doc',
             reply: null,
-            broadcast: { kind: 'awareness', data: message.data } satisfies AwarenessRoomMessage,
+            broadcast: { kind: 'awareness', data: message.data },
         }
     }
 
     return {
-        relay: encodeServerRoomMessage({
+        kind: 'signal',
+        targetPeerId: message.signal.targetPeerId,
+        relayBytes: encodeServerRoomMessage({
             kind: 'file-signal',
             signal: {
                 sourcePeerId: sender.data.awarenessClientId,
                 signal: message.signal.signal,
             },
         }),
-        targetPeerId: message.signal.targetPeerId,
     }
 }
 
-export function destroyLiveFileRoom(room: LiveFileRoom) {
+export function destroyFileSessionRoom(room: FileSessionRoom) {
     room.awareness.destroy()
     room.doc.destroy()
 }
 
-export function routeLiveFileSignal(
-    room: Pick<LiveFileRoom, 'clients'>,
+export function relayFileSessionSignal(
+    room: Pick<FileSessionRoom, 'clients'>,
     targetPeerId: number,
     relayBytes: Uint8Array,
 ) {
