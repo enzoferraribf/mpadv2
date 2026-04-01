@@ -1,13 +1,13 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
-import type { TextPadComments } from '@/pad-doc/model/use-text-pad-model'
-import type { TextCommentResult } from './text-comment-controller'
+import type { TextPadComments } from '@/pad-text/application/use-text-pad'
+import type { TextCommentResult } from '@/pad-text/infrastructure/text-comment-store'
 import {
     buildCommentMarkers,
     readOverlayThreadId,
     type TextCommentRangeRect,
-} from './text-comment-overlay'
+} from '@/pad-text/domain/comment-overlay'
 import { TextCommentsPane } from './text-comments-pane'
-import type { CursorPosition, TextEditorHandle, TextEditorSelection } from './text-editor-handle'
+import type { CursorPosition, TextEditorHandle, TextEditorSelection } from '@/pad-text/infrastructure/text-editor'
 
 export function MarkdownEditorPane(input: {
     comments: TextPadComments

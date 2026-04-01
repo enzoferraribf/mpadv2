@@ -2,7 +2,7 @@ import { EditorState } from '@codemirror/state'
 import { MergeView } from '@codemirror/merge'
 import { EditorView } from '@codemirror/view'
 import { useEffect, useRef } from 'react'
-import { createMarkdownCodeMirrorExtensions } from './markdown-codemirror'
+import { createMarkdownCodeMirrorExtensions } from '@/pad-text/infrastructure/markdown-codemirror'
 
 export function TextDiffMergeView(input: {
     leftContent: string

@@ -1,8 +1,8 @@
-import type { PadPageModel } from '@/workspace-shell/model/use-pad-page-model'
+import type { PadPageModel } from '@/app/model/use-pad-page'
 import { CommandMenu } from '@/workspace/command-menu'
 import { DrawingSettingsDialog } from '@/pad-drawing/drawing-settings-dialog'
 import { TreeDialog } from '@/pad-tree/tree-dialog'
-import { FilesDialog } from '@/file-session/view/files-dialog'
+import { FilesDialog } from '@/live-files/view/files-dialog'
 
 export function WorkspaceDialogs(input: { model: PadPageModel }) {
     const { actions, state } = input.model

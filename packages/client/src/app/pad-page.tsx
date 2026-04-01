@@ -1,17 +1,17 @@
 import type { PadPath } from '@mmpad/shared'
 import { useEffect } from 'react'
 import { TextDiffWorkspace } from '@/pad-text/text-diff-workspace'
-import { DrawingWorkspacePane } from '@/pad-doc/view/drawing-workspace-pane'
-import { TextWorkspace } from '@/pad-doc/view/text-workspace'
-import { FilesPane } from '@/file-session/view/files-pane'
-import { usePadPageModel, type PadPageModel } from '@/workspace-shell/model/use-pad-page-model'
+import { DrawingWorkspacePane } from '@/pad-drawing/view/drawing-workspace-pane'
+import { TextWorkspace } from '@/pad-text/view/text-workspace'
+import { FilesPane } from '@/live-files/view/files-pane'
+import { usePadPage, type PadPageModel } from '@/app/model/use-pad-page'
 import { PadSidebar } from '@/workspace-shell/view/pad-sidebar'
 import { PadStatusBar } from '@/workspace-shell/view/pad-status-bar'
 import { PadTopBar } from '@/workspace-shell/view/pad-top-bar'
 import { WorkspaceDialogs } from '@/workspace-shell/view/workspace-dialogs'
 
 export function PadPage({ path }: { path: PadPath }) {
-    const model = usePadPageModel(path)
+    const model = usePadPage(path)
 
     useEffect(() => {
         if (import.meta.env.VITE_E2E !== '1') return
@@ -46,7 +46,7 @@ export function PadPage({ path }: { path: PadPath }) {
     )
 }
 
-function LoadingPadPage(input: { path: PadPath; model: ReturnType<typeof usePadPageModel> }) {
+function LoadingPadPage(input: { path: PadPath; model: ReturnType<typeof usePadPage> }) {
     const { actions, state } = input.model
 
     return (

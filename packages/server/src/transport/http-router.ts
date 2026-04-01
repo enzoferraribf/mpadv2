@@ -1,6 +1,6 @@
 import { assert, padPath, parsePadRoomName, type PadPath, type PadRoomKind } from '@mmpad/shared'
 import { listRelatedPads } from '../pad-tree/infrastructure/repository'
-import { listPadDocRevisions, readPadDocRevisionText } from '../pad-doc/application/service'
+import { listPadTextRevisions, readPadTextRevision } from '../pad-text/application/service'
 
 type ApiRoute =
     | { kind: 'health' }
@@ -23,12 +23,12 @@ export async function handleRequest(req: Request) {
     }
 
     if (route.kind === 'text-history') {
-        const revisions = await listPadDocRevisions(route.path, 'text')
+        const revisions = await listPadTextRevisions(route.path)
         return withCors(Response.json(revisions))
     }
 
     if (route.kind === 'text-history-revision') {
-        const revision = await readPadDocRevisionText(route.path, route.revisionId)
+        const revision = await readPadTextRevision(route.path, route.revisionId)
         if (!revision) return withCors(new Response('Revision not found', { status: 404 }))
         return withCors(Response.json(revision))
     }

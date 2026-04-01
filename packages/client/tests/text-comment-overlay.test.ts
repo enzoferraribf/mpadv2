@@ -5,8 +5,8 @@ import {
     readOverlayThread,
     readOverlayThreadId,
     type TextCommentOverlay,
-} from '../src/pad-text/text-comment-overlay'
-import type { TextCommentThreadView } from '../src/pad-text/text-comment-controller'
+} from '../src/pad-text/domain/comment-overlay'
+import type { TextCommentThreadView } from '../src/pad-text/infrastructure/text-comment-store'
 
 describe('text comment overlay', () => {
     test('closes a thread overlay when that thread no longer exists', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { Y_TEXT_KEY, type LocalPeer } from '@mmpad/shared'
 import { Doc } from 'yjs'
-import { createTextCommentController } from '../src/pad-text/text-comment-controller'
+import { createTextCommentController } from '../src/pad-text/infrastructure/text-comment-store'
 
 describe('text comment controller', () => {
     test('creates, updates, resolves, reopens, and deletes threads', () => {

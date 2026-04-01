@@ -1,4 +1,4 @@
-import type { PadPageModel } from '@/workspace-shell/model/use-pad-page-model'
+import type { PadPageModel } from '@/app/model/use-pad-page'
 
 declare global {
     interface Window {

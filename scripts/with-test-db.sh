@@ -3,7 +3,7 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 COMPOSE_FILE="$ROOT/docker-compose.test.yml"
-PROJECT="mmpad-test"
+PROJECT="${TEST_DB_PROJECT:-mmpad-test-$$}"
 
 if ! command -v docker >/dev/null 2>&1; then
     echo "docker is required to run test:server and test:e2e" >&2

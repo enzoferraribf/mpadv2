@@ -3,7 +3,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { Collaborator, ExcalidrawImperativeAPI, SocketId } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
 import type { DrawingTheme } from './drawing-theme'
-import type { DrawingHandle } from './drawing-handle'
+import type { DrawingHandle } from '@/pad-drawing/infrastructure/drawing-handle'
 
 const ExcalidrawEditor = lazy(() => import('@excalidraw/excalidraw').then((mod) => ({ default: mod.Excalidraw })))
 

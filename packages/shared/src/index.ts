@@ -1,4 +1,4 @@
-export type { PadDocKind, PadRoom, PadRoomKind } from './domain/pad-room'
+export type { PadDocKind, PadRoom, PadRoomKind } from './kernel/pad-room'
 export type {
     FileSignal,
     InboundFileSignal,
@@ -7,17 +7,22 @@ export type {
     LiveFileState,
     LiveFileTransfer,
     OutboundFileSignal,
-} from './domain/file-session'
-export type { LocalPeer, PeerColor } from './domain/peer'
-export type { PadDocRevisionSummary, PadTextRevision } from './domain/pad-doc'
-export type { PadPath } from './domain/pad-path'
+} from './contracts/live-files'
+export type { LocalPeer, PeerColor } from './contracts/peer'
+export type {
+    PadTextHistoryResponse,
+    PadTextRevisionResponse,
+    PadTreeResponse,
+} from './contracts/http'
+export type { PadDocRevisionSummary, PadTextRevision } from './contracts/pad-text-history'
+export type { PadPath } from './kernel/pad-path'
 export type {
     TextCommentAnchor,
     TextCommentAuthor,
     TextCommentMessage,
     TextCommentStatus,
     TextCommentThread,
-} from './domain/text-comments'
+} from './contracts/text-comments'
 export type {
     AwarenessRoomMessage,
     ClientRoomMessage,
@@ -25,21 +30,21 @@ export type {
     ServerRoomMessage,
     SyncRoomMessage,
 } from './transport/room-message-codec'
-export type { PadTreeItem } from './domain/pad-tree'
+export type { PadTreeItem } from './contracts/pad-tree'
 
 export {
     assert,
     assertNever,
-} from './domain/assert'
+} from './kernel/assert'
 
 export {
     padRoomName,
     parsePadRoomName,
-} from './domain/pad-room'
+} from './kernel/pad-room'
 
 export {
     assertLiveFileAllowed,
-} from './domain/file-session'
+} from './contracts/live-files'
 
 export {
     MAX_DRAWING_BYTES,
@@ -55,7 +60,7 @@ export {
     Y_TEXT_COMMENT_MESSAGES_KEY,
     Y_TEXT_COMMENT_THREADS_KEY,
     Y_TEXT_KEY,
-} from './domain/pad-limits'
+} from './kernel/pad-limits'
 
 export {
     padPathAncestors,
@@ -63,7 +68,7 @@ export {
     padPathName,
     rootPadPath,
     parentPadPath,
-} from './domain/pad-path'
+} from './kernel/pad-path'
 
 export {
     applyAwarenessMessage,

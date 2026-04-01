@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { readTextAwarenessStates } from '../src/pad-session/text-awareness'
+import { readTextAwarenessStates } from '../src/pad-text/infrastructure/text-awareness'
 
 describe('text awareness', () => {
     test('ignores incomplete peer states', () => {

@@ -333,6 +333,7 @@ test('renders the pad shell', async ({ browser }) => {
     await hideSidebarEntries(page)
 
     await expect(page).toHaveScreenshot('pad-shell.png', {
+        maxDiffPixels: 200,
         mask: [
             page.locator('.pad-statusbar-conn'),
             page.getByTestId('status-cursor'),

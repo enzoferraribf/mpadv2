@@ -11,7 +11,7 @@ import {
     type DrawingTheme,
     type DrawingThemePreference,
 } from '@/pad-drawing/drawing-theme'
-import type { CursorPosition } from '@/pad-text/text-editor-handle'
+import type { CursorPosition } from '@/pad-text/infrastructure/text-editor'
 import type { DialogName } from '@/shell/dialog-name'
 
 export type PadWorkspaceLayout = 'split' | 'editor' | 'preview'

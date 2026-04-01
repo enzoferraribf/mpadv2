@@ -9,7 +9,7 @@
         "typecheck": "turbo typecheck",
         "test:client": "cd packages/client && bun run test",
         "test:server": "./scripts/with-test-db.sh bun test packages/server/tests",
-        "test:e2e": "./scripts/with-test-db.sh playwright test"
+        "test:e2e": "./scripts/run-e2e.sh"
     },
     "devDependencies": {
         "@playwright/test": "^1.54.2",

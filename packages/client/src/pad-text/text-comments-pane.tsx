@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { TextCommentResult, TextCommentThreadView } from './text-comment-controller'
-import type { TextCommentSelection } from './text-comment-controller'
+import type { TextCommentResult, TextCommentSelection, TextCommentThreadView } from '@/pad-text/infrastructure/text-comment-store'
 
 type CommentActionResult<T = void> = TextCommentResult<T>
 

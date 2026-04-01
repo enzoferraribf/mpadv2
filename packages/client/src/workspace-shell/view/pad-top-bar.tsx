@@ -1,5 +1,5 @@
 import { Settings2 } from 'lucide-react'
-import type { PadPageModel } from '@/workspace-shell/model/use-pad-page-model'
+import type { PadPageModel } from '@/app/model/use-pad-page'
 
 export function PadTopBar(input: { model: PadPageModel }) {
     const { actions, state } = input.model

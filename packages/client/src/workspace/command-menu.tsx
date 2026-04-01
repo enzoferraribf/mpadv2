@@ -1,6 +1,6 @@
 import { Blocks, Columns2, Eye, FileText, FolderTree, PanelRightOpen } from 'lucide-react'
 import { CommandDialog, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import type { PadPageActions, PadWorkspaceLayout } from '@/workspace-shell/model/use-pad-page-model'
+import type { PadPageActions, PadWorkspaceLayout } from '@/app/model/use-pad-page'
 
 export function CommandMenu(input: {
     open: boolean

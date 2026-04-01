@@ -1,4 +1,4 @@
-import type { DrawingHandle } from './drawing-handle'
+import type { DrawingHandle } from '@/pad-drawing/infrastructure/drawing-handle'
 import type { DrawingTheme } from './drawing-theme'
 import { DrawingPane } from './drawing-pane'
 
