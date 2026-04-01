@@ -108,11 +108,23 @@ function ReadyPadPage(input: { model: PadPageModel & { state: Extract<PadPageMod
                     <DrawingWorkspacePane drawing={drawing} theme={state.view.drawingTheme} />
                 ) : (
                     <TextWorkspace
+                        comments={state.text.comments}
                         content={state.text.content}
                         direction={state.view.splitDirection}
                         editor={state.text.editor}
                         layout={state.view.layout}
+                        onCloseCommentOverlay={actions.closeCommentOverlay}
+                        onCommentCreate={actions.createCommentThread}
+                        onCommentDeleteMessage={actions.deleteCommentMessage}
+                        onCommentDeleteThread={actions.deleteCommentThread}
+                        onCommentEditMessage={actions.editCommentMessage}
+                        onCommentOpenThread={actions.openCommentThread}
+                        onCommentReopen={actions.reopenCommentThread}
+                        onCommentReply={actions.replyToCommentThread}
+                        onCommentResolve={actions.resolveCommentThread}
+                        onCommentStartDraft={actions.openCommentDraftFromSelection}
                         onCursorChange={actions.setCursor}
+                        onEditorSelectionChange={actions.setCommentSelection}
                     />
                 )}
                 <PadStatusBar

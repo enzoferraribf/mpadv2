@@ -12,6 +12,13 @@ export type { LocalPeer, PeerColor } from './domain/peer'
 export type { PadDocRevisionSummary, PadTextRevision } from './domain/pad-doc'
 export type { PadPath } from './domain/pad-path'
 export type {
+    TextCommentAnchor,
+    TextCommentAuthor,
+    TextCommentMessage,
+    TextCommentStatus,
+    TextCommentThread,
+} from './domain/text-comments'
+export type {
     AwarenessRoomMessage,
     ClientRoomMessage,
     RoomDocMessage,
@@ -45,6 +52,8 @@ export {
     WS_IDLE_TIMEOUT_S,
     WS_MAX_PAYLOAD,
     Y_DRAWING_ELEMENTS_KEY,
+    Y_TEXT_COMMENT_MESSAGES_KEY,
+    Y_TEXT_COMMENT_THREADS_KEY,
     Y_TEXT_KEY,
 } from './domain/pad-limits'
 

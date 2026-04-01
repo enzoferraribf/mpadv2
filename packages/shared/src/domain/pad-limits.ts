@@ -10,4 +10,6 @@ export const MAX_TEXT_BYTES = 1 * 1024 * 1024
 export const MAX_DRAWING_BYTES = 2 * 1024 * 1024
 
 export const Y_TEXT_KEY = 'text'
+export const Y_TEXT_COMMENT_THREADS_KEY = 'comment-threads'
+export const Y_TEXT_COMMENT_MESSAGES_KEY = 'messages'
 export const Y_DRAWING_ELEMENTS_KEY = 'elements'

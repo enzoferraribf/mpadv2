@@ -4,6 +4,7 @@ export type PeerColor = {
 }
 
 export type LocalPeer = {
+    id: string
     name: string
     color: PeerColor
     textColor: string

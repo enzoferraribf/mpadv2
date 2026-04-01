@@ -5,6 +5,7 @@ describe('local peer', () => {
     test('picks an anime name and palette color for new peers', () => {
         const peer = createRandomLocalPeer(() => 0)
 
+        expect(peer.id.startsWith('peer-')).toBe(true)
         expect(peer.name).toBe(ANIME_PEER_NAMES[0])
         expect(peer.color.background).toBe('#f97316')
         expect(peer.color.stroke).toBe('#7c2d12')
@@ -35,11 +36,15 @@ describe('local peer', () => {
             textColorLight: '#7dd3fc33',
         })
 
-        expect(readStoredLocalPeer(stored)).toEqual({
+        const peer = readStoredLocalPeer(stored)
+
+        expect(peer).toEqual({
+            id: expect.stringMatching(/^peer-/),
             name: 'Naruto Uzumaki',
             color: { background: '#0ea5e9', stroke: '#164e63' },
             textColor: '#0284c7',
             textColorLight: '#7dd3fc33',
         })
+        expect(peer?.id.startsWith('peer-')).toBe(true)
     })
 })

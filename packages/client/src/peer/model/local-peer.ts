@@ -44,7 +44,7 @@ export const ANIME_PEER_NAMES = [
 ] as const
 
 const animePeerNames = new Set<string>(ANIME_PEER_NAMES)
-const e2ePeer = createPeer('Goku', PEER_PALETTE[4])
+const e2ePeer = createPeer('peer-e2e', 'Goku', PEER_PALETTE[4])
 
 export function loadLocalPeer(): LocalPeer {
     if (import.meta.env.VITE_E2E === '1') {
@@ -54,7 +54,10 @@ export function loadLocalPeer(): LocalPeer {
     }
 
     const stored = readStoredLocalPeer(window.localStorage.getItem(LOCAL_PEER_STORAGE_KEY))
-    if (stored) return stored
+    if (stored) {
+        window.localStorage.setItem(LOCAL_PEER_STORAGE_KEY, JSON.stringify(stored))
+        return stored
+    }
 
     const peer = createRandomLocalPeer()
     window.localStorage.setItem(LOCAL_PEER_STORAGE_KEY, JSON.stringify(peer))
@@ -63,6 +66,7 @@ export function loadLocalPeer(): LocalPeer {
 
 export function createRandomLocalPeer(random = Math.random): LocalPeer {
     return createPeer(
+        `peer-${crypto.randomUUID()}`,
         pickRandom(ANIME_PEER_NAMES, random),
         pickRandom(PEER_PALETTE, random),
     )
@@ -78,13 +82,14 @@ export function readStoredLocalPeer(value: string | null): LocalPeer | null {
     }
 }
 
-function createPeer(name: string, color: {
+function createPeer(id: string, name: string, color: {
     background: string
     stroke: string
     text: string
     textLight: string
 }): LocalPeer {
     return {
+        id,
         name,
         color: {
             background: color.background,
@@ -97,6 +102,7 @@ function createPeer(name: string, color: {
 
 function readLocalPeer(value: unknown): LocalPeer | null {
     if (!isRecord(value)) return null
+    const id = typeof value.id === 'string' && value.id.length > 0 ? value.id : `peer-${crypto.randomUUID()}`
     if (typeof value.name !== 'string') return null
     if (!animePeerNames.has(value.name)) return null
     if (!isRecord(value.color)) return null
@@ -106,6 +112,7 @@ function readLocalPeer(value: unknown): LocalPeer | null {
     if (typeof value.textColorLight !== 'string') return null
 
     return {
+        id,
         name: value.name,
         color: {
             background: value.color.background,

@@ -4,15 +4,33 @@ declare global {
     interface Window {
         __mmpad__?: {
             appendText: (content: string) => void
+            createCommentThread: (body: string) => void
+            deleteCommentMessage: (threadId: string, messageId: string) => void
+            deleteCommentThread: (threadId: string) => void
+            editCommentMessage: (threadId: string, messageId: string, body: string) => void
             getText: () => string
+            getCommentThreads: () => Array<{
+                id: string
+                status: 'active' | 'resolved'
+                quote: string
+                selected: boolean
+                detached: boolean
+                messages: Array<{ id: string; body: string }>
+            }>
             getFileCount: () => number
             getDrawingConnection: () => string
             getDrawingElementCount: () => number
             getConnection: () => string
             hasLocalFile: (name: string) => boolean
             openDrawing: () => void
+            openCommentDraftFromSelection: () => void
+            reopenCommentThread: (threadId: string) => void
             insertTestArrow: () => Promise<void>
             insertTestRectangle: () => Promise<void>
+            replyToCommentThread: (threadId: string, body: string) => void
+            resolveCommentThread: (threadId: string) => void
+            selectCommentRange: (from: number, to: number) => void
+            selectCommentThread: (threadId: string) => void
             setText: (content: string) => void
             uploadTestFile: () => Promise<void>
             requestFile: (name: string) => void
@@ -33,6 +51,28 @@ export function publishWindowState(workspace: PadPageModel) {
         appendText: (content: string) => {
             state.text.editor.appendText(content)
         },
+        createCommentThread: (body: string) => {
+            actions.createCommentThread(body)
+        },
+        deleteCommentMessage: (threadId: string, messageId: string) => {
+            actions.deleteCommentMessage({ threadId, messageId })
+        },
+        deleteCommentThread: (threadId: string) => {
+            actions.deleteCommentThread(threadId)
+        },
+        editCommentMessage: (threadId: string, messageId: string, body: string) => {
+            actions.editCommentMessage({ threadId, messageId, body })
+        },
+        getCommentThreads: () => state.text.comments.threads.map((thread) => ({
+            id: thread.id,
+            status: thread.status,
+            quote: thread.quote,
+            selected:
+                state.text.comments.overlay.kind === 'thread'
+                && thread.id === state.text.comments.overlay.threadId,
+            detached: thread.anchor.detached,
+            messages: thread.messages.map((message) => ({ id: message.id, body: message.body })),
+        })),
         getText: () => state.text.editor.readContent(),
         getFileCount: () => state.status.files.length,
         getDrawingConnection: () => state.drawing.kind === 'ready' ? state.drawing.connection : 'closed',
@@ -43,6 +83,12 @@ export function publishWindowState(workspace: PadPageModel) {
         getConnection: () => state.status.connection,
         hasLocalFile: (name: string) => state.status.files.some((file) => file.meta.name === name && file.isLocal),
         openDrawing: () => actions.openTab('drawing'),
+        openCommentDraftFromSelection: () => {
+            actions.openCommentDraftFromSelection()
+        },
+        reopenCommentThread: (threadId: string) => {
+            actions.reopenCommentThread(threadId)
+        },
         insertTestArrow: async () => {
             if (!window.__mmpadDrawingApi__) throw new Error('Drawing API is unavailable')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
@@ -54,6 +100,18 @@ export function publishWindowState(workspace: PadPageModel) {
             if (state.drawing.kind !== 'ready') throw new Error('Drawing is closed')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
             state.drawing.drawing.writeScene(convertToExcalidrawElements([{ type: 'rectangle', x: 80, y: 80, width: 160, height: 120 }]))
+        },
+        replyToCommentThread: (threadId: string, body: string) => {
+            actions.replyToCommentThread({ threadId, body })
+        },
+        resolveCommentThread: (threadId: string) => {
+            actions.resolveCommentThread(threadId)
+        },
+        selectCommentRange: (from: number, to: number) => {
+            state.text.editor.selectRange(from, to)
+        },
+        selectCommentThread: (threadId: string) => {
+            actions.openCommentThread(threadId)
         },
         setText: (content: string) => {
             state.text.editor.setText(content)
