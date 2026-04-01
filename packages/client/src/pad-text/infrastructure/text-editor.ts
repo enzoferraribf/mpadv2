@@ -141,6 +141,9 @@ export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEdit
                 doc: ytext.toString(),
                 extensions: [
                     ...createMarkdownCodeMirrorExtensions(),
+                    EditorView.contentAttributes.of({
+                        'aria-label': 'Pad text editor',
+                    }),
                     drawSelection(),
                     highlightActiveLine(),
                     highlightActiveLineGutter(),

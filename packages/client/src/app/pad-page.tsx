@@ -1,17 +1,28 @@
 import type { PadPath } from '@mmpad/shared'
-import { useEffect } from 'react'
-import { TextDiffWorkspace } from '@/pad-text/text-diff-workspace'
+import { Suspense, useEffect, useRef } from 'react'
 import { DrawingWorkspacePane } from '@/pad-drawing/view/drawing-workspace-pane'
 import { TextWorkspace } from '@/pad-text/view/text-workspace'
-import { FilesPane } from '@/live-files/view/files-pane'
 import { usePadPage, type PadPageModel } from '@/app/model/use-pad-page'
+import { PadLoadingShell } from '@/app/pad-loading-shell'
+import { lazyWithPreload } from '@/lib/lazy-with-preload'
+import { scheduleIdleTask } from '@/lib/schedule-idle'
 import { PadSidebar } from '@/workspace-shell/view/pad-sidebar'
 import { PadStatusBar } from '@/workspace-shell/view/pad-status-bar'
 import { PadTopBar } from '@/workspace-shell/view/pad-top-bar'
-import { WorkspaceDialogs } from '@/workspace-shell/view/workspace-dialogs'
+
+const LazyTextDiffWorkspace = lazyWithPreload(() =>
+    import('@/pad-text/text-diff-workspace').then((mod) => ({ default: mod.TextDiffWorkspace })),
+)
+const LazyFilesPane = lazyWithPreload(() =>
+    import('@/live-files/view/files-pane').then((mod) => ({ default: mod.FilesPane })),
+)
+const LazyWorkspaceDialogs = lazyWithPreload(() =>
+    import('@/workspace-shell/view/workspace-dialogs').then((mod) => ({ default: mod.WorkspaceDialogs })),
+)
 
 export function PadPage({ path }: { path: PadPath }) {
     const model = usePadPage(path)
+    const prefetchedRef = useRef(false)
 
     useEffect(() => {
         if (import.meta.env.VITE_E2E !== '1') return
@@ -20,12 +31,40 @@ export function PadPage({ path }: { path: PadPath }) {
         })
     }, [model])
 
+    useEffect(() => {
+        if (prefetchedRef.current || model.state.view.activeTab !== 'text') return
+
+        return scheduleIdleTask(() => {
+            prefetchedRef.current = true
+            void LazyTextDiffWorkspace.preload()
+            void LazyFilesPane.preload()
+            void LazyWorkspaceDialogs.preload()
+        }, 600)
+    }, [model.state.view.activeTab])
+
+    const dialogs = model.state.view.dialog !== null ? (
+        <Suspense fallback={null}>
+            <LazyWorkspaceDialogs model={model} />
+        </Suspense>
+    ) : null
+
     if (model.state.kind === 'loading') {
         return (
             <main className="app-shell" data-testid="pad-page">
-                <PadTopBar model={model} />
-                <LoadingPadPage path={path} model={model} />
-                <WorkspaceDialogs model={model} />
+                <PadLoadingShell
+                    activeTab={model.state.view.activeTab}
+                    clockLabel={model.state.view.clockLabel}
+                    cursorLabel={model.state.view.cursorLabel}
+                    layout={model.state.view.layout}
+                    onNavigate={model.actions.navigateToPad}
+                    onOpenTab={model.actions.openTab}
+                    onSetLayout={model.actions.setLayout}
+                    onToggleSidebar={model.actions.toggleSidebar}
+                    path={path}
+                    phrase={model.state.view.phrase}
+                    sidebarOpen={model.state.view.sidebarOpen}
+                />
+                {dialogs}
             </main>
         )
     }
@@ -41,39 +80,8 @@ export function PadPage({ path }: { path: PadPath }) {
         <main className="app-shell" data-testid="pad-page">
             <PadTopBar model={model} />
             <ReadyPadPage model={readyModel} />
-            <WorkspaceDialogs model={model} />
+            {dialogs}
         </main>
-    )
-}
-
-function LoadingPadPage(input: { path: PadPath; model: ReturnType<typeof usePadPage> }) {
-    const { actions, state } = input.model
-
-    return (
-        <div className="app-content">
-            {state.view.sidebarOpen ? (
-                <PadSidebar
-                    path={input.path}
-                    tree={[]}
-                    onNavigate={actions.navigateToPad}
-                />
-            ) : null}
-            <div className="app-main">
-                <section className="loading-shell workspace-shell">
-                    <div className="loading-card">
-                        <span className="mpad-logo mpad-logo-lg"><span className="mpad-logo-m">M</span>PAD</span>
-                        <p className="text-sm text-[--stone-text-secondary]">{state.view.phrase}</p>
-                    </div>
-                </section>
-                <PadStatusBar
-                    path={state.view.path}
-                    connection={state.status.connection}
-                    peerCount={state.status.peerCount}
-                    clockLabel={state.view.clockLabel}
-                    cursorLabel={state.view.cursorLabel}
-                />
-            </div>
-        </div>
     )
 }
 
@@ -92,18 +100,22 @@ function ReadyPadPage(input: { model: PadPageModel & { state: Extract<PadPageMod
             ) : null}
             <div className="app-main">
                 {state.view.activeTab === 'files' ? (
-                    <FilesPane
-                        files={state.status.files}
-                        onDeleteFile={actions.deleteFile}
-                        onDownloadFile={actions.downloadFile}
-                        onUploadFile={actions.uploadFile}
-                    />
+                    <Suspense fallback={<FilesPaneFallback />}>
+                        <LazyFilesPane
+                            files={state.status.files}
+                            onDeleteFile={actions.deleteFile}
+                            onDownloadFile={actions.downloadFile}
+                            onUploadFile={actions.uploadFile}
+                        />
+                    </Suspense>
                 ) : state.view.activeTab === 'diffs' ? (
-                    <TextDiffWorkspace
-                        currentContent={state.text.content}
-                        direction={state.view.splitDirection}
-                        path={state.view.path}
-                    />
+                    <Suspense fallback={<DiffWorkspaceFallback />}>
+                        <LazyTextDiffWorkspace
+                            currentContent={state.text.content}
+                            direction={state.view.splitDirection}
+                            path={state.view.path}
+                        />
+                    </Suspense>
                 ) : state.view.activeTab === 'drawing' ? (
                     <DrawingWorkspacePane drawing={drawing} theme={state.view.drawingTheme} />
                 ) : (
@@ -136,5 +148,25 @@ function ReadyPadPage(input: { model: PadPageModel & { state: Extract<PadPageMod
                 />
             </div>
         </div>
+    )
+}
+
+function DiffWorkspaceFallback() {
+    return (
+        <section className="workspace-shell min-h-0" data-testid="text-diff-workspace">
+            <div className="flex h-full items-center justify-center bg-[--stone-bg] text-sm text-[--stone-text-muted]">
+                Loading diff…
+            </div>
+        </section>
+    )
+}
+
+function FilesPaneFallback() {
+    return (
+        <section className="workspace-shell min-h-0">
+            <div className="flex h-full items-center justify-center bg-[--stone-bg] text-sm text-[--stone-text-muted]">
+                Loading files…
+            </div>
+        </section>
     )
 }

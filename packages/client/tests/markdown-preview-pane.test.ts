@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'bun:test'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { MarkdownPreviewPane } from '../src/pad-text/markdown-preview-pane'
+import { MarkdownPreviewPane, preloadMarkdownHighlighter } from '../src/pad-text/markdown-preview-pane'
 
 describe('markdown preview', () => {
-    test('highlights fenced code blocks', () => {
+    test('highlights fenced code blocks', async () => {
+        await preloadMarkdownHighlighter()
+
         const html = renderToStaticMarkup(createElement(MarkdownPreviewPane, {
             content: '```js\nconst total = 1\n```',
         }))
@@ -19,5 +21,15 @@ describe('markdown preview', () => {
         }))
 
         expect(html).toContain('plain words')
+    })
+
+    test('labels task list checkboxes for assistive tech', () => {
+        const html = renderToStaticMarkup(createElement(MarkdownPreviewPane, {
+            content: '- [x] done\n- [ ] todo',
+        }))
+
+        expect(html).toContain('aria-label="Completed task"')
+        expect(html).toContain('aria-label="Incomplete task"')
+        expect(html).toContain('tabindex="-1"')
     })
 })

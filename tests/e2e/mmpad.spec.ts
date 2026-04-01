@@ -25,6 +25,24 @@ test('opens a pad from the landing input', async ({ page }) => {
     await expect(page).toHaveURL(new RegExp(`/${path}$`))
 })
 
+test('labels the editor and rendered task checkboxes', async ({ browser }) => {
+    const path = `notes/${Date.now()}-a11y`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await page.evaluate(() => (window as any).__mmpad__.setText('- [x] done\n- [ ] todo'))
+    await waitForText(page, '- [x] done\n- [ ] todo')
+
+    await expect(page.locator('.cm-content').first()).toHaveAttribute('aria-label', 'Pad text editor')
+    await expect(page.locator('.markdown-body input[type="checkbox"]').nth(0)).toHaveAttribute('aria-label', 'Completed task')
+    await expect(page.locator('.markdown-body input[type="checkbox"]').nth(0)).toHaveAttribute('tabindex', '-1')
+    await expect(page.locator('.markdown-body input[type="checkbox"]').nth(1)).toHaveAttribute('aria-label', 'Incomplete task')
+    await expect(page.locator('.markdown-body input[type="checkbox"]').nth(1)).toHaveAttribute('tabindex', '-1')
+
+    await context.close()
+})
+
 test('syncs markdown between two pads', async ({ browser }) => {
     const path = `notes/${Date.now()}-text`
     const contextA = await browser.newContext()

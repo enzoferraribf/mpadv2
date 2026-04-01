@@ -1,3 +1,4 @@
+import 'github-markdown-css/github-markdown.css'
 import type { TextPadComments } from '@/pad-text/application/use-text-pad'
 import type { TextCommentResult } from '@/pad-text/infrastructure/text-comment-store'
 import type { CursorPosition, TextEditorHandle } from '@/pad-text/infrastructure/text-editor'

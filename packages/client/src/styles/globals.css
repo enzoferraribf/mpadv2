@@ -30,6 +30,7 @@
         --stone-elevated: #2e2d28;
         --stone-text: #e6e0d6;
         --stone-text-secondary: #8a8279;
+        --stone-text-muted: #91887f;
         --stone-text-dim: #524e47;
         --stone-accent: #c9a87c;
         --stone-accent-secondary: #7c9c8a;
@@ -435,7 +436,7 @@
     .pad-sidebar-section-label {
         font-size: 10px;
         font-family: 'Nunito Sans', sans-serif;
-        color: var(--stone-text-dim);
+        color: var(--stone-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.15em;
     }
@@ -649,7 +650,7 @@
         font-family: 'Nunito Sans', sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: var(--stone-text-dim);
+        color: var(--stone-text-muted);
         border: none;
         background: transparent;
         position: relative;
@@ -688,7 +689,7 @@
         width: 28px;
         height: 28px;
         font-size: 14px;
-        color: var(--stone-text-dim);
+        color: var(--stone-text-muted);
         background: none;
         border: none;
         border-radius: 4px;
@@ -729,19 +730,22 @@
     }
 
     .cm-comment-highlight {
-        background: rgba(231, 194, 90, 0.24);
+        color: var(--stone-text);
+        background: rgba(231, 194, 90, 0.18);
         border-radius: 2px;
         cursor: pointer;
         box-shadow: inset 0 -1px 0 rgba(231, 194, 90, 0.45);
     }
 
     .cm-comment-highlight-active {
-        background: rgba(231, 194, 90, 0.34);
+        color: #f3dec0;
+        background: rgba(231, 194, 90, 0.26);
         box-shadow: inset 0 -2px 0 rgba(231, 194, 90, 0.8);
     }
 
     .cm-comment-highlight-resolved {
-        background: rgba(231, 194, 90, 0.12);
+        color: var(--stone-text-muted);
+        background: rgba(231, 194, 90, 0.08);
         box-shadow: inset 0 -1px 0 rgba(231, 194, 90, 0.25);
     }
 
@@ -972,7 +976,7 @@
         background: var(--stone-bg);
         font-size: 11px;
         font-family: 'Nunito Sans', sans-serif;
-        color: var(--stone-text-dim);
+        color: var(--stone-text-muted);
         user-select: none;
     }
 
