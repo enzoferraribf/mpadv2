@@ -1,4 +1,5 @@
 export type { PadDocKind, PadRoom, PadRoomKind } from './kernel/pad-room'
+export type { PadConnection } from './collab/domain/pad-connection'
 export type {
     FileSignal,
     InboundFileSignal,
@@ -14,6 +15,12 @@ export type {
     PadTextRevisionResponse,
     PadTreeResponse,
 } from './contracts/http'
+export type {
+    PadWorkspaceDialog,
+    PadWorkspaceDirection,
+    PadWorkspaceLayout,
+    PadWorkspaceTab,
+} from './pad-workspace/domain/workspace-view'
 export type { PadDocRevisionSummary, PadTextRevision } from './contracts/pad-text-history'
 export type { PadPath } from './kernel/pad-path'
 export type {

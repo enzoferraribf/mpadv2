@@ -1,9 +1,9 @@
 import { Suspense, lazy } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { padPath } from '@mmpad/shared'
-import { PadLoadingShell } from '@/app/pad-loading-shell'
+import { PadLoadingShell } from '@/pad-workspace/view/pad-loading-shell'
 
-const LazyPadPage = lazy(() => import('@/app/pad-page').then((mod) => ({ default: mod.PadPage })))
+const LazyPadPage = lazy(() => import('@/pad-workspace/view/pad-page').then((mod) => ({ default: mod.PadPage })))
 
 export const Route = createFileRoute('/$')({
     component: PadRoute,

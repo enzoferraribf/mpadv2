@@ -1,30 +1,31 @@
 import { Blocks, Columns2, Eye, FileText, FolderTree, PanelRightOpen } from 'lucide-react'
+import type { PadWorkspaceLayout } from '@mmpad/shared'
 import { CommandDialog, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import type { PadPageActions, PadWorkspaceLayout } from '@/app/model/use-pad-page'
+import type { PadWorkspaceCommands } from '@/pad-workspace/application/use-pad-workspace-model'
 
 export function CommandMenu(input: {
     open: boolean
     onOpenChange: (open: boolean) => void
-    actions: PadPageActions
+    commands: PadWorkspaceCommands
 }) {
     return (
         <CommandDialog open={input.open} onOpenChange={input.onOpenChange}>
             <CommandInput placeholder="Search commands" />
             <CommandList>
                 <CommandGroup heading="Workspace">
-                    <CommandItem onSelect={() => run(input, () => input.actions.openTab('diffs'))} className="gap-3">
+                    <CommandItem onSelect={() => run(input, () => input.commands.openTab('diffs'))} className="gap-3">
                         <span className="command-icon-wrap"><Columns2 className="h-4 w-4" /></span>
                         <CommandCopy heading="Diffs" description="Compare saved snapshots with the current text." />
                     </CommandItem>
-                    <CommandItem onSelect={() => run(input, () => input.actions.openTab('drawing'))} className="gap-3">
+                    <CommandItem onSelect={() => run(input, () => input.commands.openTab('drawing'))} className="gap-3">
                         <span className="command-icon-wrap"><Blocks className="h-4 w-4" /></span>
                         <CommandCopy heading="Excalidraw" description="Show the shared drawing." />
                     </CommandItem>
-                    <CommandItem onSelect={() => run(input, () => input.actions.openDialog('tree'))} className="gap-3">
+                    <CommandItem onSelect={() => run(input, () => input.commands.openDialog('tree'))} className="gap-3">
                         <span className="command-icon-wrap"><FolderTree className="h-4 w-4" /></span>
                         <CommandCopy heading="Explorer" description="Browse related pads." />
                     </CommandItem>
-                    <CommandItem onSelect={() => run(input, () => input.actions.openDialog('files'))} className="gap-3">
+                    <CommandItem onSelect={() => run(input, () => input.commands.openDialog('files'))} className="gap-3">
                         <span className="command-icon-wrap"><FileText className="h-4 w-4" /></span>
                         <CommandCopy heading="Files" description="Browse live files." />
                     </CommandItem>
@@ -48,13 +49,13 @@ export function CommandMenu(input: {
     )
 }
 
-function setLayout(input: { actions: PadPageActions; onOpenChange: (open: boolean) => void }, layout: PadWorkspaceLayout) {
-    input.actions.closeDialog()
-    input.actions.setLayout(layout)
+function setLayout(input: { commands: PadWorkspaceCommands; onOpenChange: (open: boolean) => void }, layout: PadWorkspaceLayout) {
+    input.commands.closeDialog()
+    input.commands.setLayout(layout)
 }
 
-function run(input: { actions: PadPageActions; onOpenChange: (open: boolean) => void }, action: () => void) {
-    input.actions.closeDialog()
+function run(input: { commands: PadWorkspaceCommands; onOpenChange: (open: boolean) => void }, action: () => void) {
+    input.commands.closeDialog()
     action()
 }
 

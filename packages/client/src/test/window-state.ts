@@ -1,4 +1,4 @@
-import type { PadPageModel } from '@/app/model/use-pad-page'
+import type { PadWorkspaceModel } from '@/pad-workspace/application/use-pad-workspace-model'
 
 declare global {
     interface Window {
@@ -39,29 +39,29 @@ declare global {
     }
 }
 
-export function publishWindowState(workspace: PadPageModel) {
+export function publishWindowState(workspace: PadWorkspaceModel) {
     if (workspace.state.kind !== 'ready') {
         delete window.__mmpad__
         return
     }
 
-    const { actions, state } = workspace
+    const { commands, state } = workspace
 
     window.__mmpad__ = {
         appendText: (content: string) => {
             state.text.editor.appendText(content)
         },
         createCommentThread: (body: string) => {
-            actions.createCommentThread(body)
+            commands.createCommentThread(body)
         },
         deleteCommentMessage: (threadId: string, messageId: string) => {
-            actions.deleteCommentMessage({ threadId, messageId })
+            commands.deleteCommentMessage({ threadId, messageId })
         },
         deleteCommentThread: (threadId: string) => {
-            actions.deleteCommentThread(threadId)
+            commands.deleteCommentThread(threadId)
         },
         editCommentMessage: (threadId: string, messageId: string, body: string) => {
-            actions.editCommentMessage({ threadId, messageId, body })
+            commands.editCommentMessage({ threadId, messageId, body })
         },
         getCommentThreads: () => state.text.comments.threads.map((thread) => ({
             id: thread.id,
@@ -82,12 +82,12 @@ export function publishWindowState(workspace: PadPageModel) {
                 : 0,
         getConnection: () => state.status.connection,
         hasLocalFile: (name: string) => state.status.files.some((file) => file.meta.name === name && file.isLocal),
-        openDrawing: () => actions.openTab('drawing'),
+        openDrawing: () => commands.openTab('drawing'),
         openCommentDraftFromSelection: () => {
-            actions.openCommentDraftFromSelection()
+            commands.openCommentDraftFromSelection()
         },
         reopenCommentThread: (threadId: string) => {
-            actions.reopenCommentThread(threadId)
+            commands.reopenCommentThread(threadId)
         },
         insertTestArrow: async () => {
             if (!window.__mmpadDrawingApi__) throw new Error('Drawing API is unavailable')
@@ -102,30 +102,30 @@ export function publishWindowState(workspace: PadPageModel) {
             state.drawing.drawing.writeScene(convertToExcalidrawElements([{ type: 'rectangle', x: 80, y: 80, width: 160, height: 120 }]))
         },
         replyToCommentThread: (threadId: string, body: string) => {
-            actions.replyToCommentThread({ threadId, body })
+            commands.replyToCommentThread({ threadId, body })
         },
         resolveCommentThread: (threadId: string) => {
-            actions.resolveCommentThread(threadId)
+            commands.resolveCommentThread(threadId)
         },
         selectCommentRange: (from: number, to: number) => {
             state.text.editor.selectRange(from, to)
         },
         selectCommentThread: (threadId: string) => {
-            actions.openCommentThread(threadId)
+            commands.openCommentThread(threadId)
         },
         setText: (content: string) => {
             state.text.editor.setText(content)
         },
         uploadTestFile: async () => {
-            actions.uploadFile(new File(['hello file'], 'readme.txt', { type: 'text/plain' }))
+            commands.uploadFile(new File(['hello file'], 'readme.txt', { type: 'text/plain' }))
         },
         requestFile: (name: string) => {
             const file = state.status.files.find((value) => value.meta.name === name)
-            if (file) actions.downloadFile(file)
+            if (file) commands.downloadFile(file)
         },
         deleteLocalFile: (name: string) => {
             const file = state.status.files.find((value) => value.meta.name === name && value.isLocal)
-            if (file) actions.deleteFile(file.meta.id)
+            if (file) commands.deleteFile(file.meta.id)
         },
     }
 }

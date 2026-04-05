@@ -2,7 +2,11 @@ import { PERSIST_DEBOUNCE_MS, type PadPath } from '@mmpad/shared'
 import { RotateCcw } from 'lucide-react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { fetchPadTextHistory, fetchPadTextRevision, type PadTextHistoryEntry, type PadTextHistoryRevision } from '@/pad-session/api'
+import {
+    browserPadTextHistoryQuery,
+    type PadTextHistoryEntry,
+    type PadTextHistoryRevision,
+} from '@/pad-text/infrastructure/browser-pad-text-history'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 
 const LazyTextDiffMergeView = lazy(() => import('./text-diff-merge-view').then((mod) => ({ default: mod.TextDiffMergeView })))
@@ -76,7 +80,7 @@ export function TextDiffWorkspace(input: {
         const controller = new AbortController()
         setLoadingHistory(true)
 
-        void fetchPadTextHistory(input.path, controller.signal)
+        void browserPadTextHistoryQuery.listRevisions(input.path, controller.signal)
             .then((nextEntries) => {
                 if (!active) return
                 setEntries(nextEntries)
@@ -285,7 +289,7 @@ function usePadTextRevision(path: PadPath, revisionId: number | null): RevisionL
         const controller = new AbortController()
         setState({ kind: 'loading' })
 
-        void fetchPadTextRevision(path, revisionId, controller.signal)
+        void browserPadTextHistoryQuery.readRevision(path, revisionId, controller.signal)
             .then((revision) => {
                 if (!active) return
                 setState({ kind: 'ready', revision })

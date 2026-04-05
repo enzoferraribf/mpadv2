@@ -1,9 +1,12 @@
 import { Y_TEXT_KEY, type LocalPeer, type PadPath } from '@mmpad/shared'
 import { useEffect, useMemo, useState } from 'react'
-import type { PadTextRoom, TextAwarenessState, TextAwarenessUser } from '@/pad-session/pad-room-types'
-import { revertPadTextRevision, type PadTextHistoryEntry } from '@/pad-session/api'
+import type { PadTextRoom, TextAwarenessState, TextAwarenessUser } from '@/collab/domain/pad-room-session'
+import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'
 import { createTextAwarenessState } from '@/pad-text/infrastructure/text-awareness'
-import { usePadRoomSession } from '@/pad-session/use-pad-room-session'
+import {
+    browserPadTextHistoryCommand,
+    type PadTextHistoryEntry,
+} from '@/pad-text/infrastructure/browser-pad-text-history'
 import {
     createTextCommentController,
     type TextCommentHighlight,
@@ -67,7 +70,7 @@ export function useTextPad(path: PadPath, localPeer: LocalPeer): TextPadModel {
         colorLight: localPeer.textColorLight,
     }), [localPeer.name, localPeer.textColor, localPeer.textColorLight])
     const localState = useMemo<TextAwarenessState>(() => createTextAwarenessState(awarenessUser), [awarenessUser])
-    const room = usePadRoomSession({
+    const room = useBrowserRoomSession({
         path,
         kind: 'text',
         localState,
@@ -244,7 +247,7 @@ export function useTextPad(path: PadPath, localPeer: LocalPeer): TextPadModel {
         commentActions,
         async revertToRevision(input) {
             if (room.status !== 'connected') throw new Error('Text room is not connected')
-            return revertPadTextRevision(path, input.revisionId)
+            return browserPadTextHistoryCommand.revertRevision(path, input.revisionId)
         },
     }
 }

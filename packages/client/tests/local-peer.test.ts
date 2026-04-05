@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { ANIME_PEER_NAMES, createRandomLocalPeer, readStoredLocalPeer } from '../src/peer/model/local-peer'
+import { ANIME_PEER_NAMES, createRandomLocalPeer, readStoredLocalPeer } from '../src/pad-workspace/infrastructure/browser-local-peer-store'
 
 describe('local peer', () => {
     test('picks an anime name and palette color for new peers', () => {

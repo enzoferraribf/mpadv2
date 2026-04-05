@@ -8,9 +8,9 @@ import {
     type PadPath,
 } from '@mmpad/shared'
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { FileAwarenessUser, PadFileRoom } from '@/pad-session/pad-room-types'
+import type { FileAwarenessUser, PadFileRoom } from '@/collab/domain/pad-room-session'
+import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'
 import { createFileAwarenessState, readFileAwarenessStates } from '@/live-files/infrastructure/file-awareness'
-import { usePadRoomSession } from '@/pad-session/use-pad-room-session'
 import {
     buildLiveFileList,
     createFileMachineState,
@@ -35,7 +35,7 @@ export type LiveFilesModel = {
     uploadFile: (file: File) => void
 }
 
-export function useLiveFiles(path: PadPath, localPeer: LocalPeer): LiveFilesModel {
+export function useLiveFiles(path: PadPath, localPeer: LocalPeer, open: boolean): LiveFilesModel {
     const [state, dispatch] = useReducer(reduceFileMachine, undefined, createFileMachineState)
     const [awarenessVersion, setAwarenessVersion] = useState(0)
     const stateRef = useRef(state)
@@ -45,11 +45,11 @@ export function useLiveFiles(path: PadPath, localPeer: LocalPeer): LiveFilesMode
         () => createFileAwarenessState(awarenessUser, Object.values(state.localFiles).map((file) => file.meta)),
         [awarenessUser, state.localFiles],
     )
-    const session = usePadRoomSession({
+    const session = useBrowserRoomSession({
         path,
         kind: 'files',
         localState,
-        open: true,
+        open: open || Object.keys(state.localFiles).length > 0 || Object.keys(state.transfers).length > 0,
     })
     const room = useMemo<PadFileRoom | null>(() => {
         if (!session) return null
@@ -106,8 +106,9 @@ export function useLiveFiles(path: PadPath, localPeer: LocalPeer): LiveFilesMode
     }, [])
 
     const files = useMemo(() => {
-        if (!room) return []
-        const awarenessStates = readFileAwarenessStates(room.awareness.getStates())
+        const awarenessStates = room
+            ? readFileAwarenessStates(room.awareness.getStates())
+            : new Map()
         return buildLiveFileList(awarenessStates, state.localFiles, state.transfers)
     }, [awarenessVersion, room, state.localFiles, state.transfers])
 

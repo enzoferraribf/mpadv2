@@ -1,5 +1,5 @@
 import type { LiveFileMeta } from '@mmpad/shared'
-import type { FileAwarenessState, FileAwarenessUser } from '@/pad-session/pad-room-types'
+import type { FileAwarenessState, FileAwarenessUser } from '@/collab/domain/pad-room-session'
 
 export function createFileAwarenessState(user: FileAwarenessUser, files: LiveFileMeta[]): FileAwarenessState {
     return { user, files }

@@ -1,7 +1,7 @@
 import type { FileSignal, LiveFileMeta, LiveFileState } from '@mmpad/shared'
 import type { SignalData } from 'simple-peer'
 import { toast } from 'sonner'
-import type { PadFileRoom } from '@/pad-session/pad-room-types'
+import type { PadFileRoom } from '@/collab/domain/pad-room-session'
 import {
     createFileMachineState,
     reduceFileMachine,

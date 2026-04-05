@@ -1,4 +1,4 @@
-import type { TextAwarenessState, TextAwarenessUser } from '@/pad-session/pad-room-types'
+import type { TextAwarenessState, TextAwarenessUser } from '@/collab/domain/pad-room-session'
 
 export function createTextAwarenessState(user: TextAwarenessUser): TextAwarenessState {
     return { user }

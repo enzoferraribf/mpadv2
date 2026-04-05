@@ -8,7 +8,7 @@ import {
     listPadDocRevisions,
     loadPadDoc,
     loadPadDocRevisionBytes,
-} from '../src/pad-doc/infrastructure/repository'
+} from '../src/collab/infrastructure/doc-store'
 import { migrate, sql } from '../src/infrastructure/db'
 
 beforeAll(async () => {

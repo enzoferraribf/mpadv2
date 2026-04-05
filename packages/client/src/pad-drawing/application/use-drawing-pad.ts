@@ -1,7 +1,7 @@
 import type { LocalPeer, PadPath } from '@mmpad/shared'
 import { useMemo } from 'react'
-import type { DrawingAwarenessState, DrawingAwarenessUser, PadDrawingRoom } from '@/pad-session/pad-room-types'
-import { usePadRoomSession } from '@/pad-session/use-pad-room-session'
+import type { DrawingAwarenessState, DrawingAwarenessUser, PadDrawingRoom } from '@/collab/domain/pad-room-session'
+import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'
 import { createDrawingHandle } from '@/pad-drawing/infrastructure/drawing-handle'
 
 export type DrawingPadModel =
@@ -23,7 +23,7 @@ export function useDrawingPad(path: PadPath, localPeer: LocalPeer, open: boolean
         pointer: null,
         button: 'up',
     }), [awarenessUser])
-    const room = usePadRoomSession({
+    const room = useBrowserRoomSession({
         path,
         kind: 'drawing',
         localState,

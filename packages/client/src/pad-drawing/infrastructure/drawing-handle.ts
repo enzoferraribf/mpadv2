@@ -2,7 +2,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { Collaborator, CollaboratorPointer, SocketId } from '@excalidraw/excalidraw/types'
 import type { Awareness } from 'y-protocols/awareness'
 import type { Doc } from 'yjs'
-import type { DrawingAwarenessPointer, DrawingAwarenessState } from '@/pad-session/pad-room-types'
+import type { DrawingAwarenessPointer, DrawingAwarenessState } from '@/collab/domain/pad-room-session'
 import { readDrawingScene, writeDrawingScene } from './drawing-scene'
 
 export type DrawingHandle = {
