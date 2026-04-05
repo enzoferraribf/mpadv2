@@ -1,12 +1,13 @@
 import type { ServerWebSocket } from 'bun'
 import { assert, type ClientRoomMessage } from '@mmpad/shared'
 import type { WsData } from '../../transport/ws-data'
-import { listPadTextRevisions, readPadTextRevision } from '../infrastructure/repository'
+import { listPadTextRevisions, readPadTextRevision, readPadTextRevisionUpdate } from '../infrastructure/repository'
 import {
     flushPadDocRooms,
     handlePadDocMessage,
     joinPadDocRoom,
     leavePadDocRoom,
+    revertPadDocRoomToUpdate,
 } from '../../pad-doc/application/service'
 
 export async function joinPadTextRoom(ws: ServerWebSocket<WsData>) {
@@ -28,4 +29,20 @@ export async function flushPadTextRooms() {
     await flushPadDocRooms()
 }
 
-export { listPadTextRevisions, readPadTextRevision }
+export async function revertPadTextRevision(path: import('@mmpad/shared').PadPath, revisionId: number) {
+    const revision = await readPadTextRevision(path, revisionId)
+    if (!revision) return null
+
+    const update = await readPadTextRevisionUpdate(path, revisionId)
+    if (!update) return null
+
+    return revertPadDocRoomToUpdate({
+        path,
+        kind: 'text',
+        revertedFromRevisionId: revisionId,
+        revertedFromRevisionNumber: revision.revisionNumber,
+        update,
+    })
+}
+
+export { listPadTextRevisions, readPadTextRevision, readPadTextRevisionUpdate }

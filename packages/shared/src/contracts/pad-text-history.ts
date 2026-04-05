@@ -3,6 +3,7 @@ export type PadDocRevisionSummary = {
     revisionNumber: number
     createdAt: string
     isHead: boolean
+    revertedFromRevisionNumber: number | null
 }
 
 export type PadTextRevision = {

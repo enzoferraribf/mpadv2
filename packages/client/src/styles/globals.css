@@ -1098,6 +1098,12 @@
         color: var(--stone-text-dim);
     }
 
+    .diff-history-item-note {
+        font-size: 11px;
+        font-family: 'Nunito Sans', sans-serif;
+        color: var(--stone-text-secondary);
+    }
+
     .diff-history-item-actions {
         display: inline-flex;
         align-items: center;
@@ -1106,6 +1112,9 @@
     }
 
     .diff-history-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         height: 28px;
         padding: 0 10px;
         border: 1px solid var(--stone-border);
@@ -1118,9 +1127,18 @@
         letter-spacing: 0.08em;
     }
 
+    .diff-history-toggle-icon {
+        width: 12px;
+        height: 12px;
+    }
+
     .diff-history-toggle.active {
         border-color: var(--stone-border-strong);
         background: rgba(201, 168, 124, 0.08);
+        color: var(--stone-text);
+    }
+
+    .diff-history-revert {
         color: var(--stone-text);
     }
 

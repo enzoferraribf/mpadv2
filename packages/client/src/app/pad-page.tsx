@@ -113,6 +113,7 @@ function ReadyPadPage(input: { model: PadPageModel & { state: Extract<PadPageMod
                         <LazyTextDiffWorkspace
                             currentContent={state.text.content}
                             direction={state.view.splitDirection}
+                            onRevertToRevision={actions.revertTextToRevision}
                             path={state.view.path}
                         />
                     </Suspense>

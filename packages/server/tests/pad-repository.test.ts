@@ -195,6 +195,39 @@ describe('pad doc repository', () => {
         latestDoc.destroy()
         await cleanupRoot(root)
     })
+
+    test('stores which snapshot a revert came from', async () => {
+        const root = uniqueRoot('revert-meta')
+        const path = padPath(`${root}/doc`)
+        await cleanupRoot(root)
+        await ensurePad(path)
+
+        const doc = new Doc()
+        const updates: Uint8Array[] = []
+        doc.on('update', (update) => updates.push(update))
+
+        doc.getText(Y_TEXT_KEY).insert(0, 'alpha')
+        const first = await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
+        updates.length = 0
+
+        doc.getText(Y_TEXT_KEY).insert(5, '\nbeta')
+        await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
+        updates.length = 0
+
+        doc.getText(Y_TEXT_KEY).delete(5, 5)
+        await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length, first.revisionId)
+
+        const history = await listPadDocRevisions(path, 'text')
+
+        expect(history[0]).toEqual(expect.objectContaining({
+            revisionNumber: 3,
+            revertedFromRevisionNumber: 1,
+            isHead: true,
+        }))
+
+        doc.destroy()
+        await cleanupRoot(root)
+    })
 })
 
 describe('pad tree repository', () => {

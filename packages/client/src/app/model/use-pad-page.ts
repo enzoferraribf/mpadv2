@@ -1,4 +1,4 @@
-import type { LiveFileState, PadPath, PadTreeItem } from '@mmpad/shared'
+import type { LiveFileState, PadDocRevisionSummary, PadPath, PadTreeItem } from '@mmpad/shared'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { toast } from 'sonner'
@@ -60,6 +60,7 @@ export type PadPageActions = WorkspaceShellActions & {
     navigateToPad: (path: PadPath) => void
     openCommentDraftFromSelection: () => boolean
     openCommentThread: (threadId: string | null) => void
+    revertTextToRevision: (input: { revisionId: number; revisionNumber: number }) => Promise<PadDocRevisionSummary>
     replyToCommentThread: (input: { threadId: string; body: string }) => TextCommentResult<{ messageId: string }>
     reopenCommentThread: (threadId: string) => TextCommentResult
     setCommentSelection: (selection: TextEditorSelection | null) => void
@@ -121,6 +122,10 @@ export function usePadPage(path: PadPath): PadPageModel {
         openCommentThread(threadId) {
             if (text.kind === 'loading') return
             text.commentActions.openThread(threadId)
+        },
+        async revertTextToRevision(input) {
+            if (text.kind === 'loading') throw new Error('Text is unavailable')
+            return text.revertToRevision(input)
         },
         replyToCommentThread(input) {
             if (text.kind === 'loading') return { ok: false, error: 'Comments are unavailable' }

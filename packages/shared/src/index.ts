@@ -71,6 +71,10 @@ export {
 } from './kernel/pad-path'
 
 export {
+    restoreTextDocFromUpdate,
+} from './kernel/text-revert'
+
+export {
     applyAwarenessMessage,
     createAwarenessMessage,
     createDocUpdateMessage,

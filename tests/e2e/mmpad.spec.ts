@@ -539,6 +539,53 @@ test('forces the right side to stay newer than the left', async ({ browser }) =>
     await context.close()
 })
 
+test('reverts an older snapshot into a new head snapshot', async ({ browser }) => {
+    const path = `notes/${Date.now()}-diffs-revert`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await persistTextRevision(page, '# alpha')
+    await persistTextRevision(page, '\n## beta')
+    await persistTextRevision(page, '\n### gamma')
+    await openDiffsTab(page)
+    await waitForHistoryItems(page, 3)
+
+    await readSnapshotRevertButton(page, 1).click()
+    await waitForText(page, '# alpha')
+    await expect(page.locator('[data-testid="diff-history-item"]')).toHaveCount(4, { timeout: 7_000 })
+    await expect(page.locator('[data-testid="diff-history-item"] .diff-history-item-number').first()).toHaveText('Snapshot 4')
+    await expect(page.locator('[data-testid="diff-history-item"] .diff-history-item-note').first()).toHaveText('Revert to Snapshot 1')
+
+    await context.close()
+})
+
+test('reverts comment state with the saved snapshot', async ({ browser }) => {
+    const path = `notes/${Date.now()}-diffs-revert-comments`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await page.evaluate(() => (window as any).__mmpad__.setText('alpha beta gamma'))
+    await waitForText(page, 'alpha beta gamma')
+    await page.waitForTimeout(3_500)
+
+    await page.evaluate(() => (window as any).__mmpad__.selectCommentRange(6, 10))
+    await page.evaluate(() => (window as any).__mmpad__.openCommentDraftFromSelection())
+    await page.evaluate(() => (window as any).__mmpad__.createCommentThread('Beta note'))
+    await waitForCommentThreadCount(page, 1)
+    await page.waitForTimeout(3_500)
+
+    await openDiffsTab(page)
+    await waitForHistoryItems(page, 2)
+
+    await readSnapshotRevertButton(page, 1).click()
+    await waitForCommentThreadCount(page, 0)
+    await expect(page.locator('[data-testid="diff-history-item"]')).toHaveCount(3, { timeout: 7_000 })
+
+    await context.close()
+})
+
 test('renders the command menu', async ({ browser }) => {
     const path = 'visuals/command-menu'
     const context = await browser.newContext()
@@ -830,6 +877,10 @@ async function waitForCommentThreadCount(page: Page, count: number) {
 
 function readSnapshotSideButton(page: Page, revisionNumber: number, side: 'left' | 'right') {
     return page.getByRole('button', { name: `Select snapshot ${revisionNumber} as ${side}` })
+}
+
+function readSnapshotRevertButton(page: Page, revisionNumber: number) {
+    return page.getByRole('button', { name: `Revert to snapshot ${revisionNumber}` })
 }
 
 function readCurrentRightButton(page: Page) {

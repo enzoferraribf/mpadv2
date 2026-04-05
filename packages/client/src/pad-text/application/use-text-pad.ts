@@ -1,6 +1,7 @@
 import { Y_TEXT_KEY, type LocalPeer, type PadPath } from '@mmpad/shared'
 import { useEffect, useMemo, useState } from 'react'
 import type { PadTextRoom, TextAwarenessState, TextAwarenessUser } from '@/pad-session/pad-room-types'
+import { revertPadTextRevision, type PadTextHistoryEntry } from '@/pad-session/api'
 import { createTextAwarenessState } from '@/pad-text/infrastructure/text-awareness'
 import { usePadRoomSession } from '@/pad-session/use-pad-room-session'
 import {
@@ -56,6 +57,7 @@ export type TextPadModel =
         editor: ReturnType<typeof createTextEditorHandle>
         comments: TextPadComments
         commentActions: TextPadCommentActions
+        revertToRevision: (input: { revisionId: number; revisionNumber: number }) => Promise<PadTextHistoryEntry>
     }
 
 export function useTextPad(path: PadPath, localPeer: LocalPeer): TextPadModel {
@@ -240,5 +242,9 @@ export function useTextPad(path: PadPath, localPeer: LocalPeer): TextPadModel {
             threads,
         },
         commentActions,
+        async revertToRevision(input) {
+            if (room.status !== 'connected') throw new Error('Text room is not connected')
+            return revertPadTextRevision(path, input.revisionId)
+        },
     }
 }

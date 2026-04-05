@@ -28,6 +28,19 @@ export async function fetchPadTextRevision(path: PadPath, revisionId: number, si
     return fetchJson<PadTextRevisionResponse>(`${API_URL}/api/pads${encodePadPath(path)}/text/history/${revisionId}`, signal)
 }
 
+export async function fetchPadTextRevisionUpdate(path: PadPath, revisionId: number) {
+    const response = await fetch(`${API_URL}/api/pads${encodePadPath(path)}/text/history/${revisionId}/update`)
+    if (!response.ok) throw new Error(await response.text())
+    return new Uint8Array(await response.arrayBuffer())
+}
+
+export async function revertPadTextRevision(path: PadPath, revisionId: number) {
+    const response = await fetch(`${API_URL}/api/pads${encodePadPath(path)}/text/history/${revisionId}/revert`, {
+        method: 'POST',
+    })
+    return readJson<PadTextHistoryEntry>(response)
+}
+
 function encodePadPath(path: PadPath) {
     return path.split('/').map(encodeURIComponent).join('/')
 }

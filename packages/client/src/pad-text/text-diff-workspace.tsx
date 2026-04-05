@@ -1,5 +1,7 @@
 import { PERSIST_DEBOUNCE_MS, type PadPath } from '@mmpad/shared'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { RotateCcw } from 'lucide-react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { fetchPadTextHistory, fetchPadTextRevision, type PadTextHistoryEntry, type PadTextHistoryRevision } from '@/pad-session/api'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 
@@ -39,11 +41,13 @@ const currentSource: CompareSource = { kind: 'current' }
 export function TextDiffWorkspace(input: {
     currentContent: string
     direction: 'horizontal' | 'vertical'
+    onRevertToRevision: (input: { revisionId: number; revisionNumber: number }) => Promise<PadTextHistoryEntry>
     path: PadPath
 }) {
     const [entries, setEntries] = useState<PadTextHistoryEntry[]>([])
     const [historyError, setHistoryError] = useState<string | null>(null)
     const [loadingHistory, setLoadingHistory] = useState(true)
+    const [pendingRevertRevisionId, setPendingRevertRevisionId] = useState<number | null>(null)
     const [refreshToken, setRefreshToken] = useState(0)
     const [selection, setSelection] = useState<DiffSelection>({
         leftRevisionId: null,
@@ -54,6 +58,7 @@ export function TextDiffWorkspace(input: {
         setEntries([])
         setHistoryError(null)
         setLoadingHistory(true)
+        setPendingRevertRevisionId(null)
         setSelection({
             leftRevisionId: null,
             rightSource: currentSource,
@@ -115,6 +120,35 @@ export function TextDiffWorkspace(input: {
         rightRevision,
         rightSource: selection.rightSource,
     })
+    const handleRevert = (entry: PadTextHistoryEntry) => {
+        if (pendingRevertRevisionId !== null) return
+
+        setPendingRevertRevisionId(entry.id)
+
+        void input.onRevertToRevision({
+            revisionId: entry.id,
+            revisionNumber: entry.revisionNumber,
+        })
+            .then((nextEntry) => {
+                const nextEntries = [
+                    nextEntry,
+                    ...entries.map((value) => ({
+                        ...value,
+                        isHead: false,
+                    })),
+                ]
+                setEntries(nextEntries)
+                setSelection((currentSelection) => reconcileSelection(nextEntries, currentSelection))
+                toast.success(`Reverted to snapshot ${entry.revisionNumber}`)
+                setRefreshToken((value) => value + 1)
+            })
+            .catch((error: unknown) => {
+                toast.error(error instanceof Error ? error.message : 'Failed to revert snapshot')
+            })
+            .finally(() => {
+                setPendingRevertRevisionId(null)
+            })
+    }
 
     return (
         <section className="workspace-shell min-h-0" data-testid="workspace-shell">
@@ -158,6 +192,9 @@ export function TextDiffWorkspace(input: {
                                         <div className="diff-history-item-copy">
                                             <span className="diff-history-item-number">Snapshot {entry.revisionNumber}</span>
                                             <span className="diff-history-item-time">{formatRevisionTime(entry.createdAt)}</span>
+                                            {entry.revertedFromRevisionNumber !== null ? (
+                                                <span className="diff-history-item-note">Revert to Snapshot {entry.revertedFromRevisionNumber}</span>
+                                            ) : null}
                                         </div>
                                         <div className="diff-history-item-actions">
                                             <button
@@ -187,6 +224,16 @@ export function TextDiffWorkspace(input: {
                                                 type="button"
                                             >
                                                 Right
+                                            </button>
+                                            <button
+                                                aria-label={`Revert to snapshot ${entry.revisionNumber}`}
+                                                className="diff-history-toggle diff-history-revert"
+                                                disabled={pendingRevertRevisionId !== null}
+                                                onClick={() => handleRevert(entry)}
+                                                type="button"
+                                            >
+                                                <RotateCcw aria-hidden="true" className="diff-history-toggle-icon" />
+                                                {pendingRevertRevisionId === entry.id ? 'Reverting…' : 'Revert To'}
                                             </button>
                                         </div>
                                     </div>

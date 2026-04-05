@@ -12,6 +12,7 @@ type RevisionRow = {
     id: number | string
     revision_number: number | string
     parent_revision_id: number | string | null
+    reverted_from_revision_id: number | string | null
     chunk_seq: number | string
     checkpoint_id: number | string | null
     created_at: Date | string
@@ -34,6 +35,7 @@ type RevisionListRow = {
     revision_number: number | string
     created_at: Date | string
     is_head: boolean
+    reverted_from_revision_number: number | string | null
 }
 
 export type StoredPadDoc = {
@@ -48,6 +50,7 @@ export type AppendPadDocRevisionResult = {
     chunkSeq: number
     revisionId: number
     revisionNumber: number
+    createdAt: string
 }
 
 export type PadDocRevisionSummary = {
@@ -55,6 +58,7 @@ export type PadDocRevisionSummary = {
     revisionNumber: number
     createdAt: string
     isHead: boolean
+    revertedFromRevisionNumber: number | null
 }
 
 export async function loadPadDoc(path: PadPath, kind: PadDocKind): Promise<StoredPadDoc> {
@@ -95,6 +99,7 @@ export async function appendPadDocRevision(
     kind: PadDocKind,
     update: Uint8Array,
     eventCount: number,
+    revertedFromRevisionId: number | null = null,
 ): Promise<AppendPadDocRevisionResult> {
     return sql.begin(async (tx: typeof sql) => {
         const [head] = await tx<HeadRevisionRow[]>`
@@ -116,12 +121,13 @@ export async function appendPadDocRevision(
         const parentRevisionId = head ? toNumber(head.id) : null
         const chunkSeq = toNumber(chunk.seq)
 
-        const [revision] = await tx<{ id: number | string; revision_number: number | string }[]>`
+        const [revision] = await tx<{ id: number | string; revision_number: number | string; created_at: Date | string }[]>`
             INSERT INTO pad_doc_revisions (
                 pad_path,
                 kind,
                 revision_number,
                 parent_revision_id,
+                reverted_from_revision_id,
                 chunk_seq
             )
             VALUES (
@@ -129,9 +135,10 @@ export async function appendPadDocRevision(
                 ${kind},
                 ${previousRevisionNumber + 1},
                 ${parentRevisionId},
+                ${revertedFromRevisionId},
                 ${chunkSeq}
             )
-            RETURNING id, revision_number
+            RETURNING id, revision_number, created_at
         `
         assert(revision !== undefined, 'Missing revision id')
 
@@ -150,6 +157,7 @@ export async function appendPadDocRevision(
             chunkSeq,
             revisionId,
             revisionNumber,
+            createdAt: toIsoString(revision.created_at),
         }
     })
 }
@@ -186,11 +194,14 @@ export async function listPadDocRevisions(path: PadPath, kind: PadDocKind): Prom
             r.id,
             r.revision_number,
             r.created_at,
-            r.id = h.head_revision_id AS is_head
+            r.id = h.head_revision_id AS is_head,
+            rr.revision_number AS reverted_from_revision_number
         FROM pad_doc_revisions AS r
         LEFT JOIN pad_doc_heads AS h
             ON h.pad_path = r.pad_path
             AND h.kind = r.kind
+        LEFT JOIN pad_doc_revisions AS rr
+            ON rr.id = r.reverted_from_revision_id
         WHERE r.pad_path = ${path} AND r.kind = ${kind}
         ORDER BY r.revision_number DESC
     `
@@ -200,6 +211,7 @@ export async function listPadDocRevisions(path: PadPath, kind: PadDocKind): Prom
         revisionNumber: toNumber(row.revision_number),
         createdAt: toIsoString(row.created_at),
         isHead: row.is_head,
+        revertedFromRevisionNumber: row.reverted_from_revision_number === null ? null : toNumber(row.reverted_from_revision_number),
     }))
 }
 
@@ -280,7 +292,7 @@ async function loadNearestCheckpoint(path: PadPath, kind: PadDocKind, revisionNu
 
 async function loadRevisionById(path: PadPath, kind: PadDocKind, revisionId: number) {
     const [revision] = await sql<RevisionRow[]>`
-        SELECT id, revision_number, parent_revision_id, chunk_seq, checkpoint_id, created_at
+        SELECT id, revision_number, parent_revision_id, reverted_from_revision_id, chunk_seq, checkpoint_id, created_at
         FROM pad_doc_revisions
         WHERE id = ${revisionId} AND pad_path = ${path} AND kind = ${kind}
     `

@@ -3,8 +3,13 @@ import {
     CHECKPOINT_INTERVAL,
     PERSIST_DEBOUNCE_MS,
     assert,
+    createDocUpdateMessage,
+    padRoomName,
     parsePadRoomName,
+    restoreTextDocFromUpdate,
     type ClientRoomMessage,
+    type PadDocKind,
+    type PadPath,
 } from '@mmpad/shared'
 import { mergeUpdates } from 'yjs'
 import { ensurePad } from '../../pad-tree/infrastructure/repository'
@@ -77,6 +82,58 @@ export function getPadDocRoom(roomName: string) {
     return rooms.get(roomName)
 }
 
+export async function revertPadDocRoomToUpdate(input: {
+    path: PadPath
+    kind: PadDocKind
+    revertedFromRevisionId: number
+    revertedFromRevisionNumber: number
+    update: Uint8Array
+}) {
+    const room = await loadPadDocRoom(padRoomName(input.path, input.kind))
+    const captured: Uint8Array[] = []
+    const capture = (update: Uint8Array, origin: unknown) => {
+        if (origin === 'server-revert') captured.push(update)
+    }
+
+    if (room.flushTimer) clearTimeout(room.flushTimer)
+    room.flushTimer = null
+    room.pendingUpdates = []
+
+    room.doc.on('update', capture)
+
+    try {
+        if (input.kind === 'text') restoreTextDocFromUpdate(room.doc, input.update, 'server-revert')
+        else throw new Error(`Unsupported revert kind: ${input.kind}`)
+    } finally {
+        room.doc.off('update', capture)
+    }
+
+    if (room.flushTimer) clearTimeout(room.flushTimer)
+    room.flushTimer = null
+
+    if (captured.length === 0) {
+        return {
+            changed: false as const,
+            revision: null,
+        }
+    }
+
+    const flushed = await flushPadDocRoom(room, input.revertedFromRevisionId)
+    assert(flushed !== null, 'Expected revert flush to create a revision')
+    broadcastAll(room, createDocUpdateMessage(mergeUpdates(captured)))
+
+    return {
+        changed: true as const,
+        revision: {
+            id: flushed.revisionId,
+            revisionNumber: flushed.revisionNumber,
+            createdAt: flushed.createdAt,
+            isHead: true,
+            revertedFromRevisionNumber: input.revertedFromRevisionNumber,
+        },
+    }
+}
+
 async function loadPadDocRoom(roomName: string) {
     const existing = rooms.get(roomName)
     if (existing) return existing
@@ -107,6 +164,10 @@ function broadcast(room: PadDocRoom, sender: ServerWebSocket<WsData>, message: {
     }
 }
 
+function broadcastAll(room: PadDocRoom, message: { data: Uint8Array }) {
+    for (const client of room.clients) sendRoomMessage(client, message)
+}
+
 function scheduleFlush(room: PadDocRoom) {
     if (room.flushTimer) clearTimeout(room.flushTimer)
     room.flushTimer = setTimeout(() => {
@@ -115,21 +176,22 @@ function scheduleFlush(room: PadDocRoom) {
     }, PERSIST_DEBOUNCE_MS)
 }
 
-async function flushPadDocRoom(room: PadDocRoom) {
+async function flushPadDocRoom(room: PadDocRoom, revertedFromRevisionId: number | null = null) {
     const updates = takePadDocUpdates(room)
-    if (updates.length === 0) return
+    if (updates.length === 0) return null
 
-    const result = await appendPadDocRevision(room.path, room.kind, mergeUpdates(updates), updates.length)
+    const result = await appendPadDocRevision(room.path, room.kind, mergeUpdates(updates), updates.length, revertedFromRevisionId)
     room.latestChunkSeq = result.chunkSeq
     room.headRevisionId = result.revisionId
     room.headRevisionNumber = result.revisionNumber
     room.docBytes = readPadDocSnapshotBytes(room).byteLength
 
-    if (result.revisionNumber % CHECKPOINT_INTERVAL !== 0) return
+    if (result.revisionNumber % CHECKPOINT_INTERVAL !== 0) return result
 
     const snapshot = readPadDocSnapshotBytes(room)
     await createPadDocCheckpoint(room.path, room.kind, result.revisionId, result.chunkSeq, snapshot)
     room.docBytes = snapshot.byteLength
+    return result
 }
 
 function sendRoomMessage(ws: ServerWebSocket<WsData>, message: { data: Uint8Array }) {

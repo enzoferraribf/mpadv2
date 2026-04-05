@@ -66,10 +66,16 @@ export async function migrate() {
             kind                TEXT NOT NULL,
             revision_number     BIGINT NOT NULL,
             parent_revision_id  BIGINT,
+            reverted_from_revision_id BIGINT,
             chunk_seq           BIGINT NOT NULL,
             checkpoint_id       BIGINT,
             created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
+    `
+
+    await sql`
+        ALTER TABLE pad_doc_revisions
+        ADD COLUMN IF NOT EXISTS reverted_from_revision_id BIGINT
     `
 
     await sql`
@@ -142,6 +148,16 @@ export async function migrate() {
         ALTER TABLE pad_doc_revisions
         ADD CONSTRAINT pad_doc_revisions_parent_revision_id_fkey
         FOREIGN KEY (parent_revision_id) REFERENCES pad_doc_revisions(id) ON DELETE SET NULL
+    `
+
+    await sql`
+        ALTER TABLE pad_doc_revisions DROP CONSTRAINT IF EXISTS pad_doc_revisions_reverted_from_revision_id_fkey
+    `
+
+    await sql`
+        ALTER TABLE pad_doc_revisions
+        ADD CONSTRAINT pad_doc_revisions_reverted_from_revision_id_fkey
+        FOREIGN KEY (reverted_from_revision_id) REFERENCES pad_doc_revisions(id) ON DELETE SET NULL
     `
 
     await sql`
