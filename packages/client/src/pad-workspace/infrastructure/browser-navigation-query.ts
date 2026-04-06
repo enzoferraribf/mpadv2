@@ -1,4 +1,4 @@
-import type { PadPath, PadTreeResponse } from '@mmpad/shared'
+import type { PadPath, PadTreeResponse } from '@mpad/shared'
 import { fetchApiJson, padApiUrl } from '@/pad-workspace/infrastructure/browser-pad-api'
 
 export const browserWorkspaceNavigationQuery = {

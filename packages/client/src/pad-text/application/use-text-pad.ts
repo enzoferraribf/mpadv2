@@ -1,4 +1,4 @@
-import { Y_TEXT_KEY, type LocalPeer, type PadPath } from '@mmpad/shared'
+import { Y_TEXT_KEY, type LocalPeer, type PadPath } from '@mpad/shared'
 import { useEffect, useMemo, useState } from 'react'
 import type { PadTextRoom, TextAwarenessState, TextAwarenessUser } from '@/collab/domain/pad-room-session'
 import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'

@@ -3,7 +3,7 @@ import type {
     PadPath,
     PadTextHistoryResponse,
     PadTextRevisionResponse,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import {
     fetchApiBytes,
     fetchApiJson,

@@ -1,4 +1,4 @@
-import type { TextCommentStatus } from '@mmpad/shared'
+import type { TextCommentStatus } from '@mpad/shared'
 import type { TextCommentSelection, TextCommentThreadView } from '@/pad-text/infrastructure/text-comment-store'
 
 export type TextCommentOverlay =

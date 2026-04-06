@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import type { LiveFileState } from '@mmpad/shared'
+import type { LiveFileState } from '@mpad/shared'
 import { FileTransferProgress } from '@/live-files/view/file-transfer-progress'
 import { formatFileSize } from '@/lib/file'
 

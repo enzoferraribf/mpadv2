@@ -1,4 +1,4 @@
-import type { FileSignal, LiveFileMeta } from '@mmpad/shared'
+import type { FileSignal, LiveFileMeta } from '@mpad/shared'
 import type { Instance as PeerInstance, SignalData } from 'simple-peer'
 import Peer from 'simple-peer/simplepeer.min.js'
 import { createDownloadTarget, readLocalFileChunks, type DownloadTarget, type LocalFile } from './local-file-store'

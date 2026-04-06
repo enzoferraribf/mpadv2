@@ -9,7 +9,7 @@ const ExcalidrawEditor = lazy(() => import('@excalidraw/excalidraw').then((mod) 
 
 declare global {
     interface Window {
-        __mmpadDrawingApi__?: ExcalidrawImperativeAPI | null
+        __mpadDrawingApi__?: ExcalidrawImperativeAPI | null
     }
 }
 
@@ -109,10 +109,10 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
 
     useEffect(() => {
         if (import.meta.env.VITE_E2E !== '1') return
-        window.__mmpadDrawingApi__ = api
+        window.__mpadDrawingApi__ = api
         return () => {
-            if (window.__mmpadDrawingApi__ !== api) return
-            delete window.__mmpadDrawingApi__
+            if (window.__mpadDrawingApi__ !== api) return
+            delete window.__mpadDrawingApi__
         }
     }, [api])
 

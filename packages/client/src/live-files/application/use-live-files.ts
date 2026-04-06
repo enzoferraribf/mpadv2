@@ -6,7 +6,7 @@ import {
     type LiveFileState,
     type LocalPeer,
     type PadPath,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { FileAwarenessUser, PadFileRoom } from '@/collab/domain/pad-room-session'
 import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'

@@ -1,6 +1,6 @@
-import type { LocalPeer } from '@mmpad/shared'
+import type { LocalPeer } from '@mpad/shared'
 
-const LOCAL_PEER_STORAGE_KEY = 'mmpad.peer'
+const LOCAL_PEER_STORAGE_KEY = 'mpad.peer'
 
 const PEER_PALETTE = [
     { background: '#f97316', stroke: '#7c2d12', text: '#ea580c', textLight: '#fdba7433' },

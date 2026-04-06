@@ -1,4 +1,4 @@
-import type { PadRoomKind } from '@mmpad/shared'
+import type { PadRoomKind } from '@mpad/shared'
 
 export type WsData = {
     roomName: string

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { MAX_FILE_BYTES, MAX_PEER_FILE_BYTES, MAX_PEER_FILE_COUNT, assertLiveFileAllowed } from '@mmpad/shared'
+import { MAX_FILE_BYTES, MAX_PEER_FILE_BYTES, MAX_PEER_FILE_COUNT, assertLiveFileAllowed } from '@mpad/shared'
 
 describe('live file policy', () => {
     test('accepts a valid file', () => {

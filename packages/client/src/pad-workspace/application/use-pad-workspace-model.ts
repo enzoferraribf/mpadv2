@@ -1,4 +1,4 @@
-import type { LiveFileState, PadDocRevisionSummary, PadPath, PadTreeItem } from '@mmpad/shared'
+import type { LiveFileState, PadDocRevisionSummary, PadPath, PadTreeItem } from '@mpad/shared'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { toast } from 'sonner'
@@ -30,7 +30,7 @@ export type PadWorkspaceState =
         kind: 'ready'
         view: PadWorkspaceViewState
         status: {
-            connection: import('@mmpad/shared').PadConnection
+            connection: import('@mpad/shared').PadConnection
             peerCount: number
             tree: PadTreeItem[]
             files: LiveFileState[]

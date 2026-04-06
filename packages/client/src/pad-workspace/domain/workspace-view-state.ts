@@ -1,4 +1,4 @@
-import { assertNever, type PadWorkspaceDialog, type PadWorkspaceLayout, type PadWorkspaceTab } from '@mmpad/shared'
+import { assertNever, type PadWorkspaceDialog, type PadWorkspaceLayout, type PadWorkspaceTab } from '@mpad/shared'
 import type { DrawingThemePreference } from '@/pad-drawing/drawing-theme'
 import type { CursorPosition } from '@/pad-text/infrastructure/text-editor'
 

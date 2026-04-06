@@ -1,4 +1,4 @@
-import type { PadPath } from '@mmpad/shared'
+import type { PadPath } from '@mpad/shared'
 
 export function PadStatusBar(input: {
     path: PadPath

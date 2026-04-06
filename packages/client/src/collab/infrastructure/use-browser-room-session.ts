@@ -9,7 +9,7 @@ import {
     type PadPath,
     type PadRoomKind,
     type ServerRoomMessage,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import { useEffect, useRef, useState } from 'react'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'

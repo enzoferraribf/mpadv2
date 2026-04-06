@@ -23,15 +23,15 @@ export async function openPad(page: Page, path: string) {
 
 export async function waitForPad(page: Page) {
     await page.waitForFunction(
-        () => Boolean((window as any).__mmpad__) && (window as any).__mmpad__.getConnection() === 'connected',
+        () => Boolean((window as any).__mpad__) && (window as any).__mpad__.getConnection() === 'connected',
     )
 }
 
 export async function openDrawingRoom(page: Page) {
-    await page.evaluate(() => (window as any).__mmpad__.openDrawing())
-    await page.waitForFunction(() => (window as any).__mmpad__?.getDrawingConnection() === 'connected')
+    await page.evaluate(() => (window as any).__mpad__.openDrawing())
+    await page.waitForFunction(() => (window as any).__mpad__?.getDrawingConnection() === 'connected')
     await expect(page.getByTestId('drawing-workspace')).toBeVisible()
-    await page.waitForFunction(() => Boolean(window.__mmpadDrawingApi__))
+    await page.waitForFunction(() => Boolean(window.__mpadDrawingApi__))
 }
 
 export async function openDiffsTab(page: Page) {
@@ -62,7 +62,7 @@ export async function replaceFirstEditorLine(page: Page, value: string) {
 }
 
 export async function waitForText(page: Page, text: string) {
-    await page.waitForFunction((value) => (window as any).__mmpad__?.getText() === value, text)
+    await page.waitForFunction((value) => (window as any).__mpad__?.getText() === value, text)
 }
 
 export async function waitForHistoryItems(page: Page, count: number) {
@@ -71,7 +71,7 @@ export async function waitForHistoryItems(page: Page, count: number) {
 
 export async function waitForCommentThreadCount(page: Page, count: number) {
     await expect.poll(async () =>
-        page.evaluate(() => (window as any).__mmpad__?.getCommentThreads()?.length ?? -1),
+        page.evaluate(() => (window as any).__mpad__?.getCommentThreads()?.length ?? -1),
     ).toBe(count)
 }
 
@@ -88,7 +88,7 @@ export function readCurrentRightButton(page: Page) {
 }
 
 export async function persistTextRevision(page: Page, content: string) {
-    await page.evaluate((value) => (window as any).__mmpad__.appendText(value), content)
+    await page.evaluate((value) => (window as any).__mpad__.appendText(value), content)
     await page.waitForTimeout(3_500)
 }
 
@@ -98,7 +98,7 @@ export async function setLayout(page: Page, name: 'Editor' | 'Preview' | 'Split'
 }
 
 export async function seedDocument(page: Page) {
-    await page.evaluate((value) => (window as any).__mmpad__.setText(value), demoText)
+    await page.evaluate((value) => (window as any).__mpad__.setText(value), demoText)
     await expect(page.getByRole('heading', { name: 'alpha' })).toBeVisible()
 }
 
@@ -143,7 +143,7 @@ export function createPeerSeed(name: string, background: string, stroke: string,
 export async function createPeerContext(browser: Browser, peer: ReturnType<typeof createPeerSeed>) {
     const context = await browser.newContext()
     await context.addInitScript((value) => {
-        window.localStorage.setItem('mmpad.peer', JSON.stringify(value))
+        window.localStorage.setItem('mpad.peer', JSON.stringify(value))
     }, peer)
     return context
 }

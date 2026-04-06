@@ -3,7 +3,7 @@ import {
     encodeServerRoomMessage,
     type ClientRoomMessage,
     type OutboundFileSignal,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import type { WsData } from '../../transport/ws-data'
 import {
     applyLiveFilesMessage,

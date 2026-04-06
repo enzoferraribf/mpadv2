@@ -1,4 +1,4 @@
-import type { LiveFileState, PadPath } from '@mmpad/shared'
+import type { LiveFileState, PadPath } from '@mpad/shared'
 import { Download, HardDrive, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command'

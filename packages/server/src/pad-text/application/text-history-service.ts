@@ -1,4 +1,4 @@
-import type { PadPath } from '@mmpad/shared'
+import type { PadPath } from '@mpad/shared'
 import {
     listPadTextRevisions,
     readPadTextRevision,

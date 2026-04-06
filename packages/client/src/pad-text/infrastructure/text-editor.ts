@@ -1,4 +1,4 @@
-import { Y_TEXT_KEY } from '@mmpad/shared'
+import { Y_TEXT_KEY } from '@mpad/shared'
 import { StateEffect, StateField } from '@codemirror/state'
 import {
     Decoration,

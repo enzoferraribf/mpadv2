@@ -22,7 +22,7 @@ import {
     waitForHistoryItems,
     waitForPad,
     waitForText,
-} from './mmpad-test'
+} from './mpad-test'
 
 test('shows text diffs from the top tab', async ({ browser }) => {
     const path = `notes/${Date.now()}-diffs-tab`
@@ -159,13 +159,13 @@ test('reverts comment state with the saved snapshot', async ({ browser }) => {
     const page = await context.newPage()
 
     await openPad(page, path)
-    await page.evaluate(() => (window as any).__mmpad__.setText('alpha beta gamma'))
+    await page.evaluate(() => (window as any).__mpad__.setText('alpha beta gamma'))
     await waitForText(page, 'alpha beta gamma')
     await page.waitForTimeout(3_500)
 
-    await page.evaluate(() => (window as any).__mmpad__.selectCommentRange(6, 10))
-    await page.evaluate(() => (window as any).__mmpad__.openCommentDraftFromSelection())
-    await page.evaluate(() => (window as any).__mmpad__.createCommentThread('Beta note'))
+    await page.evaluate(() => (window as any).__mpad__.selectCommentRange(6, 10))
+    await page.evaluate(() => (window as any).__mpad__.openCommentDraftFromSelection())
+    await page.evaluate(() => (window as any).__mpad__.createCommentThread('Beta note'))
     await waitForCommentThreadCount(page, 1)
     await page.waitForTimeout(3_500)
 

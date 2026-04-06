@@ -5,7 +5,7 @@ import {
     type LocalPeer,
     type TextCommentAuthor,
     type TextCommentStatus,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import {
     Array as YArray,
     Map as YMap,

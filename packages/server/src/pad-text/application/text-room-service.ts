@@ -1,5 +1,5 @@
 import type { ServerWebSocket } from 'bun'
-import { assert, type ClientRoomMessage } from '@mmpad/shared'
+import { assert, type ClientRoomMessage } from '@mpad/shared'
 import type { WsData } from '../../transport/ws-data'
 import {
     flushPadDocRooms,

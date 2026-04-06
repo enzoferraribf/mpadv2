@@ -2,7 +2,7 @@ import type { PadWorkspaceModel } from '@/pad-workspace/application/use-pad-work
 
 declare global {
     interface Window {
-        __mmpad__?: {
+        __mpad__?: {
             appendText: (content: string) => void
             createCommentThread: (body: string) => void
             deleteCommentMessage: (threadId: string, messageId: string) => void
@@ -41,13 +41,13 @@ declare global {
 
 export function publishWindowState(workspace: PadWorkspaceModel) {
     if (workspace.state.kind !== 'ready') {
-        delete window.__mmpad__
+        delete window.__mpad__
         return
     }
 
     const { commands, state } = workspace
 
-    window.__mmpad__ = {
+    window.__mpad__ = {
         appendText: (content: string) => {
             state.text.editor.appendText(content)
         },
@@ -90,9 +90,9 @@ export function publishWindowState(workspace: PadWorkspaceModel) {
             commands.reopenCommentThread(threadId)
         },
         insertTestArrow: async () => {
-            if (!window.__mmpadDrawingApi__) throw new Error('Drawing API is unavailable')
+            if (!window.__mpadDrawingApi__) throw new Error('Drawing API is unavailable')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
-            window.__mmpadDrawingApi__.updateScene({
+            window.__mpadDrawingApi__.updateScene({
                 elements: convertToExcalidrawElements([{ type: 'arrow', x: 80, y: 80, width: 220, height: 120 }]),
             })
         },

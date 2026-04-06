@@ -5,7 +5,7 @@ import {
     type PadWorkspaceDirection,
     type PadWorkspaceLayout,
     type PadWorkspaceTab,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import { useEffect, useReducer, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { getRandomPhrase } from '@/components/feedback/loading-phrases'

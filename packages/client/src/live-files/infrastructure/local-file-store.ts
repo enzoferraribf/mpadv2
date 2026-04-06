@@ -1,6 +1,6 @@
-import type { LiveFileMeta } from '@mmpad/shared'
+import type { LiveFileMeta } from '@mpad/shared'
 
-const FILE_STORE_DIR = 'mmpad-live-files'
+const FILE_STORE_DIR = 'mpad-live-files'
 const MEMORY_DOWNLOAD_LIMIT_BYTES = 50 * 1024 * 1024
 
 export type LocalFile = {

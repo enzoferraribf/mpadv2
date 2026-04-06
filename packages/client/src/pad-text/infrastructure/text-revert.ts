@@ -1,1 +1,1 @@
-export { restoreTextDocFromUpdate } from '@mmpad/shared'
+export { restoreTextDocFromUpdate } from '@mpad/shared'

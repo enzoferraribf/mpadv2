@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test'
 
-const databaseUrl = process.env.DATABASE_URL ?? 'postgres://localhost:5432/mmpad'
+const databaseUrl = process.env.DATABASE_URL ?? 'postgres://localhost:5432/mpad'
 const serverPort = Number(process.env.E2E_SERVER_PORT ?? 4000)
 const clientPort = Number(process.env.E2E_CLIENT_PORT ?? 4173)
 const serverUrl = `http://127.0.0.1:${serverPort}`

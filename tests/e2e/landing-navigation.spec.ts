@@ -22,7 +22,7 @@ import {
     waitForHistoryItems,
     waitForPad,
     waitForText,
-} from './mmpad-test'
+} from './mpad-test'
 
 test('renders the landing shell', async ({ page }) => {
     await openLanding(page)

@@ -1,4 +1,4 @@
-import { padPath, type PadPath } from '@mmpad/shared'
+import { padPath, type PadPath } from '@mpad/shared'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 

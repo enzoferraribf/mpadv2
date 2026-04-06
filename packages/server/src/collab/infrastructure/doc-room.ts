@@ -11,7 +11,7 @@ import {
     type PadDocKind,
     type PadPath,
     type SyncRoomMessage,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc, applyUpdate, encodeStateAsUpdate } from 'yjs'

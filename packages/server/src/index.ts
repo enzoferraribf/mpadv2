@@ -1,4 +1,4 @@
-import { WS_IDLE_TIMEOUT_S, WS_MAX_PAYLOAD } from '@mmpad/shared'
+import { WS_IDLE_TIMEOUT_S, WS_MAX_PAYLOAD } from '@mpad/shared'
 import type { ServerWebSocket } from 'bun'
 import { migrate } from './infrastructure/db'
 import { handleRequest } from './transport/http-router'

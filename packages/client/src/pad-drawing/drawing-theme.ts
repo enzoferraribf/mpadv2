@@ -1,7 +1,7 @@
 export type DrawingThemePreference = 'app' | 'light' | 'dark'
 export type DrawingTheme = 'light' | 'dark'
 
-const STORAGE_KEY = 'mmpad.excalidraw-theme'
+const STORAGE_KEY = 'mpad.excalidraw-theme'
 
 export function readDrawingThemePreference(): DrawingThemePreference {
     if (typeof window === 'undefined') return 'app'

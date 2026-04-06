@@ -10,7 +10,7 @@ import {
     type ClientRoomMessage,
     type PadDocKind,
     type PadPath,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import { mergeUpdates } from 'yjs'
 import { ensurePad } from '../../pad-tree/infrastructure/repository'
 import type { WsData } from '../../transport/ws-data'

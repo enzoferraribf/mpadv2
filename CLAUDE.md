@@ -1,8 +1,8 @@
-# Mmpad Contract
+# mpad Contract
 
 ## What this app is
 
-mmpad is a real-time pad app.
+mpad is a real-time pad app.
 
 A pad has:
 - markdown text
@@ -14,9 +14,9 @@ No auth. Text and drawing persist. Files do not.
 
 ## Repo shape
 
-- `@mmpad/shared` holds pad contracts, limits, and asserts
-- `@mmpad/server` holds pad-doc, pad-tree, live-file, and transport
-- `@mmpad/client` holds the pad page shell, feature hooks, and UI
+- `@mpad/shared` holds pad contracts, limits, and asserts
+- `@mpad/server` holds pad-doc, pad-tree, live-file, and transport
+- `@mpad/client` holds the pad page shell, feature hooks, and UI
 
 ## Server flow
 

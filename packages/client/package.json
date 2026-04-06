@@ -1,5 +1,5 @@
 {
-    "name": "@mmpad/client",
+    "name": "@mpad/client",
     "version": "0.1.0",
     "private": true,
     "type": "module",
@@ -19,7 +19,7 @@
         "@codemirror/view": "^6.38.6",
         "@excalidraw/excalidraw": "^0.18",
         "@lezer/highlight": "^1.2.3",
-        "@mmpad/shared": "workspace:*",
+        "@mpad/shared": "workspace:*",
         "@radix-ui/react-dialog": "^1.1",
         "@radix-ui/react-slot": "^1.2",
         "@radix-ui/react-tooltip": "^1.2",

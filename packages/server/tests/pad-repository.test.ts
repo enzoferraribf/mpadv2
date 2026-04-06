@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { CHECKPOINT_INTERVAL, Y_TEXT_COMMENT_MESSAGES_KEY, Y_TEXT_COMMENT_THREADS_KEY, Y_TEXT_KEY, padPath } from '@mmpad/shared'
+import { CHECKPOINT_INTERVAL, Y_TEXT_COMMENT_MESSAGES_KEY, Y_TEXT_COMMENT_THREADS_KEY, Y_TEXT_KEY, padPath } from '@mpad/shared'
 import { Array as YArray, Doc, Map as YMap, applyUpdate, createRelativePositionFromTypeIndex, encodeRelativePosition, encodeStateAsUpdate, mergeUpdates } from 'yjs'
 import { ensurePad, listRelatedPads } from '../src/pad-tree/infrastructure/repository'
 import {

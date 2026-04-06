@@ -1,5 +1,5 @@
-import type { PadPath, PadTreeItem } from '@mmpad/shared'
-import { padPathName } from '@mmpad/shared'
+import type { PadPath, PadTreeItem } from '@mpad/shared'
+import { padPathName } from '@mpad/shared'
 import { useState } from 'react'
 
 export function PadSidebar(input: {

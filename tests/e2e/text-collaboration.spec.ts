@@ -22,7 +22,7 @@ import {
     waitForHistoryItems,
     waitForPad,
     waitForText,
-} from './mmpad-test'
+} from './mpad-test'
 
 test('labels the editor and rendered task checkboxes', async ({ browser }) => {
     const path = `notes/${Date.now()}-a11y`
@@ -30,7 +30,7 @@ test('labels the editor and rendered task checkboxes', async ({ browser }) => {
     const page = await context.newPage()
 
     await openPad(page, path)
-    await page.evaluate(() => (window as any).__mmpad__.setText('- [x] done\n- [ ] todo'))
+    await page.evaluate(() => (window as any).__mpad__.setText('- [x] done\n- [ ] todo'))
     await waitForText(page, '- [x] done\n- [ ] todo')
 
     await expect(page.locator('.cm-content').first()).toHaveAttribute('aria-label', 'Pad text editor')
@@ -56,7 +56,7 @@ test('syncs markdown between two pads', async ({ browser }) => {
     await pageA.locator('.cm-content').first().click()
     await pageA.keyboard.type('# shared title')
 
-    await pageB.waitForFunction(() => (window as any).__mmpad__?.getText() === '# shared title')
+    await pageB.waitForFunction(() => (window as any).__mpad__?.getText() === '# shared title')
     await expect(pageB.getByRole('heading', { name: 'shared title' })).toBeVisible()
 
     await contextA.close()
@@ -74,10 +74,10 @@ test('syncs edits from both clients in the same pad', async ({ browser }) => {
     await openPad(pageA, path)
     await openPad(pageB, path)
 
-    await pageA.evaluate(() => (window as any).__mmpad__.appendText('# alpha'))
+    await pageA.evaluate(() => (window as any).__mpad__.appendText('# alpha'))
     await waitForText(pageB, '# alpha')
 
-    await pageB.evaluate(() => (window as any).__mmpad__.appendText('\n## beta'))
+    await pageB.evaluate(() => (window as any).__mpad__.appendText('\n## beta'))
     await waitForText(pageA, '# alpha\n## beta')
     await waitForText(pageB, '# alpha\n## beta')
 
@@ -102,19 +102,19 @@ test('shows persisted anime peer identity on remote text and drawing cursors', a
     await pageA.locator('.cm-content').first().click()
     await pageA.keyboard.type('# badge test')
 
-    await pageB.waitForFunction(() => (window as any).__mmpad__?.getText() === '# badge test')
+    await pageB.waitForFunction(() => (window as any).__mpad__?.getText() === '# badge test')
     await expect(pageB.locator('.cm-ySelectionInfo').filter({ hasText: 'Naruto Uzumaki' })).toBeVisible()
-    await expect.poll(() => pageA.evaluate(() => JSON.parse(window.localStorage.getItem('mmpad.peer')!).name)).toBe('Naruto Uzumaki')
+    await expect.poll(() => pageA.evaluate(() => JSON.parse(window.localStorage.getItem('mpad.peer')!).name)).toBe('Naruto Uzumaki')
 
     await pageA.reload()
     await waitForPad(pageA)
-    await expect.poll(() => pageA.evaluate(() => JSON.parse(window.localStorage.getItem('mmpad.peer')!).name)).toBe('Naruto Uzumaki')
+    await expect.poll(() => pageA.evaluate(() => JSON.parse(window.localStorage.getItem('mpad.peer')!).name)).toBe('Naruto Uzumaki')
 
     await openDrawingRoom(pageA)
     await openDrawingRoom(pageB)
     await moveDrawingPointer(pageA)
     await pageB.waitForFunction(() => {
-        const appState = window.__mmpadDrawingApi__?.getAppState()
+        const appState = window.__mpadDrawingApi__?.getAppState()
         if (!appState) return false
         return Array.from(appState.collaborators.values()).some((value) =>
             value.username === 'Naruto Uzumaki' && Boolean(value.pointer),
@@ -158,7 +158,7 @@ test('keeps remote text badges out of text replacement', async ({ browser }) => 
     await waitForText(pageA, 'clean')
     await waitForText(pageB, 'clean')
 
-    const sharedText = await pageB.evaluate(() => (window as any).__mmpad__?.getText() ?? '')
+    const sharedText = await pageB.evaluate(() => (window as any).__mpad__?.getText() ?? '')
     expect(sharedText).toBe('clean')
     expect(sharedText).not.toContain('Naruto Uzumaki')
 
@@ -173,7 +173,7 @@ test('keeps text after a reload', async ({ browser }) => {
     const page = await context.newPage()
 
     await openPad(page, path)
-    await page.evaluate(() => (window as any).__mmpad__.appendText('# persisted'))
+    await page.evaluate(() => (window as any).__mpad__.appendText('# persisted'))
     await waitForText(page, '# persisted')
 
     await page.waitForTimeout(3_500)

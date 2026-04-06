@@ -10,7 +10,7 @@ import {
     type AwarenessRoomMessage,
     type ClientRoomMessage,
     type SyncRoomMessage,
-} from '@mmpad/shared'
+} from '@mpad/shared'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc, encodeStateAsUpdate } from 'yjs'

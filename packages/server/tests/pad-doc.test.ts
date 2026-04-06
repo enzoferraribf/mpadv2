@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { Y_TEXT_KEY } from '@mmpad/shared'
+import { Y_TEXT_KEY } from '@mpad/shared'
 import { Doc, applyUpdate, encodeStateAsUpdate } from 'yjs'
 import { mergePadDoc } from '../src/collab/infrastructure/doc-store'
 

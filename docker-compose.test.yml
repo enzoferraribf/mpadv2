@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: mmpad_test
-      POSTGRES_USER: mmpad
-      POSTGRES_PASSWORD: mmpad
+      POSTGRES_DB: mpad_test
+      POSTGRES_USER: mpad
+      POSTGRES_PASSWORD: mpad
     ports:
       - "${TEST_DB_PORT:-55432}:5432"
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mmpad -d mmpad_test"]
+      test: ["CMD-SHELL", "pg_isready -U mpad -d mpad_test"]
       interval: 1s
       timeout: 5s
       retries: 60

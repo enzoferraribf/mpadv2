@@ -1,5 +1,5 @@
 {
-    "name": "@mmpad/server",
+    "name": "@mpad/server",
     "version": "0.1.0",
     "private": true,
     "type": "module",
@@ -9,7 +9,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@mmpad/shared": "workspace:*",
+        "@mpad/shared": "workspace:*",
         "yjs": "^13.6",
         "y-protocols": "^1.0",
         "lib0": "^0.2"

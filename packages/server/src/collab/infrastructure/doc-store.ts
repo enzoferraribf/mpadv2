@@ -1,4 +1,4 @@
-import { Y_TEXT_KEY, type PadDocKind, type PadPath, assert } from '@mmpad/shared'
+import { Y_TEXT_KEY, type PadDocKind, type PadPath, assert } from '@mpad/shared'
 import { Doc, applyUpdate, mergeUpdates } from 'yjs'
 import { sql } from '../../infrastructure/db'
 

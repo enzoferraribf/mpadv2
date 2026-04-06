@@ -1,5 +1,5 @@
 import { Blocks, Columns2, Eye, FileText, FolderTree, PanelRightOpen } from 'lucide-react'
-import type { PadWorkspaceLayout } from '@mmpad/shared'
+import type { PadWorkspaceLayout } from '@mpad/shared'
 import { CommandDialog, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import type { PadWorkspaceCommands } from '@/pad-workspace/application/use-pad-workspace-model'
 

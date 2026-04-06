@@ -22,7 +22,7 @@ import {
     waitForHistoryItems,
     waitForPad,
     waitForText,
-} from './mmpad-test'
+} from './mpad-test'
 
 test('keeps the same pad stable across two tabs in one browser context', async ({ browser }) => {
     const path = `notes/${Date.now()}-same-context`
@@ -36,7 +36,7 @@ test('keeps the same pad stable across two tabs in one browser context', async (
     await expect(pageB.getByTestId('workspace-shell')).toBeVisible()
     await expect(pageB.getByText('Something went wrong!')).toHaveCount(0)
 
-    await pageA.evaluate(() => (window as any).__mmpad__.appendText('# mirrored'))
+    await pageA.evaluate(() => (window as any).__mpad__.appendText('# mirrored'))
     await waitForText(pageB, '# mirrored')
 
     await context.close()

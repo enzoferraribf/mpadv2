@@ -22,7 +22,7 @@ import {
     waitForHistoryItems,
     waitForPad,
     waitForText,
-} from './mmpad-test'
+} from './mpad-test'
 
 test('syncs the drawing surface between two pads', async ({ browser }) => {
     const path = `notes/${Date.now()}-drawing`
@@ -37,8 +37,8 @@ test('syncs the drawing surface between two pads', async ({ browser }) => {
     await openDrawingRoom(pageA)
     await openDrawingRoom(pageB)
 
-    await pageA.evaluate(() => (window as any).__mmpad__.insertTestRectangle())
-    await pageB.waitForFunction(() => (window as any).__mmpad__?.getDrawingElementCount() === 1)
+    await pageA.evaluate(() => (window as any).__mpad__.insertTestRectangle())
+    await pageB.waitForFunction(() => (window as any).__mpad__?.getDrawingElementCount() === 1)
 
     await contextA.close()
     await contextB.close()
@@ -52,22 +52,22 @@ test('persists a local Excalidraw arrow change', async ({ browser }) => {
 
     await openPad(page, path)
     await openDrawingRoom(page)
-    await page.evaluate(() => (window as any).__mmpad__.insertTestArrow())
+    await page.evaluate(() => (window as any).__mpad__.insertTestArrow())
     await moveDrawingPointer(page)
     await expect.poll(async () =>
-        page.evaluate(() => (window as any).__mmpad__?.getDrawingElementCount() ?? -1),
+        page.evaluate(() => (window as any).__mpad__?.getDrawingElementCount() ?? -1),
     ).toBe(1)
 
     await page.waitForTimeout(250)
     await expect.poll(async () =>
-        page.evaluate(() => (window as any).__mmpad__?.getDrawingElementCount() ?? -1),
+        page.evaluate(() => (window as any).__mpad__?.getDrawingElementCount() ?? -1),
     ).toBe(1)
 
     await page.reload()
     await waitForPad(page)
     await openDrawingRoom(page)
     await expect.poll(async () =>
-        page.evaluate(() => (window as any).__mmpad__?.getDrawingElementCount() ?? -1),
+        page.evaluate(() => (window as any).__mpad__?.getDrawingElementCount() ?? -1),
     ).toBe(1)
 
     await context.close()
@@ -96,7 +96,7 @@ test('opens the drawing workspace from the command menu', async ({ browser }) =>
 
     await page.keyboard.press('Control+,')
     await page.getByRole('dialog').getByText('Excalidraw', { exact: true }).click()
-    await page.waitForFunction(() => (window as any).__mmpad__?.getDrawingConnection() === 'connected')
+    await page.waitForFunction(() => (window as any).__mpad__?.getDrawingConnection() === 'connected')
     await expect(page.getByTestId('drawing-workspace')).toBeVisible()
 
     await context.close()
@@ -116,9 +116,9 @@ test('keeps drawings split by exact pad path', async ({ browser }) => {
     await openDrawingRoom(pageA)
     await openDrawingRoom(pageB)
 
-    await pageA.evaluate(() => (window as any).__mmpad__.insertTestRectangle())
+    await pageA.evaluate(() => (window as any).__mpad__.insertTestRectangle())
     await expect.poll(async () =>
-        pageB.evaluate(() => (window as any).__mmpad__?.getDrawingElementCount() ?? -1),
+        pageB.evaluate(() => (window as any).__mpad__?.getDrawingElementCount() ?? -1),
     ).toBe(0)
 
     await contextA.close()

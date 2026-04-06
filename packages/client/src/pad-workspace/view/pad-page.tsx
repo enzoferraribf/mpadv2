@@ -1,4 +1,4 @@
-import type { PadPath } from '@mmpad/shared'
+import type { PadPath } from '@mpad/shared'
 import { Suspense, useEffect, useRef } from 'react'
 import { PadLoadingShell } from '@/pad-workspace/view/pad-loading-shell'
 import { usePadWorkspaceModel, type PadWorkspaceModel } from '@/pad-workspace/application/use-pad-workspace-model'
