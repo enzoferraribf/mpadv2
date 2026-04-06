@@ -1,4 +1,5 @@
 import type { Browser, Page } from '@playwright/test'
+import { createPeerSeed } from '@mpad/testkit/peer-seed'
 import { expect, test } from '@playwright/test'
 
 export const demoText = '# alpha\n\nint a = 1;\nint b = 2;\n\n```cpp\nvector<int> v(2) = {3, 4};\n```'
@@ -128,16 +129,6 @@ export function layoutDescription(name: 'Editor' | 'Preview' | 'Split') {
     if (name === 'Editor') return 'Focus the editor.'
     if (name === 'Preview') return 'Focus the preview.'
     return 'Show editor and preview together.'
-}
-
-export function createPeerSeed(name: string, background: string, stroke: string, textColor: string, textColorLight: string) {
-    return {
-        id: `peer-${name.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`,
-        name,
-        color: { background, stroke },
-        textColor,
-        textColorLight,
-    }
 }
 
 export async function createPeerContext(browser: Browser, peer: ReturnType<typeof createPeerSeed>) {

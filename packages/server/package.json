@@ -4,12 +4,15 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "bun run --watch src/index.ts",
-        "start": "bun run src/index.ts",
+        "dev": "bun --env-file=../../.env run --watch src/index.ts",
+        "migrate": "bun --env-file=../../.env run src/infrastructure/migrate.ts",
+        "start": "bun --env-file=../../.env run src/index.ts",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@mpad/shared": "workspace:*",
+        "@mpad/core": "workspace:*",
+        "@mpad/protocol": "workspace:*",
+        "@mpad/text-core": "workspace:*",
         "yjs": "^13.6",
         "y-protocols": "^1.0",
         "lib0": "^0.2"

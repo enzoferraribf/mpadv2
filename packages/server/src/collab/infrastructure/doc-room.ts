@@ -1,22 +1,20 @@
 import type { ServerWebSocket } from 'bun'
 import {
-    MAX_DRAWING_BYTES,
-    MAX_TEXT_BYTES,
     applyAwarenessMessage,
-    assert,
     createAwarenessMessage,
     createDocUpdateMessage,
     replyToSyncMessage,
-    type AwarenessRoomMessage,
-    type PadDocKind,
-    type PadPath,
-    type SyncRoomMessage,
-} from '@mpad/shared'
+} from '@mpad/protocol/room-message-codec'
+import { assert } from '@mpad/core/assert'
+import { MAX_DRAWING_BYTES, MAX_TEXT_BYTES } from '@mpad/core/pad-limits'
+import { type PadDocKind } from '@mpad/core/pad-room'
+import type { PadPath } from '@mpad/core/pad-path'
+import type { AwarenessRoomMessage, SyncRoomMessage } from '@mpad/protocol/room-message-codec'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc, applyUpdate, encodeStateAsUpdate } from 'yjs'
 import type { WsData } from '../../transport/ws-data'
-import type { StoredPadDoc } from './doc-store'
+import type { StoredPadDoc } from '../../pad-doc/domain/doc-repository'
 
 const DOC_SIZE_PROBE_MARGIN_BYTES = 64 * 1024
 

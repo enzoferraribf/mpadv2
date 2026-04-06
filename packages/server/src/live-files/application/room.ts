@@ -1,16 +1,16 @@
 import type { ServerWebSocket } from 'bun'
 import {
     applyAwarenessMessage,
-    assert,
     createAwarenessMessage,
     createDocUpdateMessage,
     encodeServerRoomMessage,
-    parsePadRoomName,
     replyToSyncMessage,
     type AwarenessRoomMessage,
     type ClientRoomMessage,
     type SyncRoomMessage,
-} from '@mpad/shared'
+} from '@mpad/protocol/room-message-codec'
+import { assert } from '@mpad/core/assert'
+import { parsePadRoomName } from '@mpad/core/pad-room'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc, encodeStateAsUpdate } from 'yjs'

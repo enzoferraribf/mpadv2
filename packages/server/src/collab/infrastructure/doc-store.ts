@@ -1,33 +1,43 @@
-import { Y_TEXT_KEY, type PadDocKind, type PadPath, assert } from '@mpad/shared'
+import { assert } from '@mpad/core/assert'
+import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
+import { type PadDocKind } from '@mpad/core/pad-room'
+import type { PadPath } from '@mpad/core/pad-path'
 import { Doc, applyUpdate, mergeUpdates } from 'yjs'
 import { sql } from '../../infrastructure/db'
+import type {
+    AppendPadDocRevisionResult,
+    PadDocRevisionSummary,
+    StoredPadDoc,
+} from '../../pad-doc/domain/doc-repository'
 
-type ChunkRow = {
-    seq: number | string
-    update: Uint8Array
-    event_count?: number
+type DocHeadRow = {
+    doc_id: number | string
+    head_revision_id: number | string | null
+    head_revision_number: number | string | null
 }
 
 type RevisionRow = {
     id: number | string
+    doc_id: number | string
     revision_number: number | string
     parent_revision_id: number | string | null
     reverted_from_revision_id: number | string | null
-    chunk_seq: number | string
-    checkpoint_id: number | string | null
     created_at: Date | string
 }
 
-type HeadRevisionRow = {
+type RevisionInsertRow = {
     id: number | string
     revision_number: number | string
-    chunk_seq: number | string
+    created_at: Date | string
 }
 
-type CheckpointRow = {
-    id: number | string
-    chunk_seq: number | string
+type SnapshotRow = {
+    revision_number: number | string
     snapshot: Uint8Array
+}
+
+type RevisionUpdateRow = {
+    update: Uint8Array
 }
 
 type RevisionListRow = {
@@ -38,32 +48,9 @@ type RevisionListRow = {
     reverted_from_revision_number: number | string | null
 }
 
-export type StoredPadDoc = {
-    snapshot: Uint8Array | null
-    updates: Uint8Array[]
-    latestChunkSeq: number
-    headRevisionId: number | null
-    headRevisionNumber: number
-}
-
-export type AppendPadDocRevisionResult = {
-    chunkSeq: number
-    revisionId: number
-    revisionNumber: number
-    createdAt: string
-}
-
-export type PadDocRevisionSummary = {
-    id: number
-    revisionNumber: number
-    createdAt: string
-    isHead: boolean
-    revertedFromRevisionNumber: number | null
-}
-
 export async function loadPadDoc(path: PadPath, kind: PadDocKind): Promise<StoredPadDoc> {
-    const head = await loadPadDocHead(path, kind)
-    if (!head) {
+    const doc = await loadPadDocHead(path, kind)
+    if (!doc || doc.head_revision_id === null || doc.head_revision_number === null) {
         return {
             snapshot: null,
             updates: [],
@@ -73,24 +60,18 @@ export async function loadPadDoc(path: PadPath, kind: PadDocKind): Promise<Store
         }
     }
 
-    const checkpoint = await loadNearestCheckpoint(path, kind, toNumber(head.revision_number))
-    const rows = await sql<ChunkRow[]>`
-        SELECT seq, update
-        FROM pad_doc_chunks
-        WHERE
-            pad_path = ${path}
-            AND kind = ${kind}
-            AND seq > ${checkpoint ? toNumber(checkpoint.chunk_seq) : 0}
-            AND seq <= ${toNumber(head.chunk_seq)}
-        ORDER BY seq
-    `
+    const docId = toNumber(doc.doc_id)
+    const headRevisionId = toNumber(doc.head_revision_id)
+    const headRevisionNumber = toNumber(doc.head_revision_number)
+    const checkpoint = await loadNearestCheckpoint(docId, headRevisionNumber)
+    const updates = await loadRevisionUpdates(docId, checkpoint ? toNumber(checkpoint.revision_number) : 0, headRevisionNumber)
 
     return {
         snapshot: checkpoint ? new Uint8Array(checkpoint.snapshot) : null,
-        updates: rows.map((row) => new Uint8Array(row.update)),
-        latestChunkSeq: toNumber(head.chunk_seq),
-        headRevisionId: toNumber(head.id),
-        headRevisionNumber: toNumber(head.revision_number),
+        updates: updates.map((row) => new Uint8Array(row.update)),
+        latestChunkSeq: headRevisionId,
+        headRevisionId,
+        headRevisionNumber,
     }
 }
 
@@ -102,41 +83,45 @@ export async function appendPadDocRevision(
     revertedFromRevisionId: number | null = null,
 ): Promise<AppendPadDocRevisionResult> {
     return sql.begin(async (tx: typeof sql) => {
-        const [head] = await tx<HeadRevisionRow[]>`
-            SELECT r.id, r.revision_number, r.chunk_seq
-            FROM pad_doc_heads AS h
-            JOIN pad_doc_revisions AS r ON r.id = h.head_revision_id
-            WHERE h.pad_path = ${path} AND h.kind = ${kind}
+        await tx`
+            INSERT INTO pad_docs (pad_path, kind)
+            VALUES (${path}, ${kind})
+            ON CONFLICT (pad_path, kind) DO NOTHING
+        `
+
+        const [doc] = await tx<DocHeadRow[]>`
+            SELECT
+                id AS doc_id,
+                head_revision_id,
+                NULL::BIGINT AS head_revision_number
+            FROM pad_docs
+            WHERE pad_path = ${path} AND kind = ${kind}
             FOR UPDATE
         `
+        assert(doc !== undefined, 'Missing pad doc')
 
-        const [chunk] = await tx<{ seq: number | string }[]>`
-            INSERT INTO pad_doc_chunks (pad_path, kind, update, event_count)
-            VALUES (${path}, ${kind}, ${update}, ${eventCount})
-            RETURNING seq
-        `
-        assert(chunk !== undefined, 'Missing chunk seq')
+        const previousRevision = doc.head_revision_id === null
+            ? null
+            : await loadRevisionNumberById(tx, toNumber(doc.head_revision_id))
+        const previousRevisionNumber = previousRevision === null ? 0 : previousRevision
+        const parentRevisionId = doc.head_revision_id === null ? null : toNumber(doc.head_revision_id)
 
-        const previousRevisionNumber = head ? toNumber(head.revision_number) : 0
-        const parentRevisionId = head ? toNumber(head.id) : null
-        const chunkSeq = toNumber(chunk.seq)
-
-        const [revision] = await tx<{ id: number | string; revision_number: number | string; created_at: Date | string }[]>`
-            INSERT INTO pad_doc_revisions (
-                pad_path,
-                kind,
+        const [revision] = await tx<RevisionInsertRow[]>`
+            INSERT INTO pad_revisions (
+                doc_id,
                 revision_number,
                 parent_revision_id,
                 reverted_from_revision_id,
-                chunk_seq
+                update,
+                event_count
             )
             VALUES (
-                ${path},
-                ${kind},
+                ${toNumber(doc.doc_id)},
                 ${previousRevisionNumber + 1},
                 ${parentRevisionId},
                 ${revertedFromRevisionId},
-                ${chunkSeq}
+                ${update},
+                ${eventCount}
             )
             RETURNING id, revision_number, created_at
         `
@@ -146,15 +131,15 @@ export async function appendPadDocRevision(
         const revisionNumber = toNumber(revision.revision_number)
 
         await tx`
-            INSERT INTO pad_doc_heads (pad_path, kind, head_revision_id)
-            VALUES (${path}, ${kind}, ${revisionId})
-            ON CONFLICT (pad_path, kind) DO UPDATE SET
-                head_revision_id = EXCLUDED.head_revision_id,
+            UPDATE pad_docs
+            SET
+                head_revision_id = ${revisionId},
                 updated_at = NOW()
+            WHERE id = ${toNumber(doc.doc_id)}
         `
 
         return {
-            chunkSeq,
+            chunkSeq: revisionId,
             revisionId,
             revisionNumber,
             createdAt: toIsoString(revision.created_at),
@@ -166,26 +151,24 @@ export async function createPadDocCheckpoint(
     path: PadPath,
     kind: PadDocKind,
     revisionId: number,
-    chunkSeq: number,
+    _chunkSeq: number,
     snapshot: Uint8Array,
 ) {
-    return sql.begin(async (tx: typeof sql) => {
-        const [checkpoint] = await tx<{ id: number | string }[]>`
-            INSERT INTO pad_doc_checkpoints (pad_path, kind, revision_id, chunk_seq, snapshot)
-            VALUES (${path}, ${kind}, ${revisionId}, ${chunkSeq}, ${snapshot})
-            RETURNING id
-        `
-        assert(checkpoint !== undefined, 'Missing checkpoint id')
-        const checkpointId = toNumber(checkpoint.id)
+    const [row] = await sql<{ doc_id: number | string }[]>`
+        SELECT d.id AS doc_id
+        FROM pad_docs AS d
+        JOIN pad_revisions AS r ON r.doc_id = d.id
+        WHERE d.pad_path = ${path} AND d.kind = ${kind} AND r.id = ${revisionId}
+    `
+    assert(row !== undefined, 'Missing pad doc for checkpoint')
 
-        await tx`
-            UPDATE pad_doc_revisions
-            SET checkpoint_id = ${checkpointId}
-            WHERE id = ${revisionId} AND pad_path = ${path} AND kind = ${kind}
-        `
+    await sql`
+        UPDATE pad_revisions
+        SET snapshot = ${snapshot}
+        WHERE id = ${revisionId} AND doc_id = ${toNumber(row.doc_id)}
+    `
 
-        return checkpointId
-    })
+    return revisionId
 }
 
 export async function listPadDocRevisions(path: PadPath, kind: PadDocKind): Promise<PadDocRevisionSummary[]> {
@@ -194,15 +177,12 @@ export async function listPadDocRevisions(path: PadPath, kind: PadDocKind): Prom
             r.id,
             r.revision_number,
             r.created_at,
-            r.id = h.head_revision_id AS is_head,
+            r.id = d.head_revision_id AS is_head,
             rr.revision_number AS reverted_from_revision_number
-        FROM pad_doc_revisions AS r
-        LEFT JOIN pad_doc_heads AS h
-            ON h.pad_path = r.pad_path
-            AND h.kind = r.kind
-        LEFT JOIN pad_doc_revisions AS rr
-            ON rr.id = r.reverted_from_revision_id
-        WHERE r.pad_path = ${path} AND r.kind = ${kind}
+        FROM pad_docs AS d
+        JOIN pad_revisions AS r ON r.doc_id = d.id
+        LEFT JOIN pad_revisions AS rr ON rr.id = r.reverted_from_revision_id
+        WHERE d.pad_path = ${path} AND d.kind = ${kind}
         ORDER BY r.revision_number DESC
     `
 
@@ -237,21 +217,14 @@ export async function loadPadDocRevisionBytes(path: PadPath, kind: PadDocKind, r
     const revision = await loadRevisionById(path, kind, revisionId)
     assert(revision !== null, `Missing revision ${revisionId}`)
 
-    const checkpoint = await loadNearestCheckpoint(path, kind, toNumber(revision.revision_number))
-    const rows = await sql<ChunkRow[]>`
-        SELECT seq, update
-        FROM pad_doc_chunks
-        WHERE
-            pad_path = ${path}
-            AND kind = ${kind}
-            AND seq > ${checkpoint ? toNumber(checkpoint.chunk_seq) : 0}
-            AND seq <= ${toNumber(revision.chunk_seq)}
-        ORDER BY seq
-    `
+    const docId = toNumber(revision.doc_id)
+    const revisionNumber = toNumber(revision.revision_number)
+    const checkpoint = await loadNearestCheckpoint(docId, revisionNumber)
+    const updates = await loadRevisionUpdates(docId, checkpoint ? toNumber(checkpoint.revision_number) : 0, revisionNumber)
 
     return mergePadDoc(
         checkpoint ? new Uint8Array(checkpoint.snapshot) : null,
-        rows.map((row) => new Uint8Array(row.update)),
+        updates.map((row) => new Uint8Array(row.update)),
     )
 }
 
@@ -263,38 +236,63 @@ export function mergePadDoc(snapshot: Uint8Array | null, updates: Uint8Array[]) 
 }
 
 async function loadPadDocHead(path: PadPath, kind: PadDocKind) {
-    const [head] = await sql<HeadRevisionRow[]>`
-        SELECT r.id, r.revision_number, r.chunk_seq
-        FROM pad_doc_heads AS h
-        JOIN pad_doc_revisions AS r ON r.id = h.head_revision_id
-        WHERE h.pad_path = ${path} AND h.kind = ${kind}
+    const [doc] = await sql<DocHeadRow[]>`
+        SELECT
+            id AS doc_id,
+            head_revision_id
+        FROM pad_docs
+        WHERE pad_path = ${path} AND kind = ${kind}
     `
 
-    return head ?? null
+    if (!doc) return null
+
+    return {
+        ...doc,
+        head_revision_number: doc.head_revision_id === null
+            ? null
+            : await loadRevisionNumberById(sql, toNumber(doc.head_revision_id)),
+    }
 }
 
-async function loadNearestCheckpoint(path: PadPath, kind: PadDocKind, revisionNumber: number) {
-    const [checkpoint] = await sql<CheckpointRow[]>`
-        SELECT c.id, c.chunk_seq, c.snapshot
-        FROM pad_doc_revisions AS r
-        JOIN pad_doc_checkpoints AS c ON c.id = r.checkpoint_id
+async function loadNearestCheckpoint(docId: number, revisionNumber: number) {
+    const [checkpoint] = await sql<SnapshotRow[]>`
+        SELECT revision_number, snapshot
+        FROM pad_revisions
         WHERE
-            r.pad_path = ${path}
-            AND r.kind = ${kind}
-            AND r.revision_number <= ${revisionNumber}
-            AND r.checkpoint_id IS NOT NULL
-        ORDER BY r.revision_number DESC
+            doc_id = ${docId}
+            AND revision_number <= ${revisionNumber}
+            AND snapshot IS NOT NULL
+        ORDER BY revision_number DESC
         LIMIT 1
     `
 
     return checkpoint ?? null
 }
 
+async function loadRevisionUpdates(docId: number, afterRevisionNumber: number, upToRevisionNumber: number) {
+    return sql<RevisionUpdateRow[]>`
+        SELECT update
+        FROM pad_revisions
+        WHERE
+            doc_id = ${docId}
+            AND revision_number > ${afterRevisionNumber}
+            AND revision_number <= ${upToRevisionNumber}
+        ORDER BY revision_number
+    `
+}
+
 async function loadRevisionById(path: PadPath, kind: PadDocKind, revisionId: number) {
     const [revision] = await sql<RevisionRow[]>`
-        SELECT id, revision_number, parent_revision_id, reverted_from_revision_id, chunk_seq, checkpoint_id, created_at
-        FROM pad_doc_revisions
-        WHERE id = ${revisionId} AND pad_path = ${path} AND kind = ${kind}
+        SELECT
+            r.id,
+            r.doc_id,
+            r.revision_number,
+            r.parent_revision_id,
+            r.reverted_from_revision_id,
+            r.created_at
+        FROM pad_docs AS d
+        JOIN pad_revisions AS r ON r.doc_id = d.id
+        WHERE r.id = ${revisionId} AND d.pad_path = ${path} AND d.kind = ${kind}
     `
 
     return revision ?? null
@@ -302,6 +300,16 @@ async function loadRevisionById(path: PadPath, kind: PadDocKind, revisionId: num
 
 function toIsoString(value: Date | string) {
     return (value instanceof Date ? value : new Date(value)).toISOString()
+}
+
+async function loadRevisionNumberById(client: typeof sql, revisionId: number) {
+    const [row] = await client<{ revision_number: number | string }[]>`
+        SELECT revision_number
+        FROM pad_revisions
+        WHERE id = ${revisionId}
+    `
+
+    return row ? toNumber(row.revision_number) : null
 }
 
 function toNumber(value: number | string) {

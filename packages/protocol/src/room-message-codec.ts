@@ -4,8 +4,8 @@ import * as syncProtocol from 'y-protocols/sync'
 import type { Doc } from 'yjs'
 import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
-import type { InboundFileSignal, OutboundFileSignal } from '../contracts/live-files'
-import { assert, assertNever } from '../kernel/assert'
+import type { InboundFileSignal, OutboundFileSignal } from './live-files'
+import { assert, assertNever } from '@mpad/core/assert'
 
 const MESSAGE_SYNC = 0
 const MESSAGE_AWARENESS = 1

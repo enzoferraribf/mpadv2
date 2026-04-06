@@ -1,4 +1,4 @@
-import type { LiveFileMeta } from '@mpad/shared'
+import type { LiveFileMeta } from '@mpad/protocol/live-files'
 
 const FILE_STORE_DIR = 'mpad-live-files'
 const MEMORY_DOWNLOAD_LIMIT_BYTES = 50 * 1024 * 1024

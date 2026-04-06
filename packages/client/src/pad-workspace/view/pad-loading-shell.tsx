@@ -1,6 +1,6 @@
-import type { PadPath, PadWorkspaceLayout, PadWorkspaceTab } from '@mpad/shared'
-import { padPathName } from '@mpad/shared'
+import { padPathName, type PadPath } from '@mpad/core/pad-path'
 import { getRandomPhrase } from '@/components/feedback/loading-phrases'
+import type { PadWorkspaceLayout, PadWorkspaceTab } from '@/pad-workspace/domain/workspace-view'
 import { PadSidebar } from '@/workspace-shell/view/pad-sidebar'
 import { PadStatusBar } from '@/workspace-shell/view/pad-status-bar'
 

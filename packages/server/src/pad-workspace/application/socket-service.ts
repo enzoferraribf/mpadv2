@@ -1,5 +1,6 @@
 import type { ServerWebSocket } from 'bun'
-import { assertNever, readClientRoomMessage } from '@mpad/shared'
+import { assertNever } from '@mpad/core/assert'
+import { readClientRoomMessage } from '@mpad/protocol/room-message-codec'
 import { flushPadDrawingRooms, handlePadDrawingMessage, joinPadDrawingRoom, leavePadDrawingRoom } from '../../pad-drawing/application/drawing-room-service'
 import { flushPadTextRooms, handlePadTextMessage, joinPadTextRoom, leavePadTextRoom } from '../../pad-text/application/text-room-service'
 import {

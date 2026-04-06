@@ -1,8 +1,7 @@
-import type { PadPath } from '@mpad/shared'
+import type { PadPath } from '@mpad/core/pad-path'
 import { Suspense, useEffect, useRef } from 'react'
 import { PadLoadingShell } from '@/pad-workspace/view/pad-loading-shell'
-import { usePadWorkspaceModel, type PadWorkspaceModel } from '@/pad-workspace/application/use-pad-workspace-model'
-import { DrawingWorkspacePane } from '@/pad-drawing/view/drawing-workspace-pane'
+import { usePadPageController, type PadPageController } from '@/pad-workspace/application/use-pad-page-controller'
 import { TextWorkspace } from '@/pad-text/view/text-workspace'
 import { lazyWithPreload } from '@/lib/lazy-with-preload'
 import { scheduleIdleTask } from '@/lib/schedule-idle'
@@ -16,19 +15,27 @@ const LazyTextDiffWorkspace = lazyWithPreload(() =>
 const LazyFilesPane = lazyWithPreload(() =>
     import('@/live-files/view/files-pane').then((mod) => ({ default: mod.FilesPane })),
 )
+const LazyDrawingWorkspacePane = lazyWithPreload(() =>
+    import('@/pad-drawing/view/drawing-workspace-pane').then((mod) => ({ default: mod.DrawingWorkspacePane })),
+)
 const LazyWorkspaceDialogs = lazyWithPreload(() =>
     import('@/workspace-shell/view/workspace-dialogs').then((mod) => ({ default: mod.WorkspaceDialogs })),
 )
 
 export function PadPage({ path }: { path: PadPath }) {
-    const model = usePadWorkspaceModel(path)
+    const model = usePadPageController(path)
     const prefetchedRef = useRef(false)
 
     useEffect(() => {
         if (import.meta.env.VITE_E2E !== '1') return
+        let active = true
         void import('@/test/window-state').then(({ publishWindowState }) => {
+            if (!active) return
             publishWindowState(model)
         })
+        return () => {
+            active = false
+        }
     }, [model])
 
     useEffect(() => {
@@ -69,8 +76,8 @@ export function PadPage({ path }: { path: PadPath }) {
         )
     }
 
-    const readyModel: PadWorkspaceModel & {
-        state: Extract<PadWorkspaceModel['state'], { kind: 'ready' }>
+    const readyModel: PadPageController & {
+        state: Extract<PadPageController['state'], { kind: 'ready' }>
     } = {
         ...model,
         state: model.state,
@@ -86,7 +93,7 @@ export function PadPage({ path }: { path: PadPath }) {
 }
 
 function ReadyPadPage(input: {
-    model: PadWorkspaceModel & { state: Extract<PadWorkspaceModel['state'], { kind: 'ready' }> }
+    model: PadPageController & { state: Extract<PadPageController['state'], { kind: 'ready' }> }
 }) {
     const { commands, state } = input.model
     const drawing = state.drawing.kind === 'ready' ? state.drawing.drawing : null
@@ -120,7 +127,9 @@ function ReadyPadPage(input: {
                         />
                     </Suspense>
                 ) : state.view.activeTab === 'drawing' ? (
-                    <DrawingWorkspacePane drawing={drawing} theme={state.view.drawingTheme} />
+                    <Suspense fallback={<DrawingWorkspaceFallback />}>
+                        <LazyDrawingWorkspacePane drawing={drawing} theme={state.view.drawingTheme} />
+                    </Suspense>
                 ) : (
                     <TextWorkspace
                         comments={state.text.comments}
@@ -169,6 +178,16 @@ function FilesPaneFallback() {
         <section className="workspace-shell min-h-0">
             <div className="flex h-full items-center justify-center bg-[--stone-bg] text-sm text-[--stone-text-muted]">
                 Loading files…
+            </div>
+        </section>
+    )
+}
+
+function DrawingWorkspaceFallback() {
+    return (
+        <section className="workspace-shell min-h-0" data-testid="drawing-workspace">
+            <div className="flex h-full items-center justify-center bg-[--stone-bg] text-sm text-[--stone-text-muted]">
+                Loading drawing…
             </div>
         </section>
     )

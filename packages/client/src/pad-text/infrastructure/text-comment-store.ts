@@ -2,10 +2,9 @@ import {
     Y_TEXT_COMMENT_MESSAGES_KEY,
     Y_TEXT_COMMENT_THREADS_KEY,
     Y_TEXT_KEY,
-    type LocalPeer,
-    type TextCommentAuthor,
-    type TextCommentStatus,
-} from '@mpad/shared'
+} from '@mpad/core/pad-limits'
+import type { LocalPeer } from '@mpad/protocol/peer'
+import type { TextCommentAuthor, TextCommentStatus } from '@mpad/protocol/text-comments'
 import {
     Array as YArray,
     Map as YMap,

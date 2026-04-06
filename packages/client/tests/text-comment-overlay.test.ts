@@ -80,7 +80,6 @@ function createThread(input: {
         author: {
             id: 'peer-local',
             name: 'Naruto Uzumaki',
-            color: { background: '#f97316', stroke: '#7c2d12' },
             textColor: '#ea580c',
             textColorLight: '#fdba7433',
         },

@@ -15,7 +15,10 @@ export default defineConfig({
     },
     webServer: [
         {
-            command: 'cd packages/server && PORT=' + serverPort + ' DATABASE_URL=' + databaseUrl + ' bun run start',
+            command:
+                'cd packages/server'
+                + ' && DATABASE_URL=' + databaseUrl + ' bun run migrate'
+                + ' && PORT=' + serverPort + ' DATABASE_URL=' + databaseUrl + ' bun run start',
             port: serverPort,
             reuseExistingServer: false,
             timeout: 120_000,

@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test'
-import { Y_TEXT_KEY, restoreTextDocFromUpdate, type LocalPeer } from '@mpad/shared'
+import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
+import type { LocalPeer } from '@mpad/protocol/peer'
+import { restoreTextDocFromUpdate } from '@mpad/text-core/text-revert'
 import { Doc, encodeStateAsUpdate } from 'yjs'
 import { createTextCommentController } from '../src/pad-text/infrastructure/text-comment-store'
 

@@ -2,25 +2,16 @@ import type { ServerWebSocket } from 'bun'
 import {
     CHECKPOINT_INTERVAL,
     PERSIST_DEBOUNCE_MS,
-    assert,
-    createDocUpdateMessage,
-    padRoomName,
-    parsePadRoomName,
-    restoreTextDocFromUpdate,
-    type ClientRoomMessage,
-    type PadDocKind,
-    type PadPath,
-} from '@mpad/shared'
+} from '@mpad/core/pad-limits'
+import { assert } from '@mpad/core/assert'
+import { padRoomName, parsePadRoomName, type PadDocKind } from '@mpad/core/pad-room'
+import type { PadPath } from '@mpad/core/pad-path'
+import { createDocUpdateMessage, type ClientRoomMessage } from '@mpad/protocol/room-message-codec'
+import { restoreTextDocFromUpdate } from '@mpad/text-core/text-revert'
 import { mergeUpdates } from 'yjs'
+import { appContext } from '../../bootstrap/app-context'
 import { ensurePad } from '../../pad-tree/infrastructure/repository'
 import type { WsData } from '../../transport/ws-data'
-import {
-    appendPadDocRevision,
-    createPadDocCheckpoint,
-    listPadDocRevisions,
-    loadPadDoc,
-    readPadDocRevisionText,
-} from './doc-store'
 import {
     applyPadDocAwareness,
     applyPadDocSync,
@@ -33,8 +24,6 @@ import {
     type PadDocRoom,
 } from './doc-room'
 
-const rooms = new Map<string, PadDocRoom>()
-
 export async function joinPadDocRoom(ws: ServerWebSocket<WsData>) {
     const room = await loadPadDocRoom(ws.data.roomName)
     for (const message of connectPadDocClient(room, ws)) {
@@ -43,7 +32,7 @@ export async function joinPadDocRoom(ws: ServerWebSocket<WsData>) {
 }
 
 export async function leavePadDocRoom(ws: ServerWebSocket<WsData>) {
-    const room = rooms.get(ws.data.roomName)
+    const room = appContext.docRoomRegistry.get(ws.data.roomName)
     if (!room) return
 
     const result = disconnectPadDocClient(room, ws)
@@ -52,11 +41,11 @@ export async function leavePadDocRoom(ws: ServerWebSocket<WsData>) {
 
     await flushPadDocRoom(room)
     destroyPadDocRoom(room)
-    rooms.delete(room.roomName)
+    appContext.docRoomRegistry.delete(room.roomName)
 }
 
 export function handlePadDocMessage(ws: ServerWebSocket<WsData>, message: ClientRoomMessage) {
-    const room = rooms.get(ws.data.roomName)
+    const room = appContext.docRoomRegistry.get(ws.data.roomName)
     if (!room) return
 
     if (message.kind === 'sync') {
@@ -75,11 +64,11 @@ export function handlePadDocMessage(ws: ServerWebSocket<WsData>, message: Client
 }
 
 export async function flushPadDocRooms() {
-    await Promise.all(Array.from(rooms.values(), (room) => flushPadDocRoom(room)))
+    await Promise.all(Array.from(appContext.docRoomRegistry.values(), (room) => flushPadDocRoom(room)))
 }
 
 export function getPadDocRoom(roomName: string) {
-    return rooms.get(roomName)
+    return appContext.docRoomRegistry.get(roomName)
 }
 
 export async function revertPadDocRoomToUpdate(input: {
@@ -135,14 +124,14 @@ export async function revertPadDocRoomToUpdate(input: {
 }
 
 async function loadPadDocRoom(roomName: string) {
-    const existing = rooms.get(roomName)
+    const existing = appContext.docRoomRegistry.get(roomName)
     if (existing) return existing
 
     const parsedRoom = parsePadRoomName(roomName)
     assert(parsedRoom.kind !== 'files', 'File rooms do not persist pad docs')
     await ensurePad(parsedRoom.path)
 
-    const stored = await loadPadDoc(parsedRoom.path, parsedRoom.kind)
+    const stored = await appContext.docRepository.loadDoc(parsedRoom.path, parsedRoom.kind)
     const room = createPadDocRoom({
         roomName,
         path: parsedRoom.path,
@@ -153,7 +142,7 @@ async function loadPadDocRoom(roomName: string) {
         },
     })
 
-    rooms.set(roomName, room)
+    appContext.docRoomRegistry.set(roomName, room)
     return room
 }
 
@@ -180,7 +169,13 @@ async function flushPadDocRoom(room: PadDocRoom, revertedFromRevisionId: number 
     const updates = takePadDocUpdates(room)
     if (updates.length === 0) return null
 
-    const result = await appendPadDocRevision(room.path, room.kind, mergeUpdates(updates), updates.length, revertedFromRevisionId)
+    const result = await appContext.docRepository.appendRevision(
+        room.path,
+        room.kind,
+        mergeUpdates(updates),
+        updates.length,
+        revertedFromRevisionId,
+    )
     room.latestChunkSeq = result.chunkSeq
     room.headRevisionId = result.revisionId
     room.headRevisionNumber = result.revisionNumber
@@ -189,7 +184,7 @@ async function flushPadDocRoom(room: PadDocRoom, revertedFromRevisionId: number 
     if (result.revisionNumber % CHECKPOINT_INTERVAL !== 0) return result
 
     const snapshot = readPadDocSnapshotBytes(room)
-    await createPadDocCheckpoint(room.path, room.kind, result.revisionId, result.chunkSeq, snapshot)
+    await appContext.docRepository.createCheckpoint(room.path, room.kind, result.revisionId, result.chunkSeq, snapshot)
     room.docBytes = snapshot.byteLength
     return result
 }
@@ -198,4 +193,5 @@ function sendRoomMessage(ws: ServerWebSocket<WsData>, message: { data: Uint8Arra
     ws.sendBinary(Buffer.from(message.data))
 }
 
-export { listPadDocRevisions, readPadDocRevisionText }
+export const listPadDocRevisions = appContext.docRepository.listRevisions
+export const readPadDocRevisionText = appContext.docRepository.readRevisionText

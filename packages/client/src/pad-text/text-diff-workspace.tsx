@@ -1,4 +1,5 @@
-import { PERSIST_DEBOUNCE_MS, type PadPath } from '@mpad/shared'
+import { PERSIST_DEBOUNCE_MS } from '@mpad/core/pad-limits'
+import type { PadPath } from '@mpad/core/pad-path'
 import { RotateCcw } from 'lucide-react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { toast } from 'sonner'

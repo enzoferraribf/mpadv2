@@ -2,11 +2,10 @@ import {
     MAX_FILE_BYTES,
     MAX_PEER_FILE_BYTES,
     MAX_PEER_FILE_COUNT,
-    assertLiveFileAllowed,
-    type LiveFileState,
-    type LocalPeer,
-    type PadPath,
-} from '@mpad/shared'
+} from '@mpad/core/pad-limits'
+import type { PadPath } from '@mpad/core/pad-path'
+import { assertLiveFileAllowed, type LiveFileState } from '@mpad/protocol/live-files'
+import type { LocalPeer } from '@mpad/protocol/peer'
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { FileAwarenessUser, PadFileRoom } from '@/collab/domain/pad-room-session'
 import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'

@@ -1,4 +1,6 @@
-import { assert, padPath, parsePadRoomName, type PadPath, type PadRoomKind } from '@mpad/shared'
+import { assert } from '@mpad/core/assert'
+import { padPath, type PadPath } from '@mpad/core/pad-path'
+import { parsePadRoomName, type PadRoomKind } from '@mpad/core/pad-room'
 import { listWorkspacePads } from './navigation-query-service'
 import {
     listPadTextRevisions,

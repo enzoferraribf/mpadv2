@@ -1,4 +1,4 @@
-import type { LocalPeer } from '@mpad/shared'
+import type { LocalPeer } from '@mpad/protocol/peer'
 
 const LOCAL_PEER_STORAGE_KEY = 'mpad.peer'
 

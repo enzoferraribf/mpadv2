@@ -1,4 +1,5 @@
-import type { PadPath, PadTreeItem } from '@mpad/shared'
+import type { PadPath } from '@mpad/core/pad-path'
+import type { PadTreeItem } from '@mpad/protocol/pad-tree'
 import { useEffect, useState } from 'react'
 import { browserWorkspaceNavigationQuery } from '@/pad-workspace/infrastructure/browser-navigation-query'
 

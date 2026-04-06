@@ -14,9 +14,12 @@ No auth. Text and drawing persist. Files do not.
 
 ## Repo shape
 
-- `@mpad/shared` holds pad contracts, limits, and asserts
+- `@mpad/core` holds pad primitives, limits, and asserts
+- `@mpad/protocol` holds http/ws contracts and codecs
+- `@mpad/text-core` holds text-only Yjs restore logic
+- `@mpad/testkit` holds shared test fixtures
 - `@mpad/server` holds pad-doc, pad-tree, live-file, and transport
-- `@mpad/client` holds the pad page shell, feature hooks, and UI
+- `@mpad/client` holds the pad page shell, feature controllers, and UI
 
 ## Server flow
 
@@ -35,14 +38,14 @@ Slices:
 
 One flow only:
 
-- `route -> usePadPage -> feature hooks -> dumb UI`
+- `route -> usePadPageController -> feature controllers -> dumb UI`
 
-Feature hooks:
+Feature controllers:
 
-- `usePadTextRoom`
-- `usePadDrawingRoom`
-- `usePadTree`
-- `usePadFiles`
+- `useTextWorkspace`
+- `useDrawingWorkspace`
+- `useNavigationTree`
+- `useFilesWorkspace`
 
 The page shell owns only layout and dialog state.
 

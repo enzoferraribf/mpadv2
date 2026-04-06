@@ -1,4 +1,4 @@
-import type { PadPath } from '../kernel/pad-path'
+import type { PadPath } from '@mpad/core/pad-path'
 
 export type PadTreeItem = {
     path: PadPath

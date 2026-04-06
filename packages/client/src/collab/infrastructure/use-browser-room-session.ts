@@ -3,13 +3,12 @@ import {
     createAwarenessMessage,
     createDocUpdateMessage,
     encodeClientRoomMessage,
-    padRoomName,
     readServerRoomMessage,
     replyToSyncMessage,
-    type PadPath,
-    type PadRoomKind,
     type ServerRoomMessage,
-} from '@mpad/shared'
+} from '@mpad/protocol/room-message-codec'
+import { padRoomName, type PadRoomKind } from '@mpad/core/pad-room'
+import type { PadPath } from '@mpad/core/pad-path'
 import { useEffect, useRef, useState } from 'react'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'

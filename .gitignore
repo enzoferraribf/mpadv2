@@ -3,3 +3,5 @@ dist
 .turbo
 .env
 *.tsbuildinfo
+test-results
+playwright-report

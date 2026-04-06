@@ -1,4 +1,4 @@
-import type { LiveFileState } from '@mpad/shared'
+import type { LiveFileState } from '@mpad/protocol/live-files'
 import { formatFileSize } from '@/lib/file'
 
 export function FileTransferProgress(input: { file: LiveFileState; compact?: boolean }) {

@@ -1,4 +1,4 @@
-import { Y_DRAWING_ELEMENTS_KEY } from '@mpad/shared'
+import { Y_DRAWING_ELEMENTS_KEY } from '@mpad/core/pad-limits'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { useEffect, useState } from 'react'
 import type { Doc } from 'yjs'

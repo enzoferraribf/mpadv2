@@ -1,11 +1,10 @@
 import type {
     ClientRoomMessage,
-    InboundFileSignal,
-    LiveFileMeta,
-    PadConnection,
-    PadRoomKind,
     ServerRoomMessage,
-} from '@mpad/shared'
+} from '@mpad/protocol/room-message-codec'
+import type { InboundFileSignal, LiveFileMeta, OutboundFileSignal } from '@mpad/protocol/live-files'
+import type { PadConnection } from '@mpad/protocol/pad-connection'
+import type { PadRoomKind } from '@mpad/core/pad-room'
 import type { Awareness } from 'y-protocols/awareness'
 import type { Doc } from 'yjs'
 
@@ -66,7 +65,7 @@ export type PadTextRoom = PadRoomSession<'text', TextAwarenessState>
 
 export type PadFileRoom = PadRoomSession<'files', FileAwarenessState> & {
     setLocalFiles: (files: LiveFileMeta[]) => void
-    sendFileSignal: (signal: import('@mpad/shared').OutboundFileSignal) => void
+    sendFileSignal: (signal: OutboundFileSignal) => void
     onFileSignal: (listener: FileSignalListener) => () => void
 }
 

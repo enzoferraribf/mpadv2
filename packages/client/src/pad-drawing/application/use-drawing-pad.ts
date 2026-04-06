@@ -1,4 +1,5 @@
-import type { LocalPeer, PadPath } from '@mpad/shared'
+import type { PadPath } from '@mpad/core/pad-path'
+import type { LocalPeer } from '@mpad/protocol/peer'
 import { useMemo } from 'react'
 import type { DrawingAwarenessState, DrawingAwarenessUser, PadDrawingRoom } from '@/collab/domain/pad-room-session'
 import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'

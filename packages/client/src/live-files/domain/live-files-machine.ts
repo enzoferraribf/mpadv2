@@ -1,4 +1,5 @@
-import { assertNever, type LiveFileMeta, type LiveFileOwner, type LiveFileState, type LiveFileTransfer } from '@mpad/shared'
+import { assertNever } from '@mpad/core/assert'
+import type { LiveFileMeta, LiveFileOwner, LiveFileState, LiveFileTransfer } from '@mpad/protocol/live-files'
 import type { FileAwarenessState } from '@/collab/domain/pad-room-session'
 import type { LocalFile } from '@/live-files/infrastructure/local-file-store'
 

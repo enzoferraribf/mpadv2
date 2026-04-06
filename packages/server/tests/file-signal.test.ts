@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { readServerRoomMessage, type OutboundFileSignal } from '@mpad/shared'
+import { readServerRoomMessage } from '@mpad/protocol/room-message-codec'
+import type { OutboundFileSignal } from '@mpad/protocol/live-files'
 import type { ServerWebSocket } from 'bun'
 import { routeLiveFileSignal } from '../src/live-files/application/live-file-room-service'
 import type { WsData } from '../src/transport/ws-data'
@@ -48,15 +49,17 @@ describe('file signal routing', () => {
 })
 
 function createSocket(awarenessClientId: number) {
+    const sent: Uint8Array[] = []
+
     return {
         data: {
             roomName: '/pad:files',
             roomKind: 'files',
             awarenessClientId,
         },
-        sent: [] as Uint8Array[],
+        sent,
         sendBinary(data: Buffer) {
-            this.sent.push(new Uint8Array(data))
+            sent.push(new Uint8Array(data))
         },
     } as unknown as ServerWebSocket<WsData> & { sent: Uint8Array[] }
 }

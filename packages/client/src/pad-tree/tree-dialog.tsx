@@ -1,4 +1,5 @@
-import { rootPadPath, type PadPath, type PadTreeItem } from '@mpad/shared'
+import { rootPadPath, type PadPath } from '@mpad/core/pad-path'
+import type { PadTreeItem } from '@mpad/protocol/pad-tree'
 import { FolderTree } from 'lucide-react'
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 

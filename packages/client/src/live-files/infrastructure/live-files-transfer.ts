@@ -1,4 +1,4 @@
-import type { FileSignal, LiveFileMeta, LiveFileState } from '@mpad/shared'
+import type { FileSignal, LiveFileMeta, LiveFileState } from '@mpad/protocol/live-files'
 import type { SignalData } from 'simple-peer'
 import { toast } from 'sonner'
 import type { PadFileRoom } from '@/collab/domain/pad-room-session'

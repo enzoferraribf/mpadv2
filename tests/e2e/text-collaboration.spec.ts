@@ -114,7 +114,9 @@ test('shows persisted anime peer identity on remote text and drawing cursors', a
     await openDrawingRoom(pageB)
     await moveDrawingPointer(pageA)
     await pageB.waitForFunction(() => {
-        const appState = window.__mpadDrawingApi__?.getAppState()
+        const appState = window.__mpadDrawingApi__?.getAppState() as {
+            collaborators: Map<unknown, { pointer: unknown; username: string }>
+        } | null
         if (!appState) return false
         return Array.from(appState.collaborators.values()).some((value) =>
             value.username === 'Naruto Uzumaki' && Boolean(value.pointer),
@@ -184,4 +186,3 @@ test('keeps text after a reload', async ({ browser }) => {
 
     await context.close()
 })
-

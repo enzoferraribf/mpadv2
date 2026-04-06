@@ -2,12 +2,12 @@ import {
     type TextCommentAuthor,
     type TextCommentMessage,
     type TextCommentStatus,
-} from '../contracts/text-comments'
+} from '@mpad/protocol/text-comments'
 import {
     Y_TEXT_COMMENT_MESSAGES_KEY,
     Y_TEXT_COMMENT_THREADS_KEY,
     Y_TEXT_KEY,
-} from './pad-limits'
+} from '@mpad/core/pad-limits'
 import {
     Array as YArray,
     Doc,

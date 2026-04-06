@@ -1,4 +1,4 @@
-import type { PadPath } from '@mpad/shared'
+import type { PadPath } from '@mpad/core/pad-path'
 import { listPadDocRevisions, loadPadDocRevisionBytes, readPadDocRevisionText } from '../../collab/infrastructure/doc-store'
 
 export function listPadTextRevisions(path: PadPath) {

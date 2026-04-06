@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { CHECKPOINT_INTERVAL, Y_TEXT_COMMENT_MESSAGES_KEY, Y_TEXT_COMMENT_THREADS_KEY, Y_TEXT_KEY, padPath } from '@mpad/shared'
+import { CHECKPOINT_INTERVAL, Y_TEXT_COMMENT_MESSAGES_KEY, Y_TEXT_COMMENT_THREADS_KEY, Y_TEXT_KEY } from '@mpad/core/pad-limits'
+import { padPath } from '@mpad/core/pad-path'
 import { Array as YArray, Doc, Map as YMap, applyUpdate, createRelativePositionFromTypeIndex, encodeRelativePosition, encodeStateAsUpdate, mergeUpdates } from 'yjs'
 import { ensurePad, listRelatedPads } from '../src/pad-tree/infrastructure/repository'
 import {
@@ -9,7 +10,8 @@ import {
     loadPadDoc,
     loadPadDocRevisionBytes,
 } from '../src/collab/infrastructure/doc-store'
-import { migrate, sql } from '../src/infrastructure/db'
+import { sql } from '../src/infrastructure/db'
+import { migrate } from '../src/infrastructure/migration-runner'
 
 beforeAll(async () => {
     await migrate()
@@ -49,13 +51,13 @@ describe('pad doc repository', () => {
         applyUpdate(restored, stored.updates[0]!)
         expect(restored.getText(Y_TEXT_KEY).toString()).toBe('hello world')
 
-        const [chunk] = await sql<{ event_count: number }[]>`
+        const [storedRevision] = await sql<{ event_count: number }[]>`
             SELECT event_count
-            FROM pad_doc_chunks
-            WHERE seq = ${revision.chunkSeq}
+            FROM pad_revisions
+            WHERE id = ${revision.revisionId}
         `
 
-        expect(chunk?.event_count).toBe(2)
+        expect(storedRevision?.event_count).toBe(2)
         doc.destroy()
         restored.destroy()
         await cleanupRoot(root)
@@ -153,13 +155,15 @@ describe('pad doc repository', () => {
         const stored = await loadPadDoc(path, 'text')
         const [checkpointCount] = await sql<{ count: number }[]>`
             SELECT COUNT(*)::int AS count
-            FROM pad_doc_checkpoints
-            WHERE pad_path = ${path} AND kind = 'text'
+            FROM pad_docs AS d
+            JOIN pad_revisions AS r ON r.doc_id = d.id
+            WHERE d.pad_path = ${path} AND d.kind = 'text' AND r.snapshot IS NOT NULL
         `
-        const [chunkCount] = await sql<{ count: number }[]>`
+        const [revisionCount] = await sql<{ count: number }[]>`
             SELECT COUNT(*)::int AS count
-            FROM pad_doc_chunks
-            WHERE pad_path = ${path} AND kind = 'text'
+            FROM pad_docs AS d
+            JOIN pad_revisions AS r ON r.doc_id = d.id
+            WHERE d.pad_path = ${path} AND d.kind = 'text'
         `
 
         expect(history).toHaveLength(CHECKPOINT_INTERVAL + 2)
@@ -174,7 +178,7 @@ describe('pad doc repository', () => {
             isHead: false,
         }))
         expect(checkpointCount?.count).toBe(1)
-        expect(chunkCount?.count).toBe(CHECKPOINT_INTERVAL + 2)
+        expect(revisionCount?.count).toBe(CHECKPOINT_INTERVAL + 2)
         expect(stored.snapshot).not.toBeNull()
         expect(stored.updates).toHaveLength(2)
 

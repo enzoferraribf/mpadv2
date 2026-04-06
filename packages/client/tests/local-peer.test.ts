@@ -13,7 +13,7 @@ describe('local peer', () => {
         expect(peer.textColorLight).toBe('#fdba7433')
     })
 
-    test('migrates legacy stored peers', () => {
+    test('rejects stored peers with invalid shape', () => {
         const stored = JSON.stringify({
             name: 'peer-abcd',
             color: { background: '#f97316', stroke: '#7c2d12' },

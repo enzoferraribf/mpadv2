@@ -2,8 +2,9 @@ import type { ServerWebSocket } from 'bun'
 import {
     encodeServerRoomMessage,
     type ClientRoomMessage,
-    type OutboundFileSignal,
-} from '@mpad/shared'
+} from '@mpad/protocol/room-message-codec'
+import type { OutboundFileSignal } from '@mpad/protocol/live-files'
+import { appContext } from '../../bootstrap/app-context'
 import type { WsData } from '../../transport/ws-data'
 import {
     applyLiveFilesMessage,
@@ -15,8 +16,6 @@ import {
     type LiveFilesRoom,
 } from './room'
 
-const rooms = new Map<string, LiveFilesRoom>()
-
 export async function openLiveFileRoomClient(ws: ServerWebSocket<WsData>) {
     const room = loadLiveFilesRoom(ws.data.roomName)
     for (const message of connectLiveFilesClient(room, ws)) {
@@ -25,7 +24,7 @@ export async function openLiveFileRoomClient(ws: ServerWebSocket<WsData>) {
 }
 
 export async function closeLiveFileRoomClient(ws: ServerWebSocket<WsData>) {
-    const room = rooms.get(ws.data.roomName)
+    const room = appContext.fileRoomRegistry.get(ws.data.roomName)
     if (!room) return
 
     const result = disconnectLiveFilesClient(room, ws)
@@ -33,11 +32,11 @@ export async function closeLiveFileRoomClient(ws: ServerWebSocket<WsData>) {
     if (!result.isEmpty) return
 
     destroyLiveFilesRoom(room)
-    rooms.delete(room.roomName)
+    appContext.fileRoomRegistry.delete(room.roomName)
 }
 
 export function handleLiveFileRoomMessage(ws: ServerWebSocket<WsData>, message: ClientRoomMessage) {
-    const room = rooms.get(ws.data.roomName)
+    const room = appContext.fileRoomRegistry.get(ws.data.roomName)
     if (!room) return
 
     const result = applyLiveFilesMessage(room, ws, message)
@@ -65,11 +64,11 @@ export function routeLiveFileSignal(
 }
 
 function loadLiveFilesRoom(roomName: string) {
-    const current = rooms.get(roomName)
+    const current = appContext.fileRoomRegistry.get(roomName)
     if (current) return current
 
     const room = createLiveFilesRoom(roomName)
-    rooms.set(roomName, room)
+    appContext.fileRoomRegistry.set(roomName, room)
     return room
 }
 

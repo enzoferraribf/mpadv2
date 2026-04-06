@@ -1,0 +1,23 @@
+{
+    "extends": "../tsconfig.base.json",
+    "compilerOptions": {
+        "baseUrl": "..",
+        "declaration": false,
+        "declarationMap": false,
+        "jsx": "react-jsx",
+        "lib": ["DOM", "DOM.Iterable", "ESNext"],
+        "moduleResolution": "bundler",
+        "noEmit": true,
+        "paths": {
+            "@/*": ["packages/client/src/*"],
+            "@mpad/testkit/*": ["packages/testkit/src/*"]
+        },
+        "types": ["@playwright/test"]
+    },
+    "include": [
+        "e2e/**/*.ts",
+        "e2e/**/*.d.ts",
+        "../packages/client/tests/**/*.ts",
+        "../packages/server/tests/**/*.ts"
+    ]
+}

@@ -4,13 +4,16 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite",
-        "build": "tsc -b && vite build",
+        "dev": "bun --env-file=../../.env run vite",
+        "build": "tsc -b && bun --env-file=../../.env run vite build",
         "test": "bun run build && bun test tests",
         "typecheck": "tsc --noEmit",
-        "preview": "vite preview --host 0.0.0.0 --port 4173"
+        "preview": "bun --env-file=../../.env run vite preview --host 0.0.0.0 --port 4173"
     },
     "dependencies": {
+        "@mpad/core": "workspace:*",
+        "@mpad/protocol": "workspace:*",
+        "@mpad/text-core": "workspace:*",
         "@codemirror/lang-markdown": "^6.3.4",
         "@codemirror/language": "^6.12.3",
         "@codemirror/merge": "^6.12.1",
@@ -19,7 +22,6 @@
         "@codemirror/view": "^6.38.6",
         "@excalidraw/excalidraw": "^0.18",
         "@lezer/highlight": "^1.2.3",
-        "@mpad/shared": "workspace:*",
         "@radix-ui/react-dialog": "^1.1",
         "@radix-ui/react-slot": "^1.2",
         "@radix-ui/react-tooltip": "^1.2",
@@ -48,6 +50,7 @@
         "yjs": "^13.6"
     },
     "devDependencies": {
+        "@mpad/testkit": "workspace:*",
         "@tanstack/router-plugin": "^1.120",
         "@types/react": "^19.1",
         "@types/react-dom": "^19.1",

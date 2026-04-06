@@ -1,11 +1,7 @@
 import {
     padPathName,
     type PadPath,
-    type PadWorkspaceDialog,
-    type PadWorkspaceDirection,
-    type PadWorkspaceLayout,
-    type PadWorkspaceTab,
-} from '@mpad/shared'
+} from '@mpad/core/pad-path'
 import { useEffect, useReducer, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { getRandomPhrase } from '@/components/feedback/loading-phrases'
@@ -23,6 +19,12 @@ import {
     reducePadWorkspaceViewState,
     type PadWorkspaceViewState as PadWorkspaceViewStateCore,
 } from '@/pad-workspace/domain/workspace-view-state'
+import type {
+    PadWorkspaceDialog,
+    PadWorkspaceDirection,
+    PadWorkspaceLayout,
+    PadWorkspaceTab,
+} from '@/pad-workspace/domain/workspace-view'
 
 export type PadWorkspaceViewState = PadWorkspaceViewStateCore & {
     clockLabel: string

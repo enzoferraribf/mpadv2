@@ -1,1 +1,1 @@
-export { restoreTextDocFromUpdate } from '@mpad/shared'
+export { restoreTextDocFromUpdate } from '@mpad/text-core/text-revert'

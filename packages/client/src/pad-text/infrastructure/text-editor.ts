@@ -1,4 +1,4 @@
-import { Y_TEXT_KEY } from '@mpad/shared'
+import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import { StateEffect, StateField } from '@codemirror/state'
 import {
     Decoration,

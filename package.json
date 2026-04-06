@@ -3,19 +3,26 @@
     "private": true,
     "packageManager": "bun@1.3.11",
     "workspaces": [
-        "packages/*"
+        "packages/client",
+        "packages/server",
+        "packages/core",
+        "packages/protocol",
+        "packages/text-core",
+        "packages/testkit"
     ],
     "scripts": {
         "dev": "turbo dev",
         "build": "turbo build",
+        "migrate:server": "cd packages/server && bun run migrate",
         "typecheck": "turbo typecheck",
+        "typecheck:tests": "bun x tsc -p tests/tsconfig.json --noEmit",
         "test:client": "cd packages/client && bun run test",
-        "test:server": "./scripts/with-test-db.sh bun test packages/server/tests",
+        "test:server": "./scripts/with-test-db.sh sh -lc 'cd packages/server && bun run migrate && bun test tests'",
         "test:e2e": "./scripts/run-e2e.sh"
     },
     "devDependencies": {
         "@playwright/test": "^1.54.2",
-        "turbo": "^2.5",
+        "turbo": "^2.9.4",
         "typescript": "^5.9"
     }
 }

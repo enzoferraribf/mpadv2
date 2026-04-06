@@ -1,5 +1,5 @@
-import type { PadPath, PadTreeItem } from '@mpad/shared'
-import { padPathName, parentPadPath, rootPadPath } from '@mpad/shared'
+import { padPathName, parentPadPath, rootPadPath, type PadPath } from '@mpad/core/pad-path'
+import type { PadTreeItem } from '@mpad/protocol/pad-tree'
 import { sql } from '../../infrastructure/db'
 
 type PadRow = {

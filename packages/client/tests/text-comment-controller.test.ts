@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { Y_TEXT_KEY, type LocalPeer } from '@mpad/shared'
+import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
+import type { LocalPeer } from '@mpad/protocol/peer'
 import { Doc } from 'yjs'
 import { createTextCommentController } from '../src/pad-text/infrastructure/text-comment-store'
 

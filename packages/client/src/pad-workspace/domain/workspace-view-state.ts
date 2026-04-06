@@ -1,6 +1,7 @@
-import { assertNever, type PadWorkspaceDialog, type PadWorkspaceLayout, type PadWorkspaceTab } from '@mpad/shared'
+import { assertNever } from '@mpad/core/assert'
 import type { DrawingThemePreference } from '@/pad-drawing/drawing-theme'
 import type { CursorPosition } from '@/pad-text/infrastructure/text-editor'
+import type { PadWorkspaceDialog, PadWorkspaceLayout, PadWorkspaceTab } from '@/pad-workspace/domain/workspace-view'
 
 export type PadWorkspaceViewState = {
     activeTab: PadWorkspaceTab

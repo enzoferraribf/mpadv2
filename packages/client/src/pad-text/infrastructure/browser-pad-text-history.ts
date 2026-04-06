@@ -1,9 +1,9 @@
 import type {
-    PadDocRevisionSummary,
-    PadPath,
     PadTextHistoryResponse,
     PadTextRevisionResponse,
-} from '@mpad/shared'
+} from '@mpad/protocol/http'
+import type { PadDocRevisionSummary } from '@mpad/protocol/pad-text-history'
+import type { PadPath } from '@mpad/core/pad-path'
 import {
     fetchApiBytes,
     fetchApiJson,
