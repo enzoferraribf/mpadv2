@@ -46,9 +46,7 @@ export type TextWorkspaceCommentActions = {
     editMessage: (input: { threadId: string; messageId: string; body: string }) => TextCommentResult
     openDraftFromSelection: () => boolean
     openThread: (threadId: string | null) => void
-    reopenThread: (threadId: string) => TextCommentResult
     replyToThread: (input: { threadId: string; body: string }) => TextCommentResult<{ messageId: string }>
-    resolveThread: (threadId: string) => TextCommentResult
     setEditorSelection: (selection: TextEditorSelection | null) => void
 }
 
@@ -222,17 +220,9 @@ export function useTextWorkspace(path: PadPath, localPeer: LocalPeer): TextWorks
             }
             setOverlay((value) => value.kind === 'thread' && value.threadId === threadId ? value : { kind: 'thread', threadId })
         },
-        reopenThread(threadId) {
-            if (!commentController) return { ok: false, error: 'Comments are unavailable' }
-            return commentController.reopenThread(threadId)
-        },
         replyToThread(input) {
             if (!commentController) return { ok: false, error: 'Comments are unavailable' }
             return commentController.replyToThread(input)
-        },
-        resolveThread(threadId) {
-            if (!commentController) return { ok: false, error: 'Comments are unavailable' }
-            return commentController.resolveThread(threadId)
         },
         setEditorSelection(selection) {
             setEditorSelection(selection)

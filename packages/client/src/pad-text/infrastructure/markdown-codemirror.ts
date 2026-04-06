@@ -2,6 +2,7 @@ import { markdown } from '@codemirror/lang-markdown'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import { EditorView, lineNumbers } from '@codemirror/view'
+import { createMarkdownImageWidgetExtension } from './markdown-image-widgets'
 
 const editorMuted = 'var(--stone-text-muted)'
 
@@ -117,6 +118,7 @@ export function createMarkdownCodeMirrorExtensions() {
         markdown(),
         lineNumbers(),
         EditorView.lineWrapping,
+        createMarkdownImageWidgetExtension(),
         editorTheme,
         editorHighlight,
     ]

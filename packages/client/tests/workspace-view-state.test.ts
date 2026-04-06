@@ -1,10 +1,18 @@
 import { describe, expect, test } from 'bun:test'
 import {
+    createPadWorkspaceViewState,
     reducePadWorkspaceViewState,
     type PadWorkspaceViewState,
 } from '../src/pad-workspace/domain/workspace-view-state'
 
 describe('workspace view state', () => {
+    test('starts with editor layout and sidebar closed', () => {
+        const state = createPadWorkspaceViewState()
+
+        expect(state.layout).toBe('editor')
+        expect(state.sidebarOpen).toBe(false)
+    })
+
     test('toggles dialogs and keeps the last requested one', () => {
         const state: PadWorkspaceViewState = {
             activeTab: 'text',

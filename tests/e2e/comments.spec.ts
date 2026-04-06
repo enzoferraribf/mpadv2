@@ -131,16 +131,6 @@ test('syncs comment threads between peers and keeps them after reload', async ({
         pageA.evaluate(() => (window as any).__mpad__?.getCommentThreads()?.[0]?.messages?.[1]?.body ?? ''),
     ).toBe('Reply from B updated')
 
-    await pageA.evaluate((value) => (window as any).__mpad__.resolveCommentThread(value), threadId)
-    await expect.poll(async () =>
-        pageB.evaluate(() => (window as any).__mpad__?.getCommentThreads()?.[0]?.status ?? ''),
-    ).toBe('resolved')
-
-    await pageB.evaluate((value) => (window as any).__mpad__.reopenCommentThread(value), threadId)
-    await expect.poll(async () =>
-        pageA.evaluate(() => (window as any).__mpad__?.getCommentThreads()?.[0]?.status ?? ''),
-    ).toBe('active')
-
     await pageB.evaluate(({ messageId, threadId: id }) => (window as any).__mpad__.deleteCommentMessage(id, messageId), {
         messageId: replyId,
         threadId,
@@ -166,4 +156,3 @@ test('syncs comment threads between peers and keeps them after reload', async ({
     await contextA.close()
     await contextB.close()
 })
-

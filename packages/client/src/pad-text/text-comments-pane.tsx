@@ -11,9 +11,7 @@ export function TextCommentsPane(input: {
     onDeleteMessage: (input: { threadId: string; messageId: string }) => CommentActionResult
     onDeleteThread: (threadId: string) => CommentActionResult
     onEditMessage: (input: { threadId: string; messageId: string; body: string }) => CommentActionResult
-    onReopenThread: (threadId: string) => CommentActionResult
     onReplyToThread: (input: { threadId: string; body: string }) => CommentActionResult<{ messageId: string }>
-    onResolveThread: (threadId: string) => CommentActionResult
     top: number
     thread: TextCommentThreadView | null
 }) {
@@ -23,7 +21,7 @@ export function TextCommentsPane(input: {
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [replyBody, setReplyBody] = useState('')
-    const [resolvedTop, setResolvedTop] = useState(12)
+    const [cardTop, setCardTop] = useState(12)
     const open = input.draftSelection !== null || input.thread !== null
 
     useEffect(() => {
@@ -55,7 +53,7 @@ export function TextCommentsPane(input: {
         if (!card) return
         const height = card.offsetHeight
         const maxTop = Math.max(12, input.containerHeight - height - 12)
-        setResolvedTop(Math.max(12, Math.min(input.top, maxTop)))
+        setCardTop(Math.max(12, Math.min(input.top, maxTop)))
     }, [input.containerHeight, input.top, input.thread, input.draftSelection, editingMessageId, editingBody, open, replyBody])
 
     if (!open) return null
@@ -65,12 +63,10 @@ export function TextCommentsPane(input: {
             ref={cardRef}
             className="comment-card"
             data-testid="comment-card"
-            style={{ top: `${resolvedTop}px` }}
+            style={{ top: `${cardTop}px` }}
         >
             <header className="comment-card-header">
-                <div className="comments-compose-label">
-                    {input.draftSelection ? 'New comment' : input.thread?.status === 'resolved' ? 'Resolved thread' : 'Thread'}
-                </div>
+                <div className="comments-compose-label">{input.draftSelection ? 'New comment' : 'Thread'}</div>
                 <button
                     aria-label="Close comment"
                     className="comment-card-close"
@@ -148,18 +144,8 @@ function ThreadCard(input: {
         <section className="comment-card-section comment-card-thread">
             <div className="comment-card-thread-scroll">
                 <blockquote className="comments-quote">{thread.quote}</blockquote>
-                <div className="comments-thread-actions">
-                    <button
-                        className="comments-pane-link"
-                        onClick={() => {
-                            if (thread.status === 'resolved') input.input.onReopenThread(thread.id)
-                            else input.input.onResolveThread(thread.id)
-                        }}
-                        type="button"
-                    >
-                        {thread.status === 'resolved' ? 'Reopen' : 'Resolve'}
-                    </button>
-                    {thread.canDelete ? (
+                {thread.canDelete ? (
+                    <div className="comments-thread-actions">
                         <button
                             className="comments-pane-link danger"
                             onClick={() => {
@@ -170,8 +156,8 @@ function ThreadCard(input: {
                         >
                             Delete thread
                         </button>
-                    ) : null}
-                </div>
+                    </div>
+                ) : null}
 
                 <div className="comment-card-body">
                     {thread.messages.map((message) => (

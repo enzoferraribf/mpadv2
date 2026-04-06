@@ -1,5 +1,3 @@
-export type TextCommentStatus = 'active' | 'resolved'
-
 export type TextCommentAuthor = {
     id: string
     name: string
@@ -22,7 +20,6 @@ export type TextCommentAnchor = {
 
 export type TextCommentThread = {
     id: string
-    status: TextCommentStatus
     quote: string
     createdAt: string
     updatedAt: string

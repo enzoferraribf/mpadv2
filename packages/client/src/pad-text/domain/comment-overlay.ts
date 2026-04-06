@@ -1,4 +1,3 @@
-import type { TextCommentStatus } from '@mpad/protocol/text-comments'
 import type { TextCommentSelection, TextCommentThreadView } from '@/pad-text/infrastructure/text-comment-store'
 
 export type TextCommentOverlay =
@@ -15,7 +14,6 @@ export type TextCommentMarker = {
     threadId: string
     kind: 'anchored' | 'detached'
     top: number
-    status: TextCommentStatus
     active: boolean
 }
 
@@ -43,7 +41,6 @@ export function buildCommentMarkers(input: {
                 threadId: thread.id,
                 kind: 'detached',
                 top: detachedTop + detachedIndex * detachedGap,
-                status: thread.status,
                 active,
             })
             detachedIndex += 1
@@ -56,7 +53,6 @@ export function buildCommentMarkers(input: {
             threadId: thread.id,
             kind: 'anchored',
             top: Math.round((anchor.top + anchor.bottom) / 2),
-            status: thread.status,
             active,
         })
     }

@@ -76,7 +76,7 @@ export function PadLoadingShell(input: PadLoadingShellProps) {
                     {(input.activeTab ?? 'text') === 'text' ? (
                         <div className="pad-tab-actions">
                             <button
-                                className={`pad-tab-action${(input.layout ?? 'split') === 'split' ? ' active' : ''}`}
+                                className={`pad-tab-action${(input.layout ?? 'editor') === 'split' ? ' active' : ''}`}
                                 onClick={() => (input.onSetLayout ?? noop)('split')}
                                 title="Split view"
                                 type="button"
@@ -84,7 +84,7 @@ export function PadLoadingShell(input: PadLoadingShellProps) {
                                 &#x2637;
                             </button>
                             <button
-                                className={`pad-tab-action${input.layout === 'editor' ? ' active' : ''}`}
+                                className={`pad-tab-action${(input.layout ?? 'editor') === 'editor' ? ' active' : ''}`}
                                 onClick={() => (input.onSetLayout ?? noop)('editor')}
                                 title="Editor only"
                                 type="button"
@@ -133,8 +133,7 @@ export function PadLoadingShell(input: PadLoadingShellProps) {
 
 function readSidebarOpen(sidebarOpen: boolean | undefined) {
     if (sidebarOpen !== undefined) return sidebarOpen
-    if (typeof window === 'undefined') return true
-    return window.innerWidth > 640
+    return false
 }
 
 function readClockLabel() {

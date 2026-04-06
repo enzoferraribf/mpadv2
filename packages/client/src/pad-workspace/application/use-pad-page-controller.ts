@@ -61,9 +61,7 @@ export type PadPageControllerCommands = PadWorkspaceViewCommands & {
     openCommentThread: (threadId: string | null) => void
     revertTextToRevision: (input: { revisionId: number; revisionNumber: number }) => Promise<PadDocRevisionSummary>
     replyToCommentThread: (input: { threadId: string; body: string }) => TextCommentResult<{ messageId: string }>
-    reopenCommentThread: (threadId: string) => TextCommentResult
     setCommentSelection: (selection: TextEditorSelection | null) => void
-    resolveCommentThread: (threadId: string) => TextCommentResult
     uploadFile: (file: File) => void
 }
 
@@ -130,17 +128,9 @@ export function usePadPageController(path: PadPath): PadPageController {
             if (text.kind === 'loading') return { ok: false, error: 'Comments are unavailable' }
             return text.commentActions.replyToThread(input)
         },
-        reopenCommentThread(threadId) {
-            if (text.kind === 'loading') return { ok: false, error: 'Comments are unavailable' }
-            return text.commentActions.reopenThread(threadId)
-        },
         setCommentSelection(selection) {
             if (text.kind === 'loading') return
             text.commentActions.setEditorSelection(selection)
-        },
-        resolveCommentThread(threadId) {
-            if (text.kind === 'loading') return { ok: false, error: 'Comments are unavailable' }
-            return text.commentActions.resolveThread(threadId)
         },
         uploadFile(file) {
             files.uploadFile(file)

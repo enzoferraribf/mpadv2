@@ -1,7 +1,6 @@
 import {
     type TextCommentAuthor,
     type TextCommentMessage,
-    type TextCommentStatus,
 } from '@mpad/protocol/text-comments'
 import {
     Y_TEXT_COMMENT_MESSAGES_KEY,
@@ -27,7 +26,6 @@ type RestoredAnchor =
 
 type RestoredThread = {
     id: string
-    status: TextCommentStatus
     quote: string
     createdAt: string
     updatedAt: string
@@ -68,7 +66,6 @@ function readRestoredThreads(doc: YDoc) {
 function readRestoredThread(threadId: string, value: unknown, ytext: YText) {
     if (!(value instanceof YMap)) return null
 
-    const status = readStatus(value)
     const quote = readString(value, 'quote')
     const createdAt = readString(value, 'createdAt')
     const updatedAt = readString(value, 'updatedAt')
@@ -76,11 +73,10 @@ function readRestoredThread(threadId: string, value: unknown, ytext: YText) {
     const messages = readMessages(value)
     const anchor = readAnchor(value, ytext)
 
-    if (!status || !quote || !createdAt || !updatedAt || !author || !anchor || messages.length === 0) return null
+    if (!quote || !createdAt || !updatedAt || !author || !anchor || messages.length === 0) return null
 
     return {
         id: threadId,
-        status,
         quote,
         createdAt,
         updatedAt,
@@ -155,7 +151,6 @@ function createThreadMap(thread: RestoredThread, ytext: YText) {
     const messages = new YArray<YMap<unknown>>()
 
     map.set('id', thread.id)
-    map.set('status', thread.status)
     map.set('quote', thread.quote)
     map.set('createdAt', thread.createdAt)
     map.set('updatedAt', thread.updatedAt)
@@ -199,11 +194,6 @@ function readAuthor(map: YMap<unknown>) {
     const textColorLight = readString(map, 'authorTextColorLight')
     if (!id || !name || !textColor || !textColorLight) return null
     return { id, name, textColor, textColorLight }
-}
-
-function readStatus(map: YMap<unknown>) {
-    const status = map.get('status')
-    return status === 'active' || status === 'resolved' ? status : null
 }
 
 function readString(map: YMap<unknown>, key: string) {

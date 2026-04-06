@@ -11,7 +11,6 @@ declare global {
             getText: () => string
             getCommentThreads: () => Array<{
                 id: string
-                status: 'active' | 'resolved'
                 quote: string
                 selected: boolean
                 detached: boolean
@@ -24,11 +23,9 @@ declare global {
             hasLocalFile: (name: string) => boolean
             openDrawing: () => void
             openCommentDraftFromSelection: () => void
-            reopenCommentThread: (threadId: string) => void
             insertTestArrow: () => Promise<void>
             insertTestRectangle: () => Promise<void>
             replyToCommentThread: (threadId: string, body: string) => void
-            resolveCommentThread: (threadId: string) => void
             selectCommentRange: (from: number, to: number) => void
             selectCommentThread: (threadId: string) => void
             setText: (content: string) => void
@@ -65,7 +62,6 @@ export function publishWindowState(workspace: PadWorkspaceModel) {
         },
         getCommentThreads: () => state.text.comments.threads.map((thread) => ({
             id: thread.id,
-            status: thread.status,
             quote: thread.quote,
             selected:
                 state.text.comments.overlay.kind === 'thread'
@@ -86,9 +82,6 @@ export function publishWindowState(workspace: PadWorkspaceModel) {
         openCommentDraftFromSelection: () => {
             commands.openCommentDraftFromSelection()
         },
-        reopenCommentThread: (threadId: string) => {
-            commands.reopenCommentThread(threadId)
-        },
         insertTestArrow: async () => {
             if (!window.__mpadDrawingApi__) throw new Error('Drawing API is unavailable')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
@@ -103,9 +96,6 @@ export function publishWindowState(workspace: PadWorkspaceModel) {
         },
         replyToCommentThread: (threadId: string, body: string) => {
             commands.replyToCommentThread({ threadId, body })
-        },
-        resolveCommentThread: (threadId: string) => {
-            commands.resolveCommentThread(threadId)
         },
         selectCommentRange: (from: number, to: number) => {
             state.text.editor.selectRange(from, to)

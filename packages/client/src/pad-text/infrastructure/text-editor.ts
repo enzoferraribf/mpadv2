@@ -315,7 +315,6 @@ function buildCommentDecorations(highlights: TextCommentHighlight[], activeThrea
 
 function readCommentClassName(highlight: TextCommentHighlight, activeThreadId: string | null) {
     const classes = ['cm-comment-highlight']
-    if (highlight.status === 'resolved') classes.push('cm-comment-highlight-resolved')
     if (highlight.threadId === activeThreadId) classes.push('cm-comment-highlight-active')
     return classes.join(' ')
 }

@@ -71,8 +71,9 @@ export async function waitForHistoryItems(page: Page, count: number) {
 }
 
 export async function waitForCommentThreadCount(page: Page, count: number) {
-    await expect.poll(async () =>
-        page.evaluate(() => (window as any).__mpad__?.getCommentThreads()?.length ?? -1),
+    await expect.poll(
+        async () => page.evaluate(() => (window as any).__mpad__?.getCommentThreads()?.length ?? -1),
+        { timeout: 10_000 },
     ).toBe(count)
 }
 
@@ -100,7 +101,7 @@ export async function setLayout(page: Page, name: 'Editor' | 'Preview' | 'Split'
 
 export async function seedDocument(page: Page) {
     await page.evaluate((value) => (window as any).__mpad__.setText(value), demoText)
-    await expect(page.getByRole('heading', { name: 'alpha' })).toBeVisible()
+    await waitForText(page, demoText)
 }
 
 export async function hideEditorCaret(page: Page) {

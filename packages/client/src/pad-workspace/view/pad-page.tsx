@@ -143,9 +143,7 @@ function ReadyPadPage(input: {
                         onCommentDeleteThread={commands.deleteCommentThread}
                         onCommentEditMessage={commands.editCommentMessage}
                         onCommentOpenThread={commands.openCommentThread}
-                        onCommentReopen={commands.reopenCommentThread}
                         onCommentReply={commands.replyToCommentThread}
-                        onCommentResolve={commands.resolveCommentThread}
                         onCommentStartDraft={commands.openCommentDraftFromSelection}
                         onCursorChange={commands.setCursor}
                         onEditorSelectionChange={commands.setCommentSelection}

@@ -28,7 +28,7 @@ export function createPadWorkspaceViewState(preference: DrawingThemePreference =
         cursor: { line: 1, column: 1 },
         dialog: null,
         drawingThemePreference: preference,
-        layout: 'split',
+        layout: 'editor',
         sidebarOpen: readSidebarDefault(),
     }
 }
@@ -57,5 +57,5 @@ export function reducePadWorkspaceViewState(state: PadWorkspaceViewState, event:
 }
 
 function readSidebarDefault() {
-    return window.innerWidth > 640
+    return false
 }

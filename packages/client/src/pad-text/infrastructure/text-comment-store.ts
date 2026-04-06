@@ -4,7 +4,7 @@ import {
     Y_TEXT_KEY,
 } from '@mpad/core/pad-limits'
 import type { LocalPeer } from '@mpad/protocol/peer'
-import type { TextCommentAuthor, TextCommentStatus } from '@mpad/protocol/text-comments'
+import type { TextCommentAuthor } from '@mpad/protocol/text-comments'
 import {
     Array as YArray,
     Map as YMap,
@@ -40,7 +40,6 @@ export type TextCommentMessageView = {
 
 export type TextCommentThreadView = {
     id: string
-    status: TextCommentStatus
     quote: string
     createdAt: string
     updatedAt: string
@@ -54,7 +53,6 @@ export type TextCommentHighlight = {
     threadId: string
     from: number
     to: number
-    status: TextCommentStatus
 }
 
 type Result<T = void> =
@@ -77,8 +75,6 @@ export type TextCommentController = {
     getThread: (threadId: string) => TextCommentThreadView | null
     listThreads: () => TextCommentThreadView[]
     replyToThread: (input: { threadId: string; body: string }) => Result<{ messageId: string }>
-    reopenThread: (threadId: string) => Result
-    resolveThread: (threadId: string) => Result
     subscribe: (listener: () => void) => () => void
     validateSelection: (selection: TextCommentSelection | null) => Result
 }
@@ -111,7 +107,6 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
                 })
 
                 thread.set('id', threadId)
-                thread.set('status', 'active')
                 thread.set('quote', input.selection.quote)
                 thread.set('createdAt', timestamp)
                 thread.set('updatedAt', timestamp)
@@ -184,7 +179,6 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
                     threadId: thread.id,
                     from: thread.anchor.from,
                     to: thread.anchor.to,
-                    status: thread.status,
                 }))
         },
         getThread(threadId) {
@@ -215,28 +209,6 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
 
             return { ok: true, value: { messageId } }
         },
-        reopenThread(threadId) {
-            const thread = readThreadMap(doc, threadId)
-            if (!thread) return error('Comment thread not found')
-
-            doc.transact(() => {
-                thread.set('status', 'active')
-                thread.set('updatedAt', now())
-            })
-
-            return ok()
-        },
-        resolveThread(threadId) {
-            const thread = readThreadMap(doc, threadId)
-            if (!thread) return error('Comment thread not found')
-
-            doc.transact(() => {
-                thread.set('status', 'resolved')
-                thread.set('updatedAt', now())
-            })
-
-            return ok()
-        },
         subscribe(listener) {
             doc.on('update', listener)
             return () => doc.off('update', listener)
@@ -254,7 +226,6 @@ function readThreadViews(doc: Doc, localAuthorId: string) {
         .filter((thread): thread is TextCommentThreadView => thread !== null)
 
     return threads.sort((left, right) => {
-        if (left.status !== right.status) return left.status === 'active' ? -1 : 1
         if (left.anchor.detached !== right.anchor.detached) return left.anchor.detached ? 1 : -1
         if (left.anchor.from !== right.anchor.from) return left.anchor.from - right.anchor.from
         return right.updatedAt.localeCompare(left.updatedAt)
@@ -273,16 +244,14 @@ function readThreadView(threadId: string, value: unknown, ytext: YText, localAut
 
     const author = readAuthor(value)
     const anchor = readAnchor(value, ytext)
-    const status = readStatus(value)
     const createdAt = readString(value, 'createdAt')
     const updatedAt = readString(value, 'updatedAt')
     const quote = readString(value, 'quote')
 
-    if (!author || !status || !createdAt || !updatedAt || !quote) return null
+    if (!author || !createdAt || !updatedAt || !quote) return null
 
     return {
         id: threadId,
-        status,
         quote,
         createdAt,
         updatedAt,
@@ -427,11 +396,6 @@ function toAuthor(peer: LocalPeer): TextCommentAuthor {
         textColor: peer.textColor,
         textColorLight: peer.textColorLight,
     }
-}
-
-function readStatus(map: YMap<unknown>): TextCommentStatus | null {
-    const status = map.get('status')
-    return status === 'active' || status === 'resolved' ? status : null
 }
 
 function readString(map: YMap<unknown>, key: string) {

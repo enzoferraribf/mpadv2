@@ -32,12 +32,43 @@ test('labels the editor and rendered task checkboxes', async ({ browser }) => {
     await openPad(page, path)
     await page.evaluate(() => (window as any).__mpad__.setText('- [x] done\n- [ ] todo'))
     await waitForText(page, '- [x] done\n- [ ] todo')
+    await setLayout(page, 'Split')
 
     await expect(page.locator('.cm-content').first()).toHaveAttribute('aria-label', 'Pad text editor')
     await expect(page.locator('.markdown-body input[type="checkbox"]').nth(0)).toHaveAttribute('aria-label', 'Completed task')
     await expect(page.locator('.markdown-body input[type="checkbox"]').nth(0)).toHaveAttribute('tabindex', '-1')
     await expect(page.locator('.markdown-body input[type="checkbox"]').nth(1)).toHaveAttribute('aria-label', 'Incomplete task')
     await expect(page.locator('.markdown-body input[type="checkbox"]').nth(1)).toHaveAttribute('tabindex', '-1')
+
+    await context.close()
+})
+
+test('renders standalone markdown images inline in the editor and reveals raw markdown while editing', async ({ browser }) => {
+    const path = `notes/${Date.now()}-inline-image`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    const imageUrl = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2040'%3E%3Crect%20width='64'%20height='40'%20fill='%23c9a87c'/%3E%3C/svg%3E"
+    const content = `alpha\n\n![badge](${imageUrl})\n\nomega`
+
+    await openPad(page, path)
+    await page.evaluate((value) => (window as any).__mpad__.setText(value), content)
+    await waitForText(page, content)
+    await setLayout(page, 'Split')
+
+    await expect(page.locator('[data-editor-image-widget="true"]')).toHaveCount(1)
+    await expect(page.locator('[data-editor-image-widget="true"] img')).toBeVisible()
+    await expect(page.locator('.markdown-body img')).toHaveCount(1)
+
+    await page.locator('.cm-line').filter({ hasText: 'alpha' }).first().click()
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+
+    await expect(page.locator('[data-editor-image-widget="true"]')).toHaveCount(0)
+    await expect(page.locator('.cm-line').filter({ hasText: '![badge](' })).toBeVisible()
+
+    await page.locator('.cm-line').filter({ hasText: 'omega' }).first().click()
+
+    await expect(page.locator('[data-editor-image-widget="true"]')).toHaveCount(1)
 
     await context.close()
 })
@@ -52,6 +83,7 @@ test('syncs markdown between two pads', async ({ browser }) => {
 
     await openPad(pageA, path)
     await openPad(pageB, path)
+    await setLayout(pageB, 'Preview')
 
     await pageA.locator('.cm-content').first().click()
     await pageA.keyboard.type('# shared title')
@@ -73,6 +105,8 @@ test('syncs edits from both clients in the same pad', async ({ browser }) => {
 
     await openPad(pageA, path)
     await openPad(pageB, path)
+    await setLayout(pageA, 'Split')
+    await setLayout(pageB, 'Split')
 
     await pageA.evaluate(() => (window as any).__mpad__.appendText('# alpha'))
     await waitForText(pageB, '# alpha')
@@ -182,6 +216,7 @@ test('keeps text after a reload', async ({ browser }) => {
     await page.reload()
     await waitForPad(page)
     await waitForText(page, '# persisted')
+    await setLayout(page, 'Preview')
     await expect(page.getByRole('heading', { name: 'persisted' })).toBeVisible()
 
     await context.close()

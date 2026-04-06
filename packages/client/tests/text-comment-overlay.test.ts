@@ -27,7 +27,7 @@ describe('text comment overlay', () => {
     test('builds anchored and detached markers with one active thread', () => {
         const threads = [
             createThread({ id: 'thread-b', anchor: { from: 6, to: 10, detached: false } }),
-            createThread({ id: 'thread-a', anchor: { from: 0, to: 0, detached: true }, status: 'resolved' }),
+            createThread({ id: 'thread-a', anchor: { from: 0, to: 0, detached: true } }),
             createThread({ id: 'thread-c', anchor: { from: 11, to: 16, detached: true } }),
         ]
 
@@ -43,21 +43,18 @@ describe('text comment overlay', () => {
             {
                 active: false,
                 kind: 'detached',
-                status: 'resolved',
                 threadId: 'thread-a',
                 top: 12,
             },
             {
                 active: true,
                 kind: 'detached',
-                status: 'active',
                 threadId: 'thread-c',
                 top: 32,
             },
             {
                 active: false,
                 kind: 'anchored',
-                status: 'active',
                 threadId: 'thread-b',
                 top: 112,
             },
@@ -69,11 +66,9 @@ function createThread(input: {
     id: string
     anchor?: TextCommentThreadView['anchor']
     quote?: string
-    status?: TextCommentThreadView['status']
 }) {
     return {
         id: input.id,
-        status: input.status ?? 'active',
         quote: input.quote ?? input.id,
         createdAt: '2026-04-01T00:00:00Z',
         updatedAt: '2026-04-01T00:00:00Z',

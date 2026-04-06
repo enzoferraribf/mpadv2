@@ -1,3 +1,4 @@
+import { MessageSquare } from 'lucide-react'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import type { TextPadComments } from '@/pad-text/application/use-text-pad'
 import type { TextCommentResult } from '@/pad-text/infrastructure/text-comment-store'
@@ -18,9 +19,7 @@ export function MarkdownEditorPane(input: {
     onCommentDeleteThread: (threadId: string) => TextCommentResult
     onCommentEditMessage: (input: { threadId: string; messageId: string; body: string }) => TextCommentResult
     onCommentOpenThread: (threadId: string | null) => void
-    onCommentReopen: (threadId: string) => TextCommentResult
     onCommentReply: (input: { threadId: string; body: string }) => TextCommentResult<{ messageId: string }>
-    onCommentResolve: (threadId: string) => TextCommentResult
     onCommentStartDraft: () => void
     onCursorChange?: (cursor: CursorPosition) => void
     onSelectionChange: (selection: TextEditorSelection | null) => void
@@ -104,15 +103,17 @@ export function MarkdownEditorPane(input: {
         <div ref={rootRef} className="comment-editor-shell relative h-full overflow-hidden">
             {input.comments.currentSelection?.canCreate ? (
                 <button
+                    aria-label="Comment"
                     className="comment-selection-action"
                     onClick={input.onCommentStartDraft}
                     style={{
                         left: `${input.comments.currentSelection.rect.left}px`,
                         top: `${Math.max(input.comments.currentSelection.rect.top - 8, 12)}px`,
                     }}
+                    title="Comment"
                     type="button"
                 >
-                    Comment
+                    <MessageSquare aria-hidden="true" />
                 </button>
             ) : null}
 
@@ -120,7 +121,7 @@ export function MarkdownEditorPane(input: {
                 <button
                     key={marker.threadId}
                     aria-label={marker.kind === 'detached' ? `Open detached comment ${index + 1}` : `Open comment ${index + 1}`}
-                    className={`comment-thread-marker${marker.active ? ' active' : ''}${marker.kind === 'detached' ? ' detached' : ''}${marker.status === 'resolved' ? ' resolved' : ''}`}
+                    className={`comment-thread-marker${marker.active ? ' active' : ''}${marker.kind === 'detached' ? ' detached' : ''}`}
                     data-testid="comment-marker"
                     onClick={() => input.onCommentOpenThread(marker.threadId)}
                     style={{ top: `${marker.top}px` }}
@@ -137,9 +138,7 @@ export function MarkdownEditorPane(input: {
                     onDeleteMessage={input.onCommentDeleteMessage}
                     onDeleteThread={input.onCommentDeleteThread}
                     onEditMessage={input.onCommentEditMessage}
-                    onReopenThread={input.onCommentReopen}
                     onReplyToThread={input.onCommentReply}
-                    onResolveThread={input.onCommentResolve}
                     thread={input.comments.overlayThread}
                     top={overlayTop}
                 />

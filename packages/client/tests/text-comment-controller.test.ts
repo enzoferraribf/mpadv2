@@ -5,7 +5,7 @@ import { Doc } from 'yjs'
 import { createTextCommentController } from '../src/pad-text/infrastructure/text-comment-store'
 
 describe('text comment controller', () => {
-    test('creates, updates, resolves, reopens, and deletes threads', () => {
+    test('creates, updates, and deletes threads', () => {
         const doc = createDoc('alpha beta gamma')
         const controller = createController(doc)
 
@@ -35,11 +35,6 @@ describe('text comment controller', () => {
         expect(edited).toEqual({ ok: true, value: undefined })
         thread = controller.getThread(threadId)
         expect(thread?.messages[1]?.body).toBe('Reply note updated')
-
-        expect(controller.resolveThread(threadId)).toEqual({ ok: true, value: undefined })
-        expect(controller.getThread(threadId)?.status).toBe('resolved')
-        expect(controller.reopenThread(threadId)).toEqual({ ok: true, value: undefined })
-        expect(controller.getThread(threadId)?.status).toBe('active')
 
         expect(controller.deleteMessage({ threadId, messageId: replyId })).toEqual({ ok: true, value: undefined })
         expect(controller.getThread(threadId)?.messages).toHaveLength(1)

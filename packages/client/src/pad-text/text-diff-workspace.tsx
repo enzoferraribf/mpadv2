@@ -1,6 +1,6 @@
 import { PERSIST_DEBOUNCE_MS } from '@mpad/core/pad-limits'
 import type { PadPath } from '@mpad/core/pad-path'
-import { RotateCcw } from 'lucide-react'
+import { LoaderCircle, RotateCcw } from 'lucide-react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import {
@@ -232,13 +232,17 @@ export function TextDiffWorkspace(input: {
                                             </button>
                                             <button
                                                 aria-label={`Revert to snapshot ${entry.revisionNumber}`}
-                                                className="diff-history-toggle diff-history-revert"
+                                                aria-busy={pendingRevertRevisionId === entry.id}
+                                                className="diff-history-toggle diff-history-revert diff-history-toggle-icon-only"
                                                 disabled={pendingRevertRevisionId !== null}
                                                 onClick={() => handleRevert(entry)}
                                                 type="button"
                                             >
-                                                <RotateCcw aria-hidden="true" className="diff-history-toggle-icon" />
-                                                {pendingRevertRevisionId === entry.id ? 'Reverting…' : 'Revert To'}
+                                                {pendingRevertRevisionId === entry.id ? (
+                                                    <LoaderCircle aria-hidden="true" className="diff-history-toggle-icon animate-spin" />
+                                                ) : (
+                                                    <RotateCcw aria-hidden="true" className="diff-history-toggle-icon" />
+                                                )}
                                             </button>
                                         </div>
                                     </div>

@@ -19,8 +19,6 @@ export function TextWorkspace(input: {
     onCommentEditMessage: (input: { threadId: string; messageId: string; body: string }) => TextCommentResult
     onCommentOpenThread: (threadId: string | null) => void
     onCommentReply: (input: { threadId: string; body: string }) => TextCommentResult<{ messageId: string }>
-    onCommentResolve: (threadId: string) => TextCommentResult
-    onCommentReopen: (threadId: string) => TextCommentResult
     onCommentStartDraft: () => void
     onEditorSelectionChange: Parameters<typeof MarkdownEditorPane>[0]['onSelectionChange']
     onCursorChange: (cursor: CursorPosition) => void
@@ -36,9 +34,7 @@ export function TextWorkspace(input: {
                 onCommentDeleteThread={input.onCommentDeleteThread}
                 onCommentEditMessage={input.onCommentEditMessage}
                 onCommentOpenThread={input.onCommentOpenThread}
-                onCommentReopen={input.onCommentReopen}
                 onCommentReply={input.onCommentReply}
-                onCommentResolve={input.onCommentResolve}
                 onCommentStartDraft={input.onCommentStartDraft}
                 onCursorChange={input.onCursorChange}
                 onSelectionChange={input.onEditorSelectionChange}

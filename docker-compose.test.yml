@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    mem_limit: 1g
     environment:
       POSTGRES_DB: mpad_test
       POSTGRES_USER: mpad
