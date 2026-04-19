@@ -1,9 +1,12 @@
-node_modules
-dist
-.turbo
+**/node_modules
+**/dist
+**/.turbo
+**/.tanstack
 .tmp
 .turso
 .env
+.env.*
 *.tsbuildinfo
 test-results
 playwright-report
+screenshots

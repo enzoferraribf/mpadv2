@@ -4,46 +4,17 @@ import type { createServerRuntime } from '#/bootstrap/runtime'
 import { prepareServer, startServerWithDeps } from '#/bootstrap/start-server'
 
 describe('start server', () => {
-    test('skips schema migrations when disabled', async () => {
+    test('runs schema migrations before readiness checks', async () => {
         const calls: string[] = []
 
-        await prepareServer(
-            {
-                appOrigin: null,
-                port: 4000,
-                runSchemaMigrationsOnBoot: false,
+        await prepareServer({
+            async ensureDatabaseReady() {
+                calls.push('ready')
             },
-            {
-                async ensureDatabaseReady() {
-                    calls.push('ready')
-                },
-                async runSchemaMigrations() {
-                    calls.push('migrate')
-                },
+            async runSchemaMigrations() {
+                calls.push('migrate')
             },
-        )
-
-        expect(calls).toEqual(['ready'])
-    })
-
-    test('runs schema migrations before readiness checks when enabled', async () => {
-        const calls: string[] = []
-
-        await prepareServer(
-            {
-                appOrigin: 'https://app.example.com',
-                port: 4000,
-                runSchemaMigrationsOnBoot: true,
-            },
-            {
-                async ensureDatabaseReady() {
-                    calls.push('ready')
-                },
-                async runSchemaMigrations() {
-                    calls.push('migrate')
-                },
-            },
-        )
+        })
 
         expect(calls).toEqual(['migrate', 'ready'])
     })
@@ -52,7 +23,6 @@ describe('start server', () => {
         const config = {
             appOrigin: 'https://app.example.com',
             port: 4100,
-            runSchemaMigrationsOnBoot: false,
         }
         const server = { port: 4100 } as unknown as ReturnType<
             typeof createServer
@@ -78,7 +48,7 @@ describe('start server', () => {
                 return config
             },
             async runSchemaMigrations() {
-                throw new Error('should not run')
+                return
             },
         })
 

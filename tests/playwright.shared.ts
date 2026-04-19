@@ -34,7 +34,6 @@ export function createMpadPlaywrightConfig(input: CreatePlaywrightConfigInput) {
                     serverPort +
                     ' DATABASE_URL=' +
                     databaseUrl +
-                    ' RUN_SCHEMA_MIGRATIONS_ON_BOOT=1' +
                     ' bun run start',
                 port: serverPort,
                 reuseExistingServer: false,

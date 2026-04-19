@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS pads (
 ALTER TABLE pads DROP CONSTRAINT IF EXISTS pads_path_check;
 ALTER TABLE pads
 ADD CONSTRAINT pads_path_check
-CHECK (path <> '/' AND path NOT LIKE '%//%' AND path ~ '^/[^[:space:]]+$');
+CHECK (path <> '/' AND path NOT LIKE '%//%' AND path ~ '^/.+$');
 
 ALTER TABLE pads DROP CONSTRAINT IF EXISTS pads_parent_path_check;
 ALTER TABLE pads
@@ -19,7 +19,7 @@ CHECK (
         parent_path <> path
         AND parent_path <> '/'
         AND parent_path NOT LIKE '%//%'
-        AND parent_path ~ '^/[^[:space:]]+$'
+        AND parent_path ~ '^/.+$'
     )
 );
 

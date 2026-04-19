@@ -7,7 +7,7 @@ TEST_DB_PORT="${TEST_DB_PORT:-15433}"
 DATABASE_URL="postgres://mpad:mpad@127.0.0.1:${TEST_DB_PORT}/mpad_test"
 
 if ! command -v docker >/dev/null 2>&1; then
-    echo "docker is required to run server:test and e2e:test" >&2
+    echo "docker is required to run bun run test and bun run smoke" >&2
     exit 1
 fi
 

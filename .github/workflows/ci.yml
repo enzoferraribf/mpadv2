@@ -31,11 +31,8 @@ jobs:
       - name: Fast checks
         run: bun run check
 
-      - name: Client unit tests
-        run: bun run client:test
-
-      - name: Server tests
-        run: bun run server:test
+      - name: Test suite
+        run: bun run test
 
   smoke:
     runs-on: ubuntu-latest
@@ -56,7 +53,7 @@ jobs:
         run: bun x playwright install --with-deps chromium
 
       - name: Smoke tests
-        run: bun run e2e:test
+        run: bun run smoke
 
   docker_changes:
     runs-on: ubuntu-latest
@@ -71,6 +68,7 @@ jobs:
         with:
           filters: |
             docker:
+              - '.dockerignore'
               - 'Dockerfile'
               - 'compose.local.yml'
               - 'DEPLOY.md'
@@ -96,18 +94,5 @@ jobs:
       - name: Install Playwright browser
         run: bun x playwright install --with-deps chromium
 
-      - name: Build image
-        run: bun run docker:build
-
-      - name: Start local stack
-        run: bun run docker:local-up
-
       - name: Docker smoke
-        run: bun run docker:local-test
-
-      - name: Docker UI smoke
-        run: bun run docker:ui-smoke
-
-      - name: Stop local stack
-        if: always()
-        run: bun run docker:local-down
+        run: bun run docker:smoke

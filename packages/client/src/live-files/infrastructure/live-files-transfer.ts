@@ -6,52 +6,26 @@ import {
     type reduceFileMachine,
 } from '@/live-files/domain/live-files-machine'
 import { assertNever } from '@mpad/core/assert'
-import type {
-    FileSignal,
-    LiveFileMeta,
-    LiveFileState,
-} from '@mpad/protocol/live-files'
+import type { FileSignal, LiveFileState } from '@mpad/protocol/live-files'
 import type { SignalData } from 'simple-peer'
 import { toast } from 'sonner'
+import { applyFilePeerSignal } from './file-peer'
 import {
-    type FilePeerSession,
-    applyFilePeerSignal,
-    closeFilePeer,
-    openFilePeer,
-} from './file-peer'
+    type FileTransferSessions,
+    closeTransferSession,
+    openTransferSession,
+} from './file-transfer-session'
 import {
     type LocalFile,
     createLocalFile,
     deleteLocalFileData,
     saveLocalFile,
 } from './local-file-store'
-
-export type FileTransferSession =
-    | { kind: 'download'; peerId: number; session: FilePeerSession }
-    | { kind: 'upload'; peerId: number; session: FilePeerSession }
-
-export type FileTransferSessions = Record<string, FileTransferSession>
-
-type OpenTransferSessionInput =
-    | {
-          kind: 'download'
-          dispatch: (event: Parameters<typeof reduceFileMachine>[1]) => void
-          fileId: string
-          meta: LiveFileMeta
-          peerId: number
-          room: PadFileRoom
-          sessions: FileTransferSessions
-      }
-    | {
-          kind: 'upload'
-          dispatch: (event: Parameters<typeof reduceFileMachine>[1]) => void
-          fileId: string
-          localFile: LocalFile
-          meta: LiveFileMeta
-          peerId: number
-          room: PadFileRoom
-          sessions: FileTransferSessions
-      }
+export type {
+    FileTransferSession,
+    FileTransferSessions,
+} from './file-transfer-session'
+export { closeAllTransferSessions } from './file-transfer-session'
 
 export function handleIncomingFileSignal(input: {
     room: PadFileRoom
@@ -196,15 +170,6 @@ export function createPendingLocalFile(file: File) {
     return createLocalFile(file)
 }
 
-export function closeAllTransferSessions(sessions: FileTransferSessions) {
-    for (const fileId of Object.keys(sessions)) {
-        const activeSession = sessions[fileId]
-        if (!activeSession) continue
-        delete sessions[fileId]
-        closeFilePeer(activeSession.session)
-    }
-}
-
 export function createEmptyFileTransferState() {
     return createFileMachineState()
 }
@@ -213,80 +178,4 @@ export async function clearLocalFiles(files: Record<string, LocalFile>) {
     await Promise.all(
         Object.values(files).map((file) => deleteLocalFileData(file)),
     )
-}
-
-function openTransferSession(input: OpenTransferSessionInput) {
-    const session = openFilePeer({
-        initiator: input.kind === 'download',
-        fileId: input.fileId,
-        peerId: input.peerId,
-        meta: input.meta,
-        localFile: input.kind === 'upload' ? input.localFile : null,
-        onSignal(signal) {
-            input.room.sendFileSignal({
-                targetPeerId: input.peerId,
-                signal: {
-                    kind: 'signal',
-                    fileId: input.fileId,
-                    data: JSON.stringify(signal),
-                },
-            })
-        },
-        onDownloadProgress(receivedBytes) {
-            input.dispatch({
-                kind: 'download-progress',
-                fileId: input.fileId,
-                peerId: input.peerId,
-                receivedBytes,
-            })
-        },
-        onDownloadComplete(localFile) {
-            input.dispatch({
-                kind: 'download-completed',
-                localFile,
-            })
-            if (input.kind === 'download') {
-                void saveLocalFile(localFile).catch((error) =>
-                    toast.error((error as Error).message),
-                )
-            }
-            closeTransferSession(input.sessions, input.dispatch, input.fileId)
-        },
-        onUploadProgress(sentBytes) {
-            input.dispatch({
-                kind: 'upload-progress',
-                fileId: input.fileId,
-                peerId: input.peerId,
-                sentBytes,
-            })
-        },
-        onError(error) {
-            toast.error(error.message)
-        },
-        onClose() {
-            if (input.sessions[input.fileId]?.session !== session) return
-            delete input.sessions[input.fileId]
-            input.dispatch({ kind: 'transfer-cleared', fileId: input.fileId })
-        },
-    })
-
-    input.sessions[input.fileId] = {
-        kind: input.kind,
-        peerId: input.peerId,
-        session,
-    }
-}
-
-function closeTransferSession(
-    sessions: FileTransferSessions,
-    dispatch: (event: Parameters<typeof reduceFileMachine>[1]) => void,
-    fileId: string,
-) {
-    const activeSession = sessions[fileId]
-    if (activeSession) {
-        delete sessions[fileId]
-        closeFilePeer(activeSession.session)
-    }
-
-    dispatch({ kind: 'transfer-cleared', fileId })
 }

@@ -14,23 +14,11 @@
     "scripts": {
         "dev": "turbo dev",
         "build": "turbo build",
-        "lint": "biome lint .",
-        "lint:fix": "biome lint --write .",
-        "format": "biome check --write --linter-enabled=false .",
-        "format:check": "biome check --formatter-enabled=true --organize-imports-enabled=true --linter-enabled=false .",
-        "check": "bun run format:check && bun run lint && bun run typecheck",
-        "legacy:import": "cd tools/legacy-import && bun run import",
-        "server:schema-migrate": "cd packages/server && bun run schema-migrate",
-        "docker:build": "docker build -t mpad .",
-        "docker:local-up": "./scripts/docker-local.sh up",
-        "docker:local-down": "./scripts/docker-local.sh down",
-        "docker:local-test": "./scripts/docker-local.sh test",
-        "docker:ui-smoke": "bun x playwright test --config playwright.docker.config.ts",
-        "client:test": "bun run --cwd packages/client test",
-        "server:test": "./scripts/docker-test-db.sh bun run --cwd packages/server test",
-        "e2e:test": "./scripts/run-playwright.sh --config playwright.config.ts",
-        "e2e:visual": "./scripts/run-playwright.sh --config playwright.visual.config.ts",
-        "typecheck": "turbo typecheck --filter=@mpad/client --filter=@mpad/server --filter=@mpad/core --filter=@mpad/protocol --filter=@mpad/testkit --filter=@mpad/text-core"
+        "check": "biome check --formatter-enabled=true --organize-imports-enabled=true --linter-enabled=false . && biome lint . && turbo typecheck --filter=@mpad/client --filter=@mpad/server --filter=@mpad/core --filter=@mpad/protocol --filter=@mpad/testkit --filter=@mpad/text-core --filter=@mpad/legacy-import",
+        "test": "bun run --cwd packages/client test && ./scripts/docker-test-db.sh bun run --cwd packages/server test",
+        "smoke": "./scripts/run-playwright.sh --config playwright.config.ts",
+        "docker:smoke": "./scripts/docker-local.sh smoke",
+        "legacy:import": "bun run --cwd tools/legacy-import import"
     },
     "devDependencies": {
         "@biomejs/biome": "^1.9.4",

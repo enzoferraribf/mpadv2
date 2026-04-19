@@ -98,6 +98,7 @@ const { migrate } = await import(
 const { sql } = await import('../../../packages/server/src/infrastructure/db')
 
 await migrate()
+await ensureTargetPadStorageIsEmpty()
 
 const sqlite = new Database(sqlitePath, { readonly: true, create: false })
 const sourceRows = sqlite
@@ -116,10 +117,6 @@ let importedTextDocs = 0
 let importedDrawingDocs = 0
 
 await sql.begin(async (tx: typeof sql) => {
-    await tx.unsafe(
-        'TRUNCATE pad_revisions, pad_docs, pads RESTART IDENTITY CASCADE',
-    )
-
     for (const row of padRows) {
         await tx`
             INSERT INTO pads (path, parent_path, created_at, updated_at)
@@ -187,6 +184,24 @@ async function syncLegacySqlite() {
 
     await client.sync()
     await client.close()
+}
+
+async function ensureTargetPadStorageIsEmpty() {
+    const [row] = await sql<{ occupied: boolean }[]>`
+        SELECT EXISTS (
+            SELECT 1 FROM pads
+            UNION ALL
+            SELECT 1 FROM pad_docs
+            UNION ALL
+            SELECT 1 FROM pad_revisions
+        ) AS occupied
+    `
+
+    if (row?.occupied) {
+        throw new Error(
+            'Target Postgres database already contains pad data. Use a fresh database for legacy:import.',
+        )
+    }
 }
 
 async function insertPadDoc(

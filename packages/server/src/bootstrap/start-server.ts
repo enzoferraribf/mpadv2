@@ -1,6 +1,6 @@
 import { createServer } from '#/bootstrap/create-server'
 import { createServerRuntime } from '#/bootstrap/runtime'
-import { type ServerConfig, readServerConfig } from '#/infrastructure/env'
+import { readServerConfig } from '#/infrastructure/env'
 import { ensureDatabaseReady, migrate } from '#/infrastructure/migration-runner'
 
 type StartServerDeps = {
@@ -27,7 +27,7 @@ export async function startServerWithDeps(deps: StartServerDeps) {
     const config = deps.readServerConfig()
     const runtime = deps.createServerRuntime()
 
-    await prepareServer(config, deps)
+    await prepareServer(deps)
     const server = deps.createServer({
         appOrigin: config.appOrigin,
         port: config.port,
@@ -41,9 +41,8 @@ export async function startServerWithDeps(deps: StartServerDeps) {
 }
 
 export async function prepareServer(
-    config: ServerConfig,
     deps: Pick<StartServerDeps, 'ensureDatabaseReady' | 'runSchemaMigrations'>,
 ) {
-    if (config.runSchemaMigrationsOnBoot) await deps.runSchemaMigrations()
+    await deps.runSchemaMigrations()
     await deps.ensureDatabaseReady()
 }

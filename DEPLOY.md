@@ -17,11 +17,12 @@ Create a Postgres database in Dokploy and copy its `DATABASE_URL`.
 - Domain: `<domain>`
 - Set env:
   - `DATABASE_URL=<dokploy postgres connection string>`
-  - `APP_ORIGIN=https://<domain>` required in production
-  - `RUN_SCHEMA_MIGRATIONS_ON_BOOT=1`
+  - `APP_ORIGIN=https://<domain>`
   - `PORT=4000`
 
-The runtime image sets `NODE_ENV=production` itself. `APP_ORIGIN` must match the deployed browser origin exactly so CORS and WebSocket origin checks stay same-origin only.
+The app runs schema migrations on boot automatically. The runtime image sets `NODE_ENV=production` itself.
+
+`APP_ORIGIN` must match the deployed browser origin exactly so CORS and WebSocket origin checks stay same-origin only.
 
 The Bun server serves all of these on the same origin:
 
@@ -31,15 +32,12 @@ The Bun server serves all of these on the same origin:
 - built client assets
 - SPA fallback routes
 
-### Local Docker Check
+### Local Docker Smoke
 
-Use these before pushing if you want one local deploy-shaped smoke run:
+Run one deploy-shaped smoke pass before pushing:
 
 ```sh
-bun run docker:build
-bun run docker:local-up
-bun run docker:local-test
-bun run docker:local-down
+bun run docker:smoke
 ```
 
 ### Verify
@@ -49,16 +47,46 @@ bun run docker:local-down
 - Create or edit a pad
 - Refresh the page and confirm the data is still there
 
-## One-Time Legacy Import
+## Turso To Postgres Cutover
 
-This is separate from normal deployment.
+This is separate from normal deploys.
 
-The Turso -> Postgres backfill lives under `tools/legacy-import` and is only for one-time cutover or manual backfill work. It is not part of normal Dokploy deploys and it is not the same thing as Postgres schema migrations.
+Use this only once, before the app writes data into the target Postgres database. The import now requires a fresh Postgres target and aborts if pad data already exists.
 
-Current command:
+### 1. Create a fresh target Postgres database
+
+Create a new Dokploy Postgres database for the cutover and copy its connection string.
+
+### 2. Make sure legacy Turso credentials exist
+
+The importer reads legacy Turso credentials from the repo `.turso` file. It must contain:
+
+- `DATABASE_URL`
+- `DATABASE_TOKEN`
+
+### 3. Run the cutover import
+
+Point the importer at the fresh Postgres database:
 
 ```sh
-bun run legacy:import
+TARGET_DATABASE_URL=<dokploy postgres connection string> bun run legacy:import
 ```
 
-Use it only when you want to copy legacy Turso data into Postgres.
+The importer will:
+
+- sync the legacy Turso data into the local sqlite cache
+- run the current baseline Postgres migration
+- verify the target Postgres pad tables are empty
+- import text and drawing docs
+- print a JSON summary
+
+### 4. Review the import summary
+
+Check the summary output for imported pad counts and make sure it completed without errors.
+
+### 5. Deploy the app against that same Postgres database
+
+Create the Dokploy app with the same `DATABASE_URL`, plus:
+
+- `APP_ORIGIN=https://<domain>`
+- `PORT=4000`

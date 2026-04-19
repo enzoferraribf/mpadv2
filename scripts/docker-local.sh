@@ -11,7 +11,6 @@ POSTGRES_PASSWORD="${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}"
 POSTGRES_PORT="${MPAD_LOCAL_POSTGRES_PORT:-15432}"
 APP_PORT="${MPAD_LOCAL_APP_PORT:-13000}"
 APP_ORIGIN="http://127.0.0.1:${APP_PORT}"
-DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}"
 
 require_command() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -113,6 +112,23 @@ App origin: ${APP_ORIGIN}
 EOF
 }
 
+docker_ui_smoke() {
+    require_command bun
+
+    (
+        cd "$ROOT"
+        bun x playwright test --config playwright.docker.config.ts
+    )
+}
+
+smoke() {
+    trap 'down || true' EXIT INT TERM
+
+    up
+    test_stack
+    docker_ui_smoke
+}
+
 case "${1:-}" in
     up)
         up
@@ -123,8 +139,11 @@ case "${1:-}" in
     test)
         test_stack
         ;;
+    smoke)
+        smoke
+        ;;
     *)
-        echo "Usage: $0 {up|down|test}" >&2
+        echo "Usage: $0 {up|down|test|smoke}" >&2
         exit 1
         ;;
 esac

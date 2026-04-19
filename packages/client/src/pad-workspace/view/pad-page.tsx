@@ -1,44 +1,15 @@
-import {
-    ResizableHandle,
-    ResizablePanel,
-    ResizablePanelGroup,
-} from '@/components/ui/resizable'
-import { lazyWithPreload } from '@/lib/lazy-with-preload'
 import { scheduleIdleTask } from '@/lib/schedule-idle'
-import { TextWorkspace } from '@/pad-text/view/text-workspace'
+import { usePadWorkspaceModel } from '@/pad-workspace/application/use-pad-workspace-model'
 import {
-    type PadWorkspaceModel,
-    type PadWorkspaceShellModel,
-    usePadWorkspaceModel,
-} from '@/pad-workspace/application/use-pad-workspace-model'
-import { PadSidebar } from '@/workspace-shell/view/pad-sidebar'
-import { PadStatusBar } from '@/workspace-shell/view/pad-status-bar'
+    PadPageDialogs,
+    PadPageLoading,
+    PadPageReady,
+    preloadPadPagePanels,
+} from '@/pad-workspace/view/pad-page-shell'
 import { PadTopBar } from '@/workspace-shell/view/pad-top-bar'
 import type { PadPath } from '@mpad/core/pad-path'
 import type { PadTreeItem } from '@mpad/protocol/pad-tree'
-import type { ReactNode } from 'react'
-import { Suspense, useEffect, useRef } from 'react'
-
-const LazyTextDiffWorkspace = lazyWithPreload(() =>
-    import('@/pad-text/text-diff-workspace').then((mod) => ({
-        default: mod.TextDiffWorkspace,
-    })),
-)
-const LazyFilesPane = lazyWithPreload(() =>
-    import('@/live-files/view/files-pane').then((mod) => ({
-        default: mod.FilesPane,
-    })),
-)
-const LazyDrawingWorkspacePane = lazyWithPreload(() =>
-    import('@/pad-drawing/view/drawing-workspace-pane').then((mod) => ({
-        default: mod.DrawingWorkspacePane,
-    })),
-)
-const LazyWorkspaceDialogs = lazyWithPreload(() =>
-    import('@/workspace-shell/view/workspace-dialogs').then((mod) => ({
-        default: mod.WorkspaceDialogs,
-    })),
-)
+import { useEffect, useRef } from 'react'
 
 export function PadPage({ path }: { path: PadPath }) {
     const model = usePadWorkspaceModel(path)
@@ -67,22 +38,9 @@ export function PadPage({ path }: { path: PadPath }) {
 
         return scheduleIdleTask(() => {
             prefetchedRef.current = true
-            void LazyTextDiffWorkspace.preload()
-            void LazyFilesPane.preload()
-            void LazyWorkspaceDialogs.preload()
+            preloadPadPagePanels()
         }, 600)
     }, [model.shell.view.activeTab])
-
-    const dialogs =
-        model.shell.view.dialog !== null ? (
-            <Suspense fallback={null}>
-                <LazyWorkspaceDialogs
-                    shell={model.shell}
-                    navigation={model.navigation}
-                    files={model.files}
-                />
-            </Suspense>
-        ) : null
     const navigationItems =
         model.navigation.kind === 'ready'
             ? model.navigation.items
@@ -92,7 +50,7 @@ export function PadPage({ path }: { path: PadPath }) {
         <main className='app-shell' data-testid='pad-page'>
             <PadTopBar shell={model.shell} />
             {model.text.kind === 'ready' ? (
-                <ReadyPadPage
+                <PadPageReady
                     model={{
                         ...model,
                         text: model.text,
@@ -100,168 +58,16 @@ export function PadPage({ path }: { path: PadPath }) {
                     navigationItems={navigationItems}
                 />
             ) : (
-                <LoadingPadPage
+                <PadPageLoading
                     shell={model.shell}
                     navigationItems={navigationItems}
                 />
             )}
-            {dialogs}
-        </main>
-    )
-}
-
-function LoadingPadPage(input: {
-    shell: PadWorkspaceShellModel
-    navigationItems: PadTreeItem[]
-}) {
-    return (
-        <PadPageFrame
-            shell={input.shell}
-            navigationItems={input.navigationItems}
-        >
-            <section
-                className='loading-shell workspace-shell'
-                data-testid='workspace-shell'
-            >
-                <div className='loading-card'>
-                    <span className='mpad-logo'>
-                        Opening {input.shell.view.padName}
-                    </span>
-                </div>
-            </section>
-        </PadPageFrame>
-    )
-}
-
-function ReadyPadPage(input: {
-    model: PadWorkspaceModel & {
-        text: Extract<PadWorkspaceModel['text'], { kind: 'ready' }>
-    }
-    navigationItems: PadTreeItem[]
-}) {
-    const { model } = input
-    const drawing =
-        model.drawing.kind === 'ready' ? model.drawing.drawing : null
-
-    return (
-        <PadPageFrame
-            shell={model.shell}
-            navigationItems={input.navigationItems}
-        >
-            {model.shell.view.activeTab === 'files' ? (
-                <Suspense fallback={<FilesPaneFallback />}>
-                    <LazyFilesPane
-                        files={model.files.files}
-                        onDeleteFile={model.files.deleteFile}
-                        onDownloadFile={model.files.downloadFile}
-                        onUploadFile={model.files.uploadFile}
-                    />
-                </Suspense>
-            ) : model.shell.view.activeTab === 'diffs' ? (
-                <Suspense fallback={<DiffWorkspaceFallback />}>
-                    <LazyTextDiffWorkspace
-                        direction={model.shell.view.splitDirection}
-                        model={model.history}
-                    />
-                </Suspense>
-            ) : model.shell.view.activeTab === 'drawing' ? (
-                <Suspense fallback={<DrawingWorkspaceFallback />}>
-                    <LazyDrawingWorkspacePane
-                        drawing={drawing}
-                        theme={model.shell.view.drawingTheme}
-                    />
-                </Suspense>
-            ) : (
-                <TextWorkspace
-                    content={model.text.content}
-                    direction={model.shell.view.splitDirection}
-                    editor={model.text.editor}
-                    layout={model.shell.view.layout}
-                    onCursorChange={model.shell.commands.setCursor}
-                />
-            )}
-        </PadPageFrame>
-    )
-}
-
-function PadPageFrame(input: {
-    shell: PadWorkspaceShellModel
-    navigationItems: PadTreeItem[]
-    children: ReactNode
-}) {
-    const main = (
-        <div className='app-main'>
-            {input.children}
-            <PadStatusBar
-                path={input.shell.view.path}
-                connection={input.shell.status.connection}
-                peerCount={input.shell.status.peerCount}
-                clockLabel={input.shell.view.clockLabel}
-                cursorLabel={input.shell.view.cursorLabel}
+            <PadPageDialogs
+                shell={model.shell}
+                navigation={model.navigation}
+                files={model.files}
             />
-        </div>
-    )
-
-    return input.shell.view.sidebarOpen ? (
-        <ResizablePanelGroup
-            autoSaveId='pad-shell-sidebar'
-            className='app-content'
-            direction='horizontal'
-        >
-            <ResizablePanel
-                className='flex min-h-0 flex-col'
-                defaultSize={18}
-                minSize={12}
-                maxSize={28}
-            >
-                <PadSidebar
-                    path={input.shell.view.path}
-                    tree={input.navigationItems}
-                    onNavigate={input.shell.commands.navigateToPad}
-                />
-            </ResizablePanel>
-            <ResizableHandle className='bg-[--stone-border]' withHandle />
-            <ResizablePanel className='flex min-h-0 flex-col' minSize={72}>
-                {main}
-            </ResizablePanel>
-        </ResizablePanelGroup>
-    ) : (
-        <div className='app-content'>{main}</div>
-    )
-}
-
-function DiffWorkspaceFallback() {
-    return (
-        <section
-            className='workspace-shell min-h-0'
-            data-testid='text-diff-workspace'
-        >
-            <div className='flex h-full items-center justify-center bg-[--stone-bg] text-sm text-[--stone-text-muted]'>
-                Loading diff…
-            </div>
-        </section>
-    )
-}
-
-function FilesPaneFallback() {
-    return (
-        <section className='workspace-shell min-h-0'>
-            <div className='flex h-full items-center justify-center bg-[--stone-bg] text-sm text-[--stone-text-muted]'>
-                Loading files…
-            </div>
-        </section>
-    )
-}
-
-function DrawingWorkspaceFallback() {
-    return (
-        <section
-            className='workspace-shell min-h-0'
-            data-testid='drawing-workspace'
-        >
-            <div className='flex h-full items-center justify-center bg-[--stone-bg] text-sm text-[--stone-text-muted]'>
-                Loading drawing…
-            </div>
-        </section>
+        </main>
     )
 }

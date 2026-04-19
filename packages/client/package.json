@@ -11,9 +11,6 @@
         "preview": "bun run vite preview --host 0.0.0.0 --port 4173"
     },
     "dependencies": {
-        "@mpad/core": "workspace:*",
-        "@mpad/protocol": "workspace:*",
-        "@mpad/text-core": "workspace:*",
         "@codemirror/lang-markdown": "^6.3.4",
         "@codemirror/language": "^6.12.3",
         "@codemirror/merge": "^6.12.1",
@@ -21,15 +18,16 @@
         "@codemirror/view": "^6.38.6",
         "@excalidraw/excalidraw": "^0.18",
         "@lezer/highlight": "^1.2.3",
+        "@mpad/core": "workspace:*",
+        "@mpad/protocol": "workspace:*",
+        "@mpad/text-core": "workspace:*",
         "@radix-ui/react-dialog": "^1.1",
         "@radix-ui/react-slot": "^1.2",
         "@tanstack/react-router": "^1.120",
         "class-variance-authority": "^0.7",
         "clsx": "^2.1",
         "cmdk": "^1.1",
-        "diff": "^8.0.4",
         "github-markdown-css": "^5.8",
-        "lib0": "^0.2",
         "lucide-react": "^0.468",
         "next-themes": "^0.4",
         "react": "^19.1",
@@ -47,7 +45,6 @@
         "yjs": "^13.6"
     },
     "devDependencies": {
-        "@mpad/testkit": "workspace:*",
         "@tanstack/router-plugin": "^1.120",
         "@types/react": "^19.1",
         "@types/react-dom": "^19.1",

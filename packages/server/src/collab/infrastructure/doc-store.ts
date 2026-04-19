@@ -53,18 +53,9 @@ export async function loadPadDoc(
     kind: PadDocKind,
 ): Promise<StoredPadDoc> {
     const doc = await loadPadDocHead(path, kind)
-    if (
-        !doc ||
-        doc.head_revision_id === null ||
-        doc.head_revision_number === null
-    ) {
-        return {
-            snapshot: null,
-            updates: [],
-            latestChunkSeq: 0,
-            headRevisionId: null,
-            headRevisionNumber: 0,
-        }
+    if (!doc) return createEmptyStoredPadDoc()
+    if (doc.head_revision_id === null || doc.head_revision_number === null) {
+        return createEmptyStoredPadDoc()
     }
 
     const docId = toNumber(doc.doc_id)
@@ -72,7 +63,7 @@ export async function loadPadDoc(
     const headRevisionNumber = toNumber(doc.head_revision_number)
     const checkpoint = await loadNearestCheckpoint(docId, headRevisionNumber)
     const updates = await loadRevisionUpdates(
-        docId,
+        toNumber(doc.doc_id),
         checkpoint ? toNumber(checkpoint.revision_number) : 0,
         headRevisionNumber,
     )
@@ -94,75 +85,27 @@ export async function appendPadDocRevision(
     revertedFromRevisionId: number | null = null,
 ): Promise<AppendPadDocRevisionResult> {
     return sql.begin(async (tx: typeof sql) => {
-        await tx`
-            INSERT INTO pad_docs (pad_path, kind)
-            VALUES (${path}, ${kind})
-            ON CONFLICT (pad_path, kind) DO NOTHING
-        `
+        await ensurePadDoc(tx, path, kind)
 
-        const [doc] = await tx<DocHeadRow[]>`
-            SELECT
-                id AS doc_id,
-                head_revision_id,
-                NULL::BIGINT AS head_revision_number
-            FROM pad_docs
-            WHERE pad_path = ${path} AND kind = ${kind}
-            FOR UPDATE
-        `
-        assert(doc !== undefined, 'Missing pad doc')
+        const doc = await lockPadDocHead(tx, path, kind)
+        const revision = await insertPadRevision(tx, {
+            docId: toNumber(doc.doc_id),
+            parentRevisionId:
+                doc.head_revision_id === null
+                    ? null
+                    : toNumber(doc.head_revision_id),
+            previousRevisionNumber:
+                doc.head_revision_number === null
+                    ? 0
+                    : toNumber(doc.head_revision_number),
+            revertedFromRevisionId,
+            update,
+            eventCount,
+        })
 
-        const previousRevision =
-            doc.head_revision_id === null
-                ? null
-                : await loadRevisionNumberById(
-                      tx,
-                      toNumber(doc.head_revision_id),
-                  )
-        const previousRevisionNumber =
-            previousRevision === null ? 0 : previousRevision
-        const parentRevisionId =
-            doc.head_revision_id === null
-                ? null
-                : toNumber(doc.head_revision_id)
+        await updatePadDocHead(tx, toNumber(doc.doc_id), toNumber(revision.id))
 
-        const [revision] = await tx<RevisionInsertRow[]>`
-            INSERT INTO pad_revisions (
-                doc_id,
-                revision_number,
-                parent_revision_id,
-                reverted_from_revision_id,
-                update,
-                event_count
-            )
-            VALUES (
-                ${toNumber(doc.doc_id)},
-                ${previousRevisionNumber + 1},
-                ${parentRevisionId},
-                ${revertedFromRevisionId},
-                ${update},
-                ${eventCount}
-            )
-            RETURNING id, revision_number, created_at
-        `
-        assert(revision !== undefined, 'Missing revision id')
-
-        const revisionId = toNumber(revision.id)
-        const revisionNumber = toNumber(revision.revision_number)
-
-        await tx`
-            UPDATE pad_docs
-            SET
-                head_revision_id = ${revisionId},
-                updated_at = NOW()
-            WHERE id = ${toNumber(doc.doc_id)}
-        `
-
-        return {
-            chunkSeq: revisionId,
-            revisionId,
-            revisionNumber,
-            createdAt: toIsoString(revision.created_at),
-        }
+        return readAppendPadDocRevisionResult(revision)
     })
 }
 
@@ -232,10 +175,7 @@ export async function readPadDocRevisionText(
         'text',
         toNumber(revision.id),
     )
-    const doc = new Doc()
-    if (bytes.byteLength > 0) applyUpdate(doc, bytes)
-    const content = doc.getText(Y_TEXT_KEY).toString()
-    doc.destroy()
+    const content = readTextFromRevisionBytes(bytes)
 
     return {
         id: toNumber(revision.id),
@@ -243,6 +183,24 @@ export async function readPadDocRevisionText(
         createdAt: toIsoString(revision.created_at),
         content,
     }
+}
+
+function createEmptyStoredPadDoc(): StoredPadDoc {
+    return {
+        snapshot: null,
+        updates: [],
+        latestChunkSeq: 0,
+        headRevisionId: null,
+        headRevisionNumber: 0,
+    }
+}
+
+function readTextFromRevisionBytes(bytes: Uint8Array) {
+    const doc = new Doc()
+    if (bytes.byteLength > 0) applyUpdate(doc, bytes)
+    const content = doc.getText(Y_TEXT_KEY).toString()
+    doc.destroy()
+    return content
 }
 
 export async function loadPadDocRevisionBytes(
@@ -281,24 +239,15 @@ export function mergePadDoc(
 async function loadPadDocHead(path: PadPath, kind: PadDocKind) {
     const [doc] = await sql<DocHeadRow[]>`
         SELECT
-            id AS doc_id,
-            head_revision_id
-        FROM pad_docs
-        WHERE pad_path = ${path} AND kind = ${kind}
+            d.id AS doc_id,
+            d.head_revision_id,
+            r.revision_number AS head_revision_number
+        FROM pad_docs AS d
+        LEFT JOIN pad_revisions AS r ON r.id = d.head_revision_id
+        WHERE d.pad_path = ${path} AND d.kind = ${kind}
     `
 
-    if (!doc) return null
-
-    return {
-        ...doc,
-        head_revision_number:
-            doc.head_revision_id === null
-                ? null
-                : await loadRevisionNumberById(
-                      sql,
-                      toNumber(doc.head_revision_id),
-                  ),
-    }
+    return doc ?? null
 }
 
 async function loadNearestCheckpoint(docId: number, revisionNumber: number) {
@@ -357,14 +306,97 @@ function toIsoString(value: Date | string) {
     return (value instanceof Date ? value : new Date(value)).toISOString()
 }
 
-async function loadRevisionNumberById(client: typeof sql, revisionId: number) {
-    const [row] = await client<{ revision_number: number | string }[]>`
-        SELECT revision_number
-        FROM pad_revisions
-        WHERE id = ${revisionId}
+async function ensurePadDoc(
+    client: typeof sql,
+    path: PadPath,
+    kind: PadDocKind,
+) {
+    await client`
+        INSERT INTO pad_docs (pad_path, kind)
+        VALUES (${path}, ${kind})
+        ON CONFLICT (pad_path, kind) DO NOTHING
     `
+}
 
-    return row ? toNumber(row.revision_number) : null
+async function lockPadDocHead(
+    client: typeof sql,
+    path: PadPath,
+    kind: PadDocKind,
+) {
+    const [doc] = await client<DocHeadRow[]>`
+        SELECT
+            d.id AS doc_id,
+            d.head_revision_id,
+            r.revision_number AS head_revision_number
+        FROM pad_docs AS d
+        LEFT JOIN pad_revisions AS r ON r.id = d.head_revision_id
+        WHERE d.pad_path = ${path} AND d.kind = ${kind}
+        FOR UPDATE OF d
+    `
+    assert(doc !== undefined, 'Missing pad doc')
+    return doc
+}
+
+async function insertPadRevision(
+    client: typeof sql,
+    input: {
+        docId: number
+        eventCount: number
+        parentRevisionId: number | null
+        previousRevisionNumber: number
+        revertedFromRevisionId: number | null
+        update: Uint8Array
+    },
+) {
+    const [revision] = await client<RevisionInsertRow[]>`
+        INSERT INTO pad_revisions (
+            doc_id,
+            revision_number,
+            parent_revision_id,
+            reverted_from_revision_id,
+            update,
+            event_count
+        )
+        VALUES (
+            ${input.docId},
+            ${input.previousRevisionNumber + 1},
+            ${input.parentRevisionId},
+            ${input.revertedFromRevisionId},
+            ${input.update},
+            ${input.eventCount}
+        )
+        RETURNING id, revision_number, created_at
+    `
+    assert(revision !== undefined, 'Missing revision id')
+    return revision
+}
+
+async function updatePadDocHead(
+    client: typeof sql,
+    docId: number,
+    revisionId: number,
+) {
+    await client`
+        UPDATE pad_docs
+        SET
+            head_revision_id = ${revisionId},
+            updated_at = NOW()
+        WHERE id = ${docId}
+    `
+}
+
+function readAppendPadDocRevisionResult(
+    revision: RevisionInsertRow,
+): AppendPadDocRevisionResult {
+    const revisionId = toNumber(revision.id)
+    const revisionNumber = toNumber(revision.revision_number)
+
+    return {
+        chunkSeq: revisionId,
+        revisionId,
+        revisionNumber,
+        createdAt: toIsoString(revision.created_at),
+    }
 }
 
 function toNumber(value: number | string) {

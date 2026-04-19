@@ -25,30 +25,7 @@ export async function migrate() {
 }
 
 export async function ensureDatabaseReady() {
-    const migrationTableReady = await hasTable(MIGRATIONS_TABLE)
-    if (!migrationTableReady)
-        throw new Error(
-            'Database is not migrated. Run `bun run server:schema-migrate`.',
-        )
-
-    const applied = new Set(await loadAppliedMigrations())
-    const pending = listMigrationVersions().filter(
-        (version) => !applied.has(version),
-    )
-    if (pending.length > 0) {
-        throw new Error(
-            `Database has pending migrations: ${pending.join(', ')}. Run \`bun run server:schema-migrate\`.`,
-        )
-    }
-}
-
-async function ensureMigrationTable() {
-    await sql.unsafe(`
-        CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
-            version    TEXT PRIMARY KEY,
-            applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-    `)
+    await sql`SELECT 1`
 }
 
 async function loadAppliedMigrations() {
@@ -67,6 +44,15 @@ function listMigrationVersions() {
         .sort()
 }
 
+async function ensureMigrationTable() {
+    await sql.unsafe(`
+        CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
+            version    TEXT PRIMARY KEY,
+            applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `)
+}
+
 async function applySqlMigration(sqlText: string) {
     const statements = sqlText
         .split(/;\s*\n/g)
@@ -76,16 +62,4 @@ async function applySqlMigration(sqlText: string) {
     for (const statement of statements) {
         await sql.unsafe(`${statement};`)
     }
-}
-
-async function hasTable(name: string) {
-    const [row] = await sql<{ exists: boolean }[]>`
-        SELECT EXISTS (
-            SELECT 1
-            FROM information_schema.tables
-            WHERE table_schema = 'public' AND table_name = ${name}
-        ) AS exists
-    `
-
-    return row?.exists === true
 }
