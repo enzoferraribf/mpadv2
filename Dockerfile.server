@@ -1,9 +1,0 @@
-FROM oven/bun:1.3.11-alpine
-
-WORKDIR /app
-COPY . .
-RUN bun install --frozen-lockfile
-
-WORKDIR /app/packages/server
-EXPOSE 4000
-CMD ["bun", "run", "start"]

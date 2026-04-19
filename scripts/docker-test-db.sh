@@ -3,7 +3,7 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 CONTAINER="${TEST_DB_CONTAINER:-mpad-test-db-$$}"
-TEST_DB_PORT="${TEST_DB_PORT:-$("$ROOT/scripts/read-free-port.sh")}"
+TEST_DB_PORT="${TEST_DB_PORT:-15433}"
 DATABASE_URL="postgres://mpad:mpad@127.0.0.1:${TEST_DB_PORT}/mpad_test"
 
 if ! command -v docker >/dev/null 2>&1; then
@@ -34,7 +34,8 @@ attempt=0
 while [ "$attempt" -lt 60 ]; do
     if docker exec "$CONTAINER" pg_isready -U mpad -d mpad_test >/dev/null 2>&1; then
         export TEST_DB_PORT
-        DATABASE_URL="$DATABASE_URL" "$@"
+        export DATABASE_URL
+        "$@"
         exit $?
     fi
 

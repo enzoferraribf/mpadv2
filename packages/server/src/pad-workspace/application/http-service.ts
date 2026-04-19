@@ -189,16 +189,20 @@ function parseWorkspaceRoute(rawUrl: string, method = 'GET'): ApiRoute {
         return { kind: 'not-found' }
     }
 
-    const awarenessClientId = Number(url.searchParams.get('client'))
-    assert(Number.isInteger(awarenessClientId), 'Missing client id')
-    const roomName = decodeURIComponent(url.pathname.slice(1))
-    const room = parsePadRoomName(roomName)
-    return {
-        kind: 'room',
-        roomName,
-        roomKind: room.kind,
-        awarenessClientId,
+    if (url.pathname.startsWith('/ws/')) {
+        const awarenessClientId = Number(url.searchParams.get('client'))
+        assert(Number.isInteger(awarenessClientId), 'Missing client id')
+        const roomName = decodeURIComponent(url.pathname.slice('/ws/'.length))
+        const room = parsePadRoomName(roomName)
+        return {
+            kind: 'room',
+            roomName,
+            roomKind: room.kind,
+            awarenessClientId,
+        }
     }
+
+    return { kind: 'not-found' }
 }
 
 function decodePadPath(value: string) {

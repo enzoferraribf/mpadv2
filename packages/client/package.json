@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "bun run vite",
         "build": "tsc -b && bun run vite build",
-        "test": "bun run build && bun test tests",
+        "test": "bun test tests",
         "typecheck": "tsc --noEmit",
         "preview": "bun run vite preview --host 0.0.0.0 --port 4173"
     },

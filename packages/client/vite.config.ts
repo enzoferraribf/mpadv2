@@ -3,6 +3,10 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+const proxyPort = process.env.E2E_SERVER_PORT ?? '4000'
+const proxyHttpOrigin = `http://127.0.0.1:${proxyPort}`
+const proxyWsOrigin = `ws://127.0.0.1:${proxyPort}`
+
 export default defineConfig({
     plugins: [TanStackRouterVite({ routesDirectory: './src/routes' }), react()],
     build: {
@@ -27,6 +31,17 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+        },
+    },
+    server: {
+        proxy: {
+            '/api': proxyHttpOrigin,
+            '/health': proxyHttpOrigin,
+            '/ws': {
+                target: proxyWsOrigin,
+                changeOrigin: true,
+                ws: true,
+            },
         },
     },
 })

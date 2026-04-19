@@ -1,21 +1,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
-import {
-    CHECKPOINT_INTERVAL,
-    Y_TEXT_COMMENT_MESSAGES_KEY,
-    Y_TEXT_COMMENT_THREADS_KEY,
-    Y_TEXT_KEY,
-} from '@mpad/core/pad-limits'
+import { CHECKPOINT_INTERVAL, Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import { padPath } from '@mpad/core/pad-path'
-import {
-    Doc,
-    Array as YArray,
-    Map as YMap,
-    applyUpdate,
-    createRelativePositionFromTypeIndex,
-    encodeRelativePosition,
-    encodeStateAsUpdate,
-    mergeUpdates,
-} from 'yjs'
+import { Doc, applyUpdate, encodeStateAsUpdate, mergeUpdates } from 'yjs'
 import {
     appendPadDocRevision,
     createPadDocCheckpoint,
@@ -80,99 +66,6 @@ describe('pad doc repository', () => {
         `
 
         expect(storedRevision?.event_count).toBe(2)
-        doc.destroy()
-        restored.destroy()
-        await cleanupRoot(root)
-    })
-
-    test('persists comment threads stored in the text document', async () => {
-        const root = uniqueRoot('comments')
-        const path = padPath(`${root}/doc`)
-        await cleanupRoot(root)
-        await ensurePad(path)
-
-        const doc = new Doc()
-        const updates: Uint8Array[] = []
-        doc.on('update', (update) => updates.push(update))
-
-        const text = doc.getText(Y_TEXT_KEY)
-        text.insert(0, 'alpha beta gamma')
-
-        const threads = doc.getMap<YMap<unknown>>(Y_TEXT_COMMENT_THREADS_KEY)
-        const thread = new YMap<unknown>()
-        const messages = new YArray<YMap<unknown>>()
-        const message = new YMap<unknown>()
-
-        message.set('id', 'message-1')
-        message.set('body', 'Root note')
-        message.set('createdAt', '2026-04-01T00:00:00.000Z')
-        message.set('updatedAt', '2026-04-01T00:00:00.000Z')
-        message.set('authorId', 'peer-1')
-        message.set('authorName', 'Naruto Uzumaki')
-        message.set('authorTextColor', '#ea580c')
-        message.set('authorTextColorLight', '#fdba7433')
-        messages.push([message])
-
-        thread.set('id', 'thread-1')
-        thread.set('status', 'active')
-        thread.set('quote', 'beta')
-        thread.set('createdAt', '2026-04-01T00:00:00.000Z')
-        thread.set('updatedAt', '2026-04-01T00:00:00.000Z')
-        thread.set('authorId', 'peer-1')
-        thread.set('authorName', 'Naruto Uzumaki')
-        thread.set('authorTextColor', '#ea580c')
-        thread.set('authorTextColorLight', '#fdba7433')
-        thread.set(
-            'anchorStart',
-            encodeRelativePosition(
-                createRelativePositionFromTypeIndex(text, 6, 0),
-            ),
-        )
-        thread.set(
-            'anchorEnd',
-            encodeRelativePosition(
-                createRelativePositionFromTypeIndex(text, 10, -1),
-            ),
-        )
-        thread.set(Y_TEXT_COMMENT_MESSAGES_KEY, messages)
-        threads.set('thread-1', thread)
-
-        const revision = await appendPadDocRevision(
-            path,
-            'text',
-            mergeUpdates(updates),
-            updates.length,
-        )
-        const bytes = await loadPadDocRevisionBytes(
-            path,
-            'text',
-            revision.revisionId,
-        )
-        const restored = new Doc()
-        applyUpdate(restored, bytes)
-
-        const restoredThread = restored
-            .getMap<YMap<unknown>>(Y_TEXT_COMMENT_THREADS_KEY)
-            .get('thread-1')
-        expect(restored.getText(Y_TEXT_KEY).toString()).toBe('alpha beta gamma')
-        expect(restoredThread).toBeInstanceOf(YMap)
-        expect((restoredThread as YMap<unknown>).get('quote')).toBe('beta')
-        expect(
-            (restoredThread as YMap<unknown>).get('anchorStart'),
-        ).toBeInstanceOf(Uint8Array)
-
-        const restoredMessages = (restoredThread as YMap<unknown>).get(
-            Y_TEXT_COMMENT_MESSAGES_KEY,
-        )
-        expect(restoredMessages).toBeInstanceOf(YArray)
-        expect(
-            (
-                (restoredMessages as YArray<YMap<unknown>>).get(
-                    0,
-                ) as YMap<unknown>
-            ).get('body'),
-        ).toBe('Root note')
-
         doc.destroy()
         restored.destroy()
         await cleanupRoot(root)

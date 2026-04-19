@@ -173,31 +173,11 @@ function ReadyPadPage(input: {
                 </Suspense>
             ) : (
                 <TextWorkspace
-                    comments={model.text.comments}
                     content={model.text.content}
                     direction={model.shell.view.splitDirection}
                     editor={model.text.editor}
                     layout={model.shell.view.layout}
-                    onCloseCommentOverlay={
-                        model.text.commentActions.closeOverlay
-                    }
-                    onCommentCreate={model.text.commentActions.createThread}
-                    onCommentDeleteMessage={
-                        model.text.commentActions.deleteMessage
-                    }
-                    onCommentDeleteThread={
-                        model.text.commentActions.deleteThread
-                    }
-                    onCommentEditMessage={model.text.commentActions.editMessage}
-                    onCommentOpenThread={model.text.commentActions.openThread}
-                    onCommentReply={model.text.commentActions.replyToThread}
-                    onCommentStartDraft={
-                        model.text.commentActions.openDraftFromSelection
-                    }
                     onCursorChange={model.shell.commands.setCursor}
-                    onEditorSelectionChange={
-                        model.text.commentActions.setEditorSelection
-                    }
                 />
             )}
         </PadPageFrame>

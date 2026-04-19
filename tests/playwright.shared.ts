@@ -1,19 +1,24 @@
 import { defineConfig } from '@playwright/test'
 
-const databaseUrl = process.env.DATABASE_URL ?? 'postgres://localhost:5432/mpad'
-const serverPort = Number(process.env.E2E_SERVER_PORT ?? 4000)
-const clientPort = Number(process.env.E2E_CLIENT_PORT ?? 4173)
+const databaseUrl =
+    process.env.DATABASE_URL ?? 'postgres://mpad:mpad@127.0.0.1:15433/mpad_test'
+const serverPort = Number(process.env.E2E_SERVER_PORT ?? 14000)
+const clientPort = Number(process.env.E2E_CLIENT_PORT ?? 4174)
 
 export const serverUrl = `http://127.0.0.1:${serverPort}`
 export const clientUrl = `http://127.0.0.1:${clientPort}`
 
 type CreatePlaywrightConfigInput = {
+    grep?: RegExp
+    grepInvert?: RegExp
     outputDir: string
     testDir: string
 }
 
 export function createMpadPlaywrightConfig(input: CreatePlaywrightConfigInput) {
     return defineConfig({
+        grep: input.grep,
+        grepInvert: input.grepInvert,
         testDir: input.testDir,
         outputDir: input.outputDir,
         fullyParallel: false,
@@ -25,13 +30,11 @@ export function createMpadPlaywrightConfig(input: CreatePlaywrightConfigInput) {
             {
                 command:
                     'cd packages/server' +
-                    ' && DATABASE_URL=' +
-                    databaseUrl +
-                    ' bun run schema-migrate' +
                     ' && PORT=' +
                     serverPort +
                     ' DATABASE_URL=' +
                     databaseUrl +
+                    ' RUN_SCHEMA_MIGRATIONS_ON_BOOT=1' +
                     ' bun run start',
                 port: serverPort,
                 reuseExistingServer: false,
@@ -41,10 +44,7 @@ export function createMpadPlaywrightConfig(input: CreatePlaywrightConfigInput) {
                 command:
                     'cd packages/client' +
                     ' && VITE_E2E=1' +
-                    ' VITE_SERVER_ORIGIN=' +
-                    serverUrl +
-                    ' bun run build' +
-                    ' && bun run preview -- --port ' +
+                    ' bun x vite --host 127.0.0.1 --port ' +
                     clientPort,
                 port: clientPort,
                 reuseExistingServer: false,

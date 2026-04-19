@@ -1,7 +1,7 @@
 import { createMpadPlaywrightConfig } from './tests/playwright.shared'
 
 export default createMpadPlaywrightConfig({
-    grepInvert: /@visual/,
-    outputDir: './.tmp/playwright/e2e',
+    grep: /@visual/,
+    outputDir: './.tmp/playwright/visual',
     testDir: './tests/e2e',
 })

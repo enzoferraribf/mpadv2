@@ -1,6 +1,7 @@
 import { WS_IDLE_TIMEOUT_S, WS_MAX_PAYLOAD } from '@mpad/core/pad-limits'
 import type { ServerWebSocket } from 'bun'
 import type { ServerRuntime } from '#/bootstrap/runtime'
+import { serveClientApp } from '#/infrastructure/client-app'
 import { isAllowedWebSocketOrigin } from '#/infrastructure/origin'
 import { handleWorkspaceRequest } from '#/pad-workspace/application/http-service'
 import {
@@ -23,6 +24,15 @@ export function createServer(input: CreateServerInput) {
         hostname: '0.0.0.0',
 
         async fetch(req, server) {
+            const { pathname } = new URL(req.url)
+            if (
+                pathname !== '/health' &&
+                !pathname.startsWith('/api/') &&
+                !pathname.startsWith('/ws/')
+            ) {
+                return serveClientApp(req)
+            }
+
             const route = await handleWorkspaceRequest(
                 input.runtime,
                 req,

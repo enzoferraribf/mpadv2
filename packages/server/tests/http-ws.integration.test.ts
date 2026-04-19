@@ -90,7 +90,7 @@ describe('http and websocket integration', () => {
 
 function readRoomUrl(port: number, path: ReturnType<typeof padPath>) {
     const roomName = encodeURIComponent(padRoomName(path, 'text'))
-    return `ws://127.0.0.1:${port}/${roomName}?client=1`
+    return `ws://127.0.0.1:${port}/ws/${roomName}?client=1`
 }
 
 function once(socket: WebSocket, event: 'open' | 'close') {

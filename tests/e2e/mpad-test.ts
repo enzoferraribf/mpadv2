@@ -1,4 +1,4 @@
-import { serverUrl } from '$/playwright.shared'
+import { clientUrl } from '$/playwright.shared'
 import { createPeerSeed } from '@mpad/testkit/peer-seed'
 import type { Browser, Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
@@ -105,20 +105,6 @@ export async function waitForHistoryItems(page: Page, count: number) {
     )
 }
 
-export async function waitForCommentThreadCount(page: Page, count: number) {
-    await expect
-        .poll(
-            async () =>
-                page.evaluate(
-                    () =>
-                        (window as any).__mpad__?.getCommentThreads()?.length ??
-                        -1,
-                ),
-            { timeout: 10_000 },
-        )
-        .toBe(count)
-}
-
 export function readSnapshotSideButton(
     page: Page,
     revisionNumber: number,
@@ -220,7 +206,7 @@ async function applyMedia(page: Page, options?: MediaOptions) {
 async function readTextHistoryCount(page: Page) {
     const path = new URL(page.url()).pathname
     const response = await page.request.get(
-        `${serverUrl}/api/pads${path}/text/history`,
+        `${clientUrl}/api/pads${path}/text/history`,
     )
     if (!response.ok()) throw new Error(await response.text())
     const revisions = (await response.json()) as Array<unknown>

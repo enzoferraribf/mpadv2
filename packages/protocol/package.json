@@ -10,8 +10,7 @@
         "./pad-text-history": "./src/pad-text-history.ts",
         "./pad-tree": "./src/pad-tree.ts",
         "./peer": "./src/peer.ts",
-        "./room-message-codec": "./src/room-message-codec.ts",
-        "./text-comments": "./src/text-comments.ts"
+        "./room-message-codec": "./src/room-message-codec.ts"
     },
     "dependencies": {
         "@mpad/core": "workspace:*",

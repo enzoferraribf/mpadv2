@@ -9,11 +9,8 @@ POSTGRES_DB="${MPAD_LOCAL_POSTGRES_DB:-mpad_local}"
 POSTGRES_USER="${MPAD_LOCAL_POSTGRES_USER:-mpad}"
 POSTGRES_PASSWORD="${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}"
 POSTGRES_PORT="${MPAD_LOCAL_POSTGRES_PORT:-15432}"
-API_PORT="${MPAD_LOCAL_API_PORT:-14000}"
-CLIENT_PORT="${MPAD_LOCAL_CLIENT_PORT:-13000}"
-APP_ORIGIN="http://127.0.0.1:${CLIENT_PORT}"
-SERVER_ORIGIN="http://127.0.0.1:${API_PORT}"
-WS_SERVER_ORIGIN="ws://127.0.0.1:${API_PORT}"
+APP_PORT="${MPAD_LOCAL_APP_PORT:-13000}"
+APP_ORIGIN="http://127.0.0.1:${APP_PORT}"
 DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}"
 
 require_command() {
@@ -72,20 +69,14 @@ up() {
         compose down --volumes --remove-orphans >/dev/null 2>&1 || true
     fi
 
-    compose up -d --build postgres >/dev/null
+    compose up -d --build postgres app >/dev/null
     wait_for_postgres
-
-    compose run --rm schema-migrate >/dev/null
-
-    compose up -d --build server client >/dev/null
-    wait_for_http "http://127.0.0.1:${API_PORT}/health" server
-    wait_for_http "http://127.0.0.1:${CLIENT_PORT}/env.js" client
+    wait_for_http "http://127.0.0.1:${APP_PORT}/health" app
 
     cat <<EOF
 Local Docker stack is up.
 
-Client:   http://127.0.0.1:${CLIENT_PORT}
-API:      http://127.0.0.1:${API_PORT}
+App:      http://127.0.0.1:${APP_PORT}
 Postgres: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
 EOF
 }
@@ -101,47 +92,24 @@ down() {
     compose down --remove-orphans >/dev/null
 }
 
-import_legacy() {
-    require_command bun
-
-    (
-        cd "$ROOT"
-        TARGET_DATABASE_URL="$DATABASE_URL" \
-            bun run legacy:import
-    )
-}
-
 test_stack() {
     require_command curl
 
-    api_health="$(curl -fsS "http://127.0.0.1:${API_PORT}/health")"
-    [ "$api_health" = '{"status":"ok"}' ]
+    app_health="$(curl -fsS "http://127.0.0.1:${APP_PORT}/health")"
+    [ "$app_health" = '{"status":"ok"}' ]
 
-    cors_origin="$(
-        curl -fsSI \
-            -H "Origin: ${APP_ORIGIN}" \
-            "http://127.0.0.1:${API_PORT}/health" \
-            | tr -d '\r' \
-            | awk -F': ' 'tolower($1)=="access-control-allow-origin"{print $2}'
-    )"
-    [ "$cors_origin" = "$APP_ORIGIN" ]
-
-    env_js="$(curl -fsS "http://127.0.0.1:${CLIENT_PORT}/env.js")"
-    printf '%s' "$env_js" | grep -F "serverOrigin: \"${SERVER_ORIGIN}\"" >/dev/null
-    printf '%s' "$env_js" | grep -F "wsServerOrigin: \"${WS_SERVER_ORIGIN}\"" >/dev/null
-
-    landing_html="$(curl -fsS "http://127.0.0.1:${CLIENT_PORT}/docker-smoke")"
+    landing_html="$(curl -fsS "http://127.0.0.1:${APP_PORT}/docker-smoke")"
     printf '%s' "$landing_html" | grep -F '<title>Mpad</title>' >/dev/null
 
-    related_json="$(curl -fsS "http://127.0.0.1:${API_PORT}/api/pads/docker/smoke/related")"
+    related_json="$(curl -fsS "http://127.0.0.1:${APP_PORT}/api/pads/docker/smoke/related")"
     printf '%s' "$related_json" | grep -F '"/docker"' >/dev/null
     printf '%s' "$related_json" | grep -F '"/docker/smoke"' >/dev/null
 
     cat <<EOF
 Local Docker smoke test passed.
 
-API health: ${api_health}
-CORS origin: ${cors_origin}
+App health: ${app_health}
+App origin: ${APP_ORIGIN}
 EOF
 }
 
@@ -152,14 +120,11 @@ case "${1:-}" in
     down)
         down
         ;;
-    import)
-        import_legacy
-        ;;
     test)
         test_stack
         ;;
     *)
-        echo "Usage: $0 {up|down|import|test}" >&2
+        echo "Usage: $0 {up|down|test}" >&2
         exit 1
         ;;
 esac

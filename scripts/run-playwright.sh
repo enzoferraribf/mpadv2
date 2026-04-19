@@ -3,8 +3,8 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 
-E2E_SERVER_PORT="${E2E_SERVER_PORT:-$("$ROOT/scripts/read-free-port.sh")}"
-E2E_CLIENT_PORT="${E2E_CLIENT_PORT:-$("$ROOT/scripts/read-free-port.sh")}"
+E2E_SERVER_PORT="${E2E_SERVER_PORT:-14000}"
+E2E_CLIENT_PORT="${E2E_CLIENT_PORT:-4174}"
 
 export E2E_SERVER_PORT
 export E2E_CLIENT_PORT
