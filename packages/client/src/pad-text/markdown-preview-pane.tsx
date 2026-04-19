@@ -5,7 +5,9 @@ import type { Components } from 'react-markdown'
 import RemarkGfm from 'remark-gfm'
 
 const remarkPlugins = [RemarkGfm]
-type RehypePlugin = NonNullable<ComponentProps<typeof ReactMarkdown>['rehypePlugins']>[number]
+type RehypePlugin = NonNullable<
+    ComponentProps<typeof ReactMarkdown>['rehypePlugins']
+>[number]
 const markdownComponents: Components = {
     input({ node: _node, checked, type, ...props }) {
         if (type !== 'checkbox') return <input {...props} type={type} />
@@ -17,7 +19,7 @@ const markdownComponents: Components = {
                 checked={Boolean(checked)}
                 readOnly
                 tabIndex={-1}
-                type="checkbox"
+                type='checkbox'
             />
         )
     },
@@ -56,7 +58,7 @@ export function MarkdownPreviewPane({ content }: { content: string }) {
 
     if (!content.trim()) {
         return (
-            <div className="flex h-full items-center justify-center text-center text-sm text-[--stone-text-muted]">
+            <div className='flex h-full items-center justify-center text-center text-sm text-[--stone-text-muted]'>
                 Preview appears here as you write.
             </div>
         )
@@ -64,9 +66,13 @@ export function MarkdownPreviewPane({ content }: { content: string }) {
 
     return (
         <ReactMarkdown
-            className="markdown-body"
+            className='markdown-body'
             components={markdownComponents}
-            rehypePlugins={wantsHighlight && highlightPlugin ? [highlightPlugin] : undefined}
+            rehypePlugins={
+                wantsHighlight && highlightPlugin
+                    ? [highlightPlugin]
+                    : undefined
+            }
             remarkPlugins={remarkPlugins}
         >
             {content}

@@ -35,12 +35,16 @@ export function createLocalFile(file: File): LocalFile {
     }
 }
 
-export async function createDownloadTarget(meta: LiveFileMeta): Promise<DownloadTarget> {
+export async function createDownloadTarget(
+    meta: LiveFileMeta,
+): Promise<DownloadTarget> {
     const root = await getFileStoreRoot()
     if (root) return createStoredDownloadTarget(root, meta)
 
     if (meta.sizeBytes > MEMORY_DOWNLOAD_LIMIT_BYTES) {
-        throw new Error('Large file downloads need browser file storage support')
+        throw new Error(
+            'Large file downloads need browser file storage support',
+        )
     }
 
     return createMemoryDownloadTarget(meta)
@@ -69,7 +73,10 @@ export async function saveLocalFile(localFile: LocalFile) {
     setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
-export async function* readLocalFileChunks(localFile: LocalFile, chunkBytes: number): AsyncGenerator<Uint8Array> {
+export async function* readLocalFileChunks(
+    localFile: LocalFile,
+    chunkBytes: number,
+): AsyncGenerator<Uint8Array> {
     const blob = await getLocalBlob(localFile)
 
     for (let offset = 0; offset < blob.size; offset += chunkBytes) {
@@ -113,7 +120,10 @@ function createMemoryDownloadTarget(meta: LiveFileMeta): DownloadTarget {
     }
 }
 
-async function createStoredDownloadTarget(root: FileSystemDirectoryHandle, meta: LiveFileMeta): Promise<DownloadTarget> {
+async function createStoredDownloadTarget(
+    root: FileSystemDirectoryHandle,
+    meta: LiveFileMeta,
+): Promise<DownloadTarget> {
     const handle = await root.getFileHandle(meta.id, { create: true })
     const writable = await handle.createWritable()
     let closed = false

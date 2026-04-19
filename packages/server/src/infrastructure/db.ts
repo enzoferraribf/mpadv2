@@ -1,5 +1,5 @@
 import { SQL } from 'bun'
-import { readDatabaseUrl } from './env'
+import { readDatabaseUrl } from '#/infrastructure/env'
 
 let sqlInstance: SQL | null = null
 
@@ -14,8 +14,6 @@ export const sql = new Proxy((() => {}) as unknown as SQL, {
     },
     get(_target, property) {
         const value = Reflect.get(getSql(), property)
-        return typeof value === 'function'
-            ? value.bind(getSql())
-            : value
+        return typeof value === 'function' ? value.bind(getSql()) : value
     },
 }) as SQL

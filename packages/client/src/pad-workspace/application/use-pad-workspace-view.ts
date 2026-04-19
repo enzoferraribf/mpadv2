@@ -1,30 +1,28 @@
-import {
-    padPathName,
-    type PadPath,
-} from '@mpad/core/pad-path'
-import { useEffect, useReducer, useState } from 'react'
-import { useTheme } from 'next-themes'
 import { getRandomPhrase } from '@/components/feedback/loading-phrases'
 import { onCtrlKeyPressed } from '@/lib/events'
+import { resolveAppVisualTone } from '@/lib/theme'
 import {
+    type DrawingTheme,
+    type DrawingThemePreference,
     readDrawingThemePreference,
     resolveDrawingThemePreference,
     writeDrawingThemePreference,
-    type DrawingTheme,
-    type DrawingThemePreference,
 } from '@/pad-drawing/drawing-theme'
 import type { CursorPosition } from '@/pad-text/infrastructure/text-editor'
-import {
-    createPadWorkspaceViewState,
-    reducePadWorkspaceViewState,
-    type PadWorkspaceViewState as PadWorkspaceViewStateCore,
-} from '@/pad-workspace/domain/workspace-view-state'
 import type {
     PadWorkspaceDialog,
     PadWorkspaceDirection,
     PadWorkspaceLayout,
     PadWorkspaceTab,
 } from '@/pad-workspace/domain/workspace-view'
+import {
+    type PadWorkspaceViewState as PadWorkspaceViewStateCore,
+    createPadWorkspaceViewState,
+    reducePadWorkspaceViewState,
+} from '@/pad-workspace/domain/workspace-view-state'
+import { type PadPath, padPathName } from '@mpad/core/pad-path'
+import { useTheme } from 'next-themes'
+import { useEffect, useReducer, useState } from 'react'
 
 export type PadWorkspaceViewState = PadWorkspaceViewStateCore & {
     clockLabel: string
@@ -49,6 +47,7 @@ export type PadWorkspaceViewCommands = {
 
 export function usePadWorkspaceView(path: PadPath) {
     const { resolvedTheme } = useTheme()
+    const appVisualTone = resolveAppVisualTone(resolvedTheme)
     const [state, dispatch] = useReducer(
         reducePadWorkspaceViewState,
         readDrawingThemePreference(),
@@ -68,9 +67,15 @@ export function usePadWorkspaceView(path: PadPath) {
 
     useEffect(() => {
         const unsubs = [
-            onCtrlKeyPressed(',', () => dispatch({ kind: 'dialog-toggled', dialog: 'command' })),
-            onCtrlKeyPressed('.', () => dispatch({ kind: 'dialog-toggled', dialog: 'tree' })),
-            onCtrlKeyPressed(';', () => dispatch({ kind: 'dialog-toggled', dialog: 'files' })),
+            onCtrlKeyPressed(',', () =>
+                dispatch({ kind: 'dialog-toggled', dialog: 'command' }),
+            ),
+            onCtrlKeyPressed('.', () =>
+                dispatch({ kind: 'dialog-toggled', dialog: 'tree' }),
+            ),
+            onCtrlKeyPressed(';', () =>
+                dispatch({ kind: 'dialog-toggled', dialog: 'files' }),
+            ),
             onCtrlKeyPressed('b', () => dispatch({ kind: 'sidebar-toggled' })),
         ]
 
@@ -83,7 +88,10 @@ export function usePadWorkspaceView(path: PadPath) {
         ...state,
         clockLabel,
         cursorLabel: `Ln ${state.cursor.line}, Col ${state.cursor.column}`,
-        drawingTheme: resolveDrawingThemePreference(state.drawingThemePreference, resolvedTheme),
+        drawingTheme: resolveDrawingThemePreference(
+            state.drawingThemePreference,
+            appVisualTone,
+        ),
         padName: padPathName(path),
         path,
         phrase,
@@ -121,7 +129,9 @@ export function usePadWorkspaceView(path: PadPath) {
 }
 
 function useWorkspaceDirection(): PadWorkspaceDirection {
-    const [direction, setDirection] = useState<PadWorkspaceDirection>(readWorkspaceDirection)
+    const [direction, setDirection] = useState<PadWorkspaceDirection>(
+        readWorkspaceDirection,
+    )
 
     useEffect(() => {
         const onResize = () => setDirection(readWorkspaceDirection())
@@ -151,5 +161,8 @@ function useClockLabel() {
 
 function readClockLabel() {
     if (import.meta.env.VITE_E2E === '1') return '03/29/26, 6:18 PM'
-    return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date())
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    }).format(new Date())
 }

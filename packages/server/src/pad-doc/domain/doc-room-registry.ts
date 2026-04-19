@@ -1,4 +1,4 @@
-import type { PadDocRoom } from '../../collab/infrastructure/doc-room'
+import type { PadDocRoom } from '#/collab/infrastructure/doc-room'
 
 export interface DocRoomRegistry {
     delete: (roomName: string) => void

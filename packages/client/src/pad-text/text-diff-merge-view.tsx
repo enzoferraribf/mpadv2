@@ -1,8 +1,8 @@
-import { EditorState } from '@codemirror/state'
+import { createMarkdownCodeMirrorExtensions } from '@/pad-text/infrastructure/markdown-codemirror'
 import { MergeView } from '@codemirror/merge'
+import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { useEffect, useRef } from 'react'
-import { createMarkdownCodeMirrorExtensions } from '@/pad-text/infrastructure/markdown-codemirror'
 
 export function TextDiffMergeView(input: {
     leftContent: string
@@ -45,7 +45,13 @@ export function TextDiffMergeView(input: {
         writeDoc(mergeRef.current?.b ?? null, input.rightContent)
     }, [input.rightContent])
 
-    return <div ref={rootRef} className="diff-merge-root" data-testid="text-diff-merge" />
+    return (
+        <div
+            ref={rootRef}
+            className='diff-merge-root'
+            data-testid='text-diff-merge'
+        />
+    )
 }
 
 function createReadOnlyDiffExtensions() {

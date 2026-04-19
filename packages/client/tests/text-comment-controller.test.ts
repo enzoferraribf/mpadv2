@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test'
+import { createTextCommentController } from '@/pad-text/infrastructure/text-comment-store'
 import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import type { LocalPeer } from '@mpad/protocol/peer'
 import { Doc } from 'yjs'
-import { createTextCommentController } from '../src/pad-text/infrastructure/text-comment-store'
 
 describe('text comment controller', () => {
     test('creates, updates, and deletes threads', () => {
@@ -36,14 +36,24 @@ describe('text comment controller', () => {
         thread = controller.getThread(threadId)
         expect(thread?.messages[1]?.body).toBe('Reply note updated')
 
-        expect(controller.deleteMessage({ threadId, messageId: replyId })).toEqual({ ok: true, value: undefined })
+        expect(
+            controller.deleteMessage({ threadId, messageId: replyId }),
+        ).toEqual({ ok: true, value: undefined })
         expect(controller.getThread(threadId)?.messages).toHaveLength(1)
-        expect(controller.deleteMessage({ threadId, messageId: controller.getThread(threadId)!.messages[0]!.id })).toEqual({
+        expect(
+            controller.deleteMessage({
+                threadId,
+                messageId: controller.getThread(threadId)!.messages[0]!.id,
+            }),
+        ).toEqual({
             ok: false,
             error: 'Delete the full thread instead',
         })
 
-        expect(controller.deleteThread(threadId)).toEqual({ ok: true, value: undefined })
+        expect(controller.deleteThread(threadId)).toEqual({
+            ok: true,
+            value: undefined,
+        })
         expect(controller.listThreads()).toHaveLength(0)
     })
 
@@ -56,35 +66,53 @@ describe('text comment controller', () => {
             selection: { from: 6, to: 10, quote: 'beta' },
             body: 'Track beta',
         })
-        expect(controller.listThreads()[0]?.anchor).toEqual({ from: 6, to: 10, detached: false })
+        expect(controller.listThreads()[0]?.anchor).toEqual({
+            from: 6,
+            to: 10,
+            detached: false,
+        })
 
         text.insert(0, 'wow ')
-        expect(controller.listThreads()[0]?.anchor).toEqual({ from: 10, to: 14, detached: false })
+        expect(controller.listThreads()[0]?.anchor).toEqual({
+            from: 10,
+            to: 14,
+            detached: false,
+        })
 
         text.delete(0, 4)
-        expect(controller.listThreads()[0]?.anchor).toEqual({ from: 6, to: 10, detached: false })
+        expect(controller.listThreads()[0]?.anchor).toEqual({
+            from: 6,
+            to: 10,
+            detached: false,
+        })
     })
 
     test('rejects overlapping comment ranges', () => {
         const doc = createDoc('alpha beta gamma')
         const controller = createController(doc)
 
-        expect(controller.createThread({
-            selection: { from: 6, to: 10, quote: 'beta' },
-            body: 'First',
-        })).toEqual({
+        expect(
+            controller.createThread({
+                selection: { from: 6, to: 10, quote: 'beta' },
+                body: 'First',
+            }),
+        ).toEqual({
             ok: true,
             value: { threadId: 'thread-1' },
         })
 
-        expect(controller.validateSelection({ from: 8, to: 12, quote: 'ta g' })).toEqual({
+        expect(
+            controller.validateSelection({ from: 8, to: 12, quote: 'ta g' }),
+        ).toEqual({
             ok: false,
             error: 'Comments cannot overlap',
         })
-        expect(controller.createThread({
-            selection: { from: 8, to: 12, quote: 'ta g' },
-            body: 'Second',
-        })).toEqual({
+        expect(
+            controller.createThread({
+                selection: { from: 8, to: 12, quote: 'ta g' },
+                body: 'Second',
+            }),
+        ).toEqual({
             ok: false,
             error: 'Comments cannot overlap',
         })

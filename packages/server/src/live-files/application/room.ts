@@ -1,20 +1,20 @@
-import type { ServerWebSocket } from 'bun'
+import { assert } from '@mpad/core/assert'
+import { parsePadRoomName } from '@mpad/core/pad-room'
 import {
+    type AwarenessRoomMessage,
+    type ClientRoomMessage,
+    type SyncRoomMessage,
     applyAwarenessMessage,
     createAwarenessMessage,
     createDocUpdateMessage,
     encodeServerRoomMessage,
     replyToSyncMessage,
-    type AwarenessRoomMessage,
-    type ClientRoomMessage,
-    type SyncRoomMessage,
 } from '@mpad/protocol/room-message-codec'
-import { assert } from '@mpad/core/assert'
-import { parsePadRoomName } from '@mpad/core/pad-room'
+import type { ServerWebSocket } from 'bun'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc, encodeStateAsUpdate } from 'yjs'
-import type { WsData } from '../../transport/ws-data'
+import type { WsData } from '#/transport/ws-data'
 
 export type LiveFilesRoom = {
     roomName: string
@@ -48,20 +48,31 @@ export function createLiveFilesRoom(roomName: string): LiveFilesRoom {
     }
 }
 
-export function connectLiveFilesClient(room: LiveFilesRoom, ws: ServerWebSocket<WsData>) {
+export function connectLiveFilesClient(
+    room: LiveFilesRoom,
+    ws: ServerWebSocket<WsData>,
+) {
     room.clients.add(ws)
 
     const messages: Array<SyncRoomMessage | AwarenessRoomMessage> = [
         createDocUpdateMessage(encodeStateAsUpdate(room.doc)),
     ]
     const clientIds = Array.from(room.awareness.getStates().keys())
-    if (clientIds.length > 0) messages.push(createAwarenessMessage(room.awareness, clientIds))
+    if (clientIds.length > 0)
+        messages.push(createAwarenessMessage(room.awareness, clientIds))
     return messages
 }
 
-export function disconnectLiveFilesClient(room: LiveFilesRoom, ws: ServerWebSocket<WsData>) {
+export function disconnectLiveFilesClient(
+    room: LiveFilesRoom,
+    ws: ServerWebSocket<WsData>,
+) {
     room.clients.delete(ws)
-    awarenessProtocol.removeAwarenessStates(room.awareness, [ws.data.awarenessClientId], null)
+    awarenessProtocol.removeAwarenessStates(
+        room.awareness,
+        [ws.data.awarenessClientId],
+        null,
+    )
 
     const awarenessMessage = room.awareness.meta.has(ws.data.awarenessClientId)
         ? createAwarenessMessage(room.awareness, [ws.data.awarenessClientId])

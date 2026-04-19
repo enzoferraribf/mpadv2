@@ -1,7 +1,7 @@
-import * as React from 'react'
+import { cn } from '@/lib/cn'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
-import { cn } from '@/lib/cn'
+import * as React from 'react'
 
 export const Dialog = DialogPrimitive.Root
 export const DialogTrigger = DialogPrimitive.Trigger
@@ -37,21 +37,43 @@ export const DialogContent = React.forwardRef<
             {...props}
         >
             {children}
-            <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded border border-[--stone-border] bg-[--stone-elevated] text-[--stone-text-dim] transition hover:bg-[--stone-elevated] hover:text-[--stone-text-secondary] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 disabled:pointer-events-none">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
+            <DialogPrimitive.Close className='absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded border border-[--stone-border] bg-[--stone-elevated] text-[--stone-text-dim] transition hover:bg-[--stone-elevated] hover:text-[--stone-text-secondary] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 disabled:pointer-events-none'>
+                <X className='h-4 w-4' />
+                <span className='sr-only'>Close</span>
             </DialogPrimitive.Close>
         </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
 ))
 DialogContent.displayName = 'DialogContent'
 
-export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-    return <div className={cn('flex flex-col gap-1 text-center sm:text-left', className)} {...props} />
+export function DialogHeader({
+    className,
+    ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+    return (
+        <div
+            className={cn(
+                'flex flex-col gap-1 text-center sm:text-left',
+                className,
+            )}
+            {...props}
+        />
+    )
 }
 
-export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-    return <div className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)} {...props} />
+export function DialogFooter({
+    className,
+    ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+    return (
+        <div
+            className={cn(
+                'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
+                className,
+            )}
+            {...props}
+        />
+    )
 }
 
 export const DialogTitle = React.forwardRef<
@@ -60,7 +82,10 @@ export const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <DialogPrimitive.Title
         ref={ref}
-        className={cn('text-lg font-medium leading-none tracking-tight text-[--stone-text]', className)}
+        className={cn(
+            'text-lg font-medium leading-none tracking-tight text-[--stone-text]',
+            className,
+        )}
         {...props}
     />
 ))
@@ -70,6 +95,10 @@ export const DialogDescription = React.forwardRef<
     React.ElementRef<typeof DialogPrimitive.Description>,
     React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
-    <DialogPrimitive.Description ref={ref} className={cn('text-sm text-[--stone-text-dim]', className)} {...props} />
+    <DialogPrimitive.Description
+        ref={ref}
+        className={cn('text-sm text-[--stone-text-dim]', className)}
+        {...props}
+    />
 ))
 DialogDescription.displayName = 'DialogDescription'

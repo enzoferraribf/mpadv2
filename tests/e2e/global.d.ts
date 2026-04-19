@@ -1,6 +1,6 @@
 declare global {
     type MpadClientRuntimeConfig = {
-        httpServerOrigin?: string
+        serverOrigin?: string
         wsServerOrigin?: string
     }
 

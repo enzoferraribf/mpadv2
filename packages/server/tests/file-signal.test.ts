@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import { readServerRoomMessage } from '@mpad/protocol/room-message-codec'
 import type { ServerWebSocket } from 'bun'
-import { routeLiveFileSignal } from '../src/live-files/application/live-file-room-service'
-import type { WsData } from '../src/transport/ws-data'
+import { routeLiveFileSignal } from '#/live-files/application/live-file-room-service'
+import type { WsData } from '#/transport/ws-data'
 
 describe('file signal routing', () => {
     test('sends the signal to the target peer in the file room', () => {
@@ -15,7 +15,11 @@ describe('file signal routing', () => {
 
         routeLiveFileSignal(room, sender, {
             targetPeerId: 2,
-            signal: { kind: 'signal', fileId: 'file-1', data: '{"type":"offer","sdp":"hello"}' },
+            signal: {
+                kind: 'signal',
+                fileId: 'file-1',
+                data: '{"type":"offer","sdp":"hello"}',
+            },
         })
 
         expect(target.sent).toHaveLength(1)
@@ -26,7 +30,11 @@ describe('file signal routing', () => {
             kind: 'file-signal',
             signal: {
                 sourcePeerId: 1,
-                signal: { kind: 'signal', fileId: 'file-1', data: '{"type":"offer","sdp":"hello"}' },
+                signal: {
+                    kind: 'signal',
+                    fileId: 'file-1',
+                    data: '{"type":"offer","sdp":"hello"}',
+                },
             },
         })
     })

@@ -1,9 +1,11 @@
-import { createServer } from './create-server'
-import { readServerConfig, type ServerConfig } from '../infrastructure/env'
-import { ensureDatabaseReady, migrate } from '../infrastructure/migration-runner'
+import { createServer } from '#/bootstrap/create-server'
+import { createServerRuntime } from '#/bootstrap/runtime'
+import { type ServerConfig, readServerConfig } from '#/infrastructure/env'
+import { ensureDatabaseReady, migrate } from '#/infrastructure/migration-runner'
 
 type StartServerDeps = {
     createServer: typeof createServer
+    createServerRuntime: typeof createServerRuntime
     ensureDatabaseReady: typeof ensureDatabaseReady
     readServerConfig: typeof readServerConfig
     runSchemaMigrations: typeof migrate
@@ -11,20 +13,31 @@ type StartServerDeps = {
 
 const defaultDeps: StartServerDeps = {
     createServer,
+    createServerRuntime,
     ensureDatabaseReady,
     readServerConfig,
     runSchemaMigrations: migrate,
 }
 
-export async function startServer(overrides: Partial<StartServerDeps> = {}) {
-    const deps = {
-        ...defaultDeps,
-        ...overrides,
-    }
+export async function startServer() {
+    return startServerWithDeps(defaultDeps)
+}
+
+export async function startServerWithDeps(deps: StartServerDeps) {
     const config = deps.readServerConfig()
+    const runtime = deps.createServerRuntime()
 
     await prepareServer(config, deps)
-    return deps.createServer(config)
+    const server = deps.createServer({
+        appOrigin: config.appOrigin,
+        port: config.port,
+        runtime,
+    })
+
+    return {
+        runtime,
+        server,
+    }
 }
 
 export async function prepareServer(

@@ -1,20 +1,35 @@
+import {
+    type LiveFilesModel,
+    useLiveFiles,
+} from '@/live-files/application/use-live-files'
+import {
+    type DrawingPadModel,
+    useDrawingPad,
+} from '@/pad-drawing/application/use-drawing-pad'
+import {
+    type PadHistoryWorkspaceModel,
+    usePadHistoryWorkspace,
+} from '@/pad-workspace/application/use-pad-history-workspace'
+import {
+    type PadWorkspaceViewCommands,
+    type PadWorkspaceViewState,
+    usePadWorkspaceView,
+} from '@/pad-workspace/application/use-pad-workspace-view'
+import {
+    type TextWorkspaceModel,
+    useTextWorkspace,
+} from '@/pad-workspace/application/use-text-workspace'
+import {
+    type WorkspaceNavigationModel,
+    useWorkspaceNavigation,
+} from '@/pad-workspace/application/use-workspace-navigation'
+import { loadLocalPeer } from '@/pad-workspace/infrastructure/browser-local-peer-store'
 import type { PadPath } from '@mpad/core/pad-path'
-import type { PadConnection } from '@mpad/protocol/pad-connection'
 import type { LiveFileState } from '@mpad/protocol/live-files'
+import type { PadConnection } from '@mpad/protocol/pad-connection'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { toast } from 'sonner'
-import { useLiveFiles, type LiveFilesModel } from '@/live-files/application/use-live-files'
-import { useDrawingPad, type DrawingPadModel } from '@/pad-drawing/application/use-drawing-pad'
-import { usePadHistoryWorkspace, type PadHistoryWorkspaceModel } from '@/pad-workspace/application/use-pad-history-workspace'
-import {
-    usePadWorkspaceView,
-    type PadWorkspaceViewCommands,
-    type PadWorkspaceViewState,
-} from '@/pad-workspace/application/use-pad-workspace-view'
-import { useTextWorkspace, type TextWorkspaceModel } from '@/pad-workspace/application/use-text-workspace'
-import { loadLocalPeer } from '@/pad-workspace/infrastructure/browser-local-peer-store'
-import { useWorkspaceNavigation, type WorkspaceNavigationModel } from '@/pad-workspace/application/use-workspace-navigation'
 
 export type PadWorkspaceShellCommands = PadWorkspaceViewCommands & {
     navigateToPad: (path: PadPath) => void
@@ -50,8 +65,16 @@ export function usePadWorkspaceModel(path: PadPath): PadWorkspaceModel {
     const peer = useMemo(loadLocalPeer, [])
     const view = usePadWorkspaceView(path)
     const text = useTextWorkspace(path, peer)
-    const drawing = useDrawingPad(path, peer, view.state.activeTab === 'drawing')
-    const liveFiles = useLiveFiles(path, peer, view.state.activeTab === 'files' || view.state.dialog === 'files')
+    const drawing = useDrawingPad(
+        path,
+        peer,
+        view.state.activeTab === 'drawing',
+    )
+    const liveFiles = useLiveFiles(
+        path,
+        peer,
+        view.state.activeTab === 'files' || view.state.dialog === 'files',
+    )
     const navigation = useWorkspaceNavigation(path)
 
     const shellCommands: PadWorkspaceShellCommands = {
@@ -90,7 +113,8 @@ export function usePadWorkspaceModel(path: PadPath): PadWorkspaceModel {
         shell: {
             view: view.state,
             status: {
-                connection: text.kind === 'ready' ? text.connection : 'connecting',
+                connection:
+                    text.kind === 'ready' ? text.connection : 'connecting',
                 peerCount: text.kind === 'ready' ? text.peerCount : 0,
             },
             commands: shellCommands,

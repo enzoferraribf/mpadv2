@@ -1,10 +1,14 @@
+import type { PadRoomKind } from '@mpad/core/pad-room'
+import type {
+    InboundFileSignal,
+    LiveFileMeta,
+    OutboundFileSignal,
+} from '@mpad/protocol/live-files'
+import type { PadConnection } from '@mpad/protocol/pad-connection'
 import type {
     ClientRoomMessage,
     ServerRoomMessage,
 } from '@mpad/protocol/room-message-codec'
-import type { InboundFileSignal, LiveFileMeta, OutboundFileSignal } from '@mpad/protocol/live-files'
-import type { PadConnection } from '@mpad/protocol/pad-connection'
-import type { PadRoomKind } from '@mpad/core/pad-room'
 import type { Awareness } from 'y-protocols/awareness'
 import type { Doc } from 'yjs'
 
@@ -49,7 +53,10 @@ export type DrawingAwarenessState = {
 
 type FileSignalListener = (signal: InboundFileSignal) => void
 
-export type PadRoomSession<TKind extends PadRoomKind, TLocalState extends object> = {
+export type PadRoomSession<
+    TKind extends PadRoomKind,
+    TLocalState extends object,
+> = {
     kind: TKind
     roomName: string
     doc: Doc

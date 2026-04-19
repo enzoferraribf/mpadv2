@@ -1,11 +1,11 @@
+import { assert, assertNever } from '@mpad/core/assert'
+import * as decoding from 'lib0/decoding'
+import * as encoding from 'lib0/encoding'
 import type { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as syncProtocol from 'y-protocols/sync'
 import type { Doc } from 'yjs'
-import * as decoding from 'lib0/decoding'
-import * as encoding from 'lib0/encoding'
 import type { InboundFileSignal, OutboundFileSignal } from './live-files'
-import { assert, assertNever } from '@mpad/core/assert'
 
 const MESSAGE_SYNC = 0
 const MESSAGE_AWARENESS = 1
@@ -32,7 +32,9 @@ export function readClientRoomMessage(data: Uint8Array): ClientRoomMessage {
     if (type === MESSAGE_FILE_SIGNAL) {
         return {
             kind: 'file-signal',
-            signal: JSON.parse(decoding.readVarString(decoder)) as OutboundFileSignal,
+            signal: JSON.parse(
+                decoding.readVarString(decoder),
+            ) as OutboundFileSignal,
         }
     }
 
@@ -48,7 +50,9 @@ export function readServerRoomMessage(data: Uint8Array): ServerRoomMessage {
     if (type === MESSAGE_FILE_SIGNAL) {
         return {
             kind: 'file-signal',
-            signal: JSON.parse(decoding.readVarString(decoder)) as InboundFileSignal,
+            signal: JSON.parse(
+                decoding.readVarString(decoder),
+            ) as InboundFileSignal,
         }
     }
 
@@ -56,14 +60,18 @@ export function readServerRoomMessage(data: Uint8Array): ServerRoomMessage {
 }
 
 export function encodeClientRoomMessage(message: ClientRoomMessage) {
-    if (message.kind === 'sync' || message.kind === 'awareness') return message.data
-    if (message.kind === 'file-signal') return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
+    if (message.kind === 'sync' || message.kind === 'awareness')
+        return message.data
+    if (message.kind === 'file-signal')
+        return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
     return assertNever(message)
 }
 
 export function encodeServerRoomMessage(message: ServerRoomMessage) {
-    if (message.kind === 'sync' || message.kind === 'awareness') return message.data
-    if (message.kind === 'file-signal') return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
+    if (message.kind === 'sync' || message.kind === 'awareness')
+        return message.data
+    if (message.kind === 'file-signal')
+        return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
     return assertNever(message)
 }
 
@@ -81,7 +89,11 @@ export function createSyncStep1Message(doc: Doc): SyncRoomMessage {
     return { kind: 'sync', data: encoding.toUint8Array(encoder) }
 }
 
-export function replyToSyncMessage(doc: Doc, data: Uint8Array, origin: unknown) {
+export function replyToSyncMessage(
+    doc: Doc,
+    data: Uint8Array,
+    origin: unknown,
+) {
     const decoder = decoding.createDecoder(data)
     const encoder = encoding.createEncoder()
     const type = decoding.readVarUint(decoder)
@@ -89,21 +101,38 @@ export function replyToSyncMessage(doc: Doc, data: Uint8Array, origin: unknown) 
     encoding.writeVarUint(encoder, MESSAGE_SYNC)
     syncProtocol.readSyncMessage(decoder, encoder, doc, origin)
     if (encoding.length(encoder) <= 1) return null
-    return { kind: 'sync', data: encoding.toUint8Array(encoder) } satisfies SyncRoomMessage
+    return {
+        kind: 'sync',
+        data: encoding.toUint8Array(encoder),
+    } satisfies SyncRoomMessage
 }
 
-export function createAwarenessMessage(awareness: Awareness, clientIds: number[]): AwarenessRoomMessage {
+export function createAwarenessMessage(
+    awareness: Awareness,
+    clientIds: number[],
+): AwarenessRoomMessage {
     const encoder = encoding.createEncoder()
     encoding.writeVarUint(encoder, MESSAGE_AWARENESS)
-    encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(awareness, clientIds))
+    encoding.writeVarUint8Array(
+        encoder,
+        awarenessProtocol.encodeAwarenessUpdate(awareness, clientIds),
+    )
     return { kind: 'awareness', data: encoding.toUint8Array(encoder) }
 }
 
-export function applyAwarenessMessage(awareness: Awareness, data: Uint8Array, origin: unknown) {
+export function applyAwarenessMessage(
+    awareness: Awareness,
+    data: Uint8Array,
+    origin: unknown,
+) {
     const decoder = decoding.createDecoder(data)
     const type = decoding.readVarUint(decoder)
     assert(type === MESSAGE_AWARENESS, 'Expected awareness room message')
-    awarenessProtocol.applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), origin)
+    awarenessProtocol.applyAwarenessUpdate(
+        awareness,
+        decoding.readVarUint8Array(decoder),
+        origin,
+    )
 }
 
 function encodeJsonMessage(type: number, value: object) {

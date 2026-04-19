@@ -1,5 +1,9 @@
+import type {
+    TextCommentResult,
+    TextCommentSelection,
+    TextCommentThreadView,
+} from '@/pad-text/infrastructure/text-comment-store'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { TextCommentResult, TextCommentSelection, TextCommentThreadView } from '@/pad-text/infrastructure/text-comment-store'
 
 type CommentActionResult<T = void> = TextCommentResult<T>
 
@@ -8,17 +12,29 @@ export function TextCommentsPane(input: {
     draftSelection: TextCommentSelection | null
     onClose: () => void
     onCreateThread: (body: string) => CommentActionResult<{ threadId: string }>
-    onDeleteMessage: (input: { threadId: string; messageId: string }) => CommentActionResult
+    onDeleteMessage: (input: {
+        threadId: string
+        messageId: string
+    }) => CommentActionResult
     onDeleteThread: (threadId: string) => CommentActionResult
-    onEditMessage: (input: { threadId: string; messageId: string; body: string }) => CommentActionResult
-    onReplyToThread: (input: { threadId: string; body: string }) => CommentActionResult<{ messageId: string }>
+    onEditMessage: (input: {
+        threadId: string
+        messageId: string
+        body: string
+    }) => CommentActionResult
+    onReplyToThread: (input: {
+        threadId: string
+        body: string
+    }) => CommentActionResult<{ messageId: string }>
     top: number
     thread: TextCommentThreadView | null
 }) {
     const cardRef = useRef<HTMLElement | null>(null)
     const [composerBody, setComposerBody] = useState('')
     const [editingBody, setEditingBody] = useState('')
-    const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(
+        null,
+    )
     const [error, setError] = useState<string | null>(null)
     const [replyBody, setReplyBody] = useState('')
     const [cardTop, setCardTop] = useState(12)
@@ -54,45 +70,63 @@ export function TextCommentsPane(input: {
         const height = card.offsetHeight
         const maxTop = Math.max(12, input.containerHeight - height - 12)
         setCardTop(Math.max(12, Math.min(input.top, maxTop)))
-    }, [input.containerHeight, input.top, input.thread, input.draftSelection, editingMessageId, editingBody, open, replyBody])
+    }, [
+        input.containerHeight,
+        input.top,
+        input.thread,
+        input.draftSelection,
+        editingMessageId,
+        editingBody,
+        open,
+        replyBody,
+    ])
 
     if (!open) return null
 
     return (
         <aside
             ref={cardRef}
-            className="comment-card"
-            data-testid="comment-card"
+            className='comment-card'
+            data-testid='comment-card'
             style={{ top: `${cardTop}px` }}
         >
-            <header className="comment-card-header">
-                <div className="comments-compose-label">{input.draftSelection ? 'New comment' : 'Thread'}</div>
+            <header className='comment-card-header'>
+                <div className='comments-compose-label'>
+                    {input.draftSelection ? 'New comment' : 'Thread'}
+                </div>
                 <button
-                    aria-label="Close comment"
-                    className="comment-card-close"
+                    aria-label='Close comment'
+                    className='comment-card-close'
                     onClick={input.onClose}
-                    type="button"
+                    type='button'
                 >
                     ×
                 </button>
             </header>
 
             {input.draftSelection ? (
-                <section className="comment-card-section">
-                    <blockquote className="comments-quote">{input.draftSelection.quote}</blockquote>
+                <section className='comment-card-section'>
+                    <blockquote className='comments-quote'>
+                        {input.draftSelection.quote}
+                    </blockquote>
                     <textarea
-                        className="comments-textarea"
-                        onChange={(event) => setComposerBody(event.target.value)}
-                        placeholder="Add a comment"
+                        className='comments-textarea'
+                        onChange={(event) =>
+                            setComposerBody(event.target.value)
+                        }
+                        placeholder='Add a comment'
                         rows={4}
                         value={composerBody}
                     />
-                    {error ? <div className="comments-error">{error}</div> : null}
-                    <div className="comments-actions">
+                    {error ? (
+                        <div className='comments-error'>{error}</div>
+                    ) : null}
+                    <div className='comments-actions'>
                         <button
-                            className="comments-btn comments-btn-primary"
+                            className='comments-btn comments-btn-primary'
                             onClick={() => {
-                                const result = input.onCreateThread(composerBody)
+                                const result =
+                                    input.onCreateThread(composerBody)
                                 if (!result.ok) {
                                     setError(result.error)
                                     return
@@ -100,11 +134,15 @@ export function TextCommentsPane(input: {
                                 setComposerBody('')
                                 setError(null)
                             }}
-                            type="button"
+                            type='button'
                         >
                             Add comment
                         </button>
-                        <button className="comments-btn" onClick={input.onClose} type="button">
+                        <button
+                            className='comments-btn'
+                            onClick={input.onClose}
+                            type='button'
+                        >
                             Cancel
                         </button>
                     </div>
@@ -128,7 +166,10 @@ export function TextCommentsPane(input: {
 
 function ThreadCard(input: {
     error: string | null
-    input: Omit<Parameters<typeof TextCommentsPane>[0], 'draftSelection' | 'top' | 'containerHeight'>
+    input: Omit<
+        Parameters<typeof TextCommentsPane>[0],
+        'draftSelection' | 'top' | 'containerHeight'
+    >
     onError: (value: string | null) => void
     editingBody: string
     editingMessageId: string | null
@@ -141,48 +182,63 @@ function ThreadCard(input: {
     if (!thread) return null
 
     return (
-        <section className="comment-card-section comment-card-thread">
-            <div className="comment-card-thread-scroll">
-                <blockquote className="comments-quote">{thread.quote}</blockquote>
+        <section className='comment-card-section comment-card-thread'>
+            <div className='comment-card-thread-scroll'>
+                <blockquote className='comments-quote'>
+                    {thread.quote}
+                </blockquote>
                 {thread.canDelete ? (
-                    <div className="comments-thread-actions">
+                    <div className='comments-thread-actions'>
                         <button
-                            className="comments-pane-link danger"
+                            className='comments-pane-link danger'
                             onClick={() => {
-                                const result = input.input.onDeleteThread(thread.id)
+                                const result = input.input.onDeleteThread(
+                                    thread.id,
+                                )
                                 if (!result.ok) input.onError(result.error)
                             }}
-                            type="button"
+                            type='button'
                         >
                             Delete thread
                         </button>
                     </div>
                 ) : null}
 
-                <div className="comment-card-body">
+                <div className='comment-card-body'>
                     {thread.messages.map((message) => (
-                        <article key={message.id} className="comments-message">
-                            <div className="comments-message-meta">
-                                <span style={{ color: message.author.textColor }}>{message.author.name}</span>
-                                <span>{formatCommentTime(message.updatedAt)}</span>
+                        <article key={message.id} className='comments-message'>
+                            <div className='comments-message-meta'>
+                                <span
+                                    style={{ color: message.author.textColor }}
+                                >
+                                    {message.author.name}
+                                </span>
+                                <span>
+                                    {formatCommentTime(message.updatedAt)}
+                                </span>
                             </div>
                             {input.editingMessageId === message.id ? (
                                 <>
                                     <textarea
-                                        className="comments-textarea"
-                                        onChange={(event) => input.onEditingBody(event.target.value)}
+                                        className='comments-textarea'
+                                        onChange={(event) =>
+                                            input.onEditingBody(
+                                                event.target.value,
+                                            )
+                                        }
                                         rows={3}
                                         value={input.editingBody}
                                     />
-                                    <div className="comments-actions">
+                                    <div className='comments-actions'>
                                         <button
-                                            className="comments-btn comments-btn-primary"
+                                            className='comments-btn comments-btn-primary'
                                             onClick={() => {
-                                                const result = input.input.onEditMessage({
-                                                    threadId: thread.id,
-                                                    messageId: message.id,
-                                                    body: input.editingBody,
-                                                })
+                                                const result =
+                                                    input.input.onEditMessage({
+                                                        threadId: thread.id,
+                                                        messageId: message.id,
+                                                        body: input.editingBody,
+                                                    })
                                                 if (!result.ok) {
                                                     input.onError(result.error)
                                                     return
@@ -191,50 +247,61 @@ function ThreadCard(input: {
                                                 input.onEditingMessageId(null)
                                                 input.onError(null)
                                             }}
-                                            type="button"
+                                            type='button'
                                         >
                                             Save
                                         </button>
                                         <button
-                                            className="comments-btn"
+                                            className='comments-btn'
                                             onClick={() => {
                                                 input.onEditingBody('')
                                                 input.onEditingMessageId(null)
                                             }}
-                                            type="button"
+                                            type='button'
                                         >
                                             Cancel
                                         </button>
                                     </div>
                                 </>
                             ) : (
-                                <p className="comments-message-body">{message.body}</p>
+                                <p className='comments-message-body'>
+                                    {message.body}
+                                </p>
                             )}
                             {input.editingMessageId !== message.id ? (
-                                <div className="comments-message-actions">
+                                <div className='comments-message-actions'>
                                     {message.canEdit ? (
                                         <button
-                                            className="comments-pane-link"
+                                            className='comments-pane-link'
                                             onClick={() => {
-                                                input.onEditingBody(message.body)
-                                                input.onEditingMessageId(message.id)
+                                                input.onEditingBody(
+                                                    message.body,
+                                                )
+                                                input.onEditingMessageId(
+                                                    message.id,
+                                                )
                                             }}
-                                            type="button"
+                                            type='button'
                                         >
                                             Edit
                                         </button>
                                     ) : null}
                                     {message.canDelete ? (
                                         <button
-                                            className="comments-pane-link danger"
+                                            className='comments-pane-link danger'
                                             onClick={() => {
-                                                const result = input.input.onDeleteMessage({
-                                                    threadId: thread.id,
-                                                    messageId: message.id,
-                                                })
-                                                if (!result.ok) input.onError(result.error)
+                                                const result =
+                                                    input.input.onDeleteMessage(
+                                                        {
+                                                            threadId: thread.id,
+                                                            messageId:
+                                                                message.id,
+                                                        },
+                                                    )
+                                                if (!result.ok)
+                                                    input.onError(result.error)
                                             }}
-                                            type="button"
+                                            type='button'
                                         >
                                             Delete
                                         </button>
@@ -245,18 +312,22 @@ function ThreadCard(input: {
                     ))}
                 </div>
 
-                <div className="comments-reply">
+                <div className='comments-reply'>
                     <textarea
-                        className="comments-textarea"
-                        onChange={(event) => input.onReplyBody(event.target.value)}
-                        placeholder="Reply to thread"
+                        className='comments-textarea'
+                        onChange={(event) =>
+                            input.onReplyBody(event.target.value)
+                        }
+                        placeholder='Reply to thread'
                         rows={3}
                         value={input.replyBody}
                     />
-                    {input.error ? <div className="comments-error">{input.error}</div> : null}
-                    <div className="comments-actions">
+                    {input.error ? (
+                        <div className='comments-error'>{input.error}</div>
+                    ) : null}
+                    <div className='comments-actions'>
                         <button
-                            className="comments-btn comments-btn-primary"
+                            className='comments-btn comments-btn-primary'
                             onClick={() => {
                                 const result = input.input.onReplyToThread({
                                     threadId: thread.id,
@@ -269,7 +340,7 @@ function ThreadCard(input: {
                                 input.onReplyBody('')
                                 input.onError(null)
                             }}
-                            type="button"
+                            type='button'
                         >
                             Reply
                         </button>

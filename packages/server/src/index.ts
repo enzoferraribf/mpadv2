@@ -1,14 +1,14 @@
-import { shutdownServer } from './bootstrap/create-server'
-import { startServer } from './bootstrap/start-server'
+import { shutdownServer } from '#/bootstrap/create-server'
+import { startServer } from '#/bootstrap/start-server'
 
-const server = await startServer()
+const started = await startServer()
 let shuttingDown = false
 
 async function shutdown() {
     if (shuttingDown) return
     shuttingDown = true
-    await shutdownServer()
-    server.stop(true)
+    await shutdownServer(started.runtime)
+    started.server.stop(true)
     process.exit(0)
 }
 

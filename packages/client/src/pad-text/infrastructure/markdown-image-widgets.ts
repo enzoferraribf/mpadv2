@@ -1,5 +1,10 @@
 import { StateField } from '@codemirror/state'
-import { Decoration, EditorView, WidgetType, type DecorationSet } from '@codemirror/view'
+import {
+    Decoration,
+    type DecorationSet,
+    EditorView,
+    WidgetType,
+} from '@codemirror/view'
 
 const standaloneImagePattern = /^\s*!\[([^\]]*)\]\((.+)\)\s*$/
 
@@ -35,10 +40,14 @@ class MarkdownImageWidget extends WidgetType {
         fallback.hidden = true
         fallback.textContent = this.image.markup
 
-        image.addEventListener('error', () => {
-            image.remove()
-            fallback.hidden = false
-        }, { once: true })
+        image.addEventListener(
+            'error',
+            () => {
+                image.remove()
+                fallback.hidden = false
+            },
+            { once: true },
+        )
 
         root.append(image, fallback)
         return root
@@ -70,17 +79,24 @@ function buildDecorations(state: EditorView['state']) {
     for (let lineNumber = 1; lineNumber <= state.doc.lines; lineNumber += 1) {
         const line = state.doc.line(lineNumber)
         const image = readStandaloneImage(line.text)
-        if (!image || selectionTouchesLine(state.selection, line.from, line.to)) continue
+        if (!image || selectionTouchesLine(state.selection, line.from, line.to))
+            continue
 
-        decorations.push(Decoration.replace({
-            widget: new MarkdownImageWidget(image),
-        }).range(line.from, line.to))
+        decorations.push(
+            Decoration.replace({
+                widget: new MarkdownImageWidget(image),
+            }).range(line.from, line.to),
+        )
     }
 
     return Decoration.set(decorations, true)
 }
 
-function selectionTouchesLine(selection: EditorView['state']['selection'], from: number, to: number) {
+function selectionTouchesLine(
+    selection: EditorView['state']['selection'],
+    from: number,
+    to: number,
+) {
     for (const range of selection.ranges) {
         if (range.empty) {
             if (range.from >= from && range.from <= to) return true

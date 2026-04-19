@@ -1,20 +1,23 @@
-import type { ServerWebSocket } from 'bun'
+import { assert } from '@mpad/core/assert'
+import { MAX_DRAWING_BYTES, MAX_TEXT_BYTES } from '@mpad/core/pad-limits'
+import type { PadPath } from '@mpad/core/pad-path'
+import type { PadDocKind } from '@mpad/core/pad-room'
 import {
     applyAwarenessMessage,
     createAwarenessMessage,
     createDocUpdateMessage,
     replyToSyncMessage,
 } from '@mpad/protocol/room-message-codec'
-import { assert } from '@mpad/core/assert'
-import { MAX_DRAWING_BYTES, MAX_TEXT_BYTES } from '@mpad/core/pad-limits'
-import { type PadDocKind } from '@mpad/core/pad-room'
-import type { PadPath } from '@mpad/core/pad-path'
-import type { AwarenessRoomMessage, SyncRoomMessage } from '@mpad/protocol/room-message-codec'
+import type {
+    AwarenessRoomMessage,
+    SyncRoomMessage,
+} from '@mpad/protocol/room-message-codec'
+import type { ServerWebSocket } from 'bun'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc, applyUpdate, encodeStateAsUpdate } from 'yjs'
-import type { WsData } from '../../transport/ws-data'
-import type { StoredPadDoc } from '../../pad-doc/domain/doc-repository'
+import type { StoredPadDoc } from '#/pad-doc/domain/doc-repository'
+import type { WsData } from '#/transport/ws-data'
 
 const DOC_SIZE_PROBE_MARGIN_BYTES = 64 * 1024
 
@@ -68,19 +71,30 @@ export function createPadDocRoom(input: {
     return room
 }
 
-export function connectPadDocClient(room: PadDocRoom, ws: ServerWebSocket<WsData>) {
+export function connectPadDocClient(
+    room: PadDocRoom,
+    ws: ServerWebSocket<WsData>,
+) {
     room.clients.add(ws)
     const messages: Array<SyncRoomMessage | AwarenessRoomMessage> = [
         createDocUpdateMessage(encodeStateAsUpdate(room.doc)),
     ]
     const clientIds = Array.from(room.awareness.getStates().keys())
-    if (clientIds.length > 0) messages.push(createAwarenessMessage(room.awareness, clientIds))
+    if (clientIds.length > 0)
+        messages.push(createAwarenessMessage(room.awareness, clientIds))
     return messages
 }
 
-export function disconnectPadDocClient(room: PadDocRoom, ws: ServerWebSocket<WsData>) {
+export function disconnectPadDocClient(
+    room: PadDocRoom,
+    ws: ServerWebSocket<WsData>,
+) {
     room.clients.delete(ws)
-    awarenessProtocol.removeAwarenessStates(room.awareness, [ws.data.awarenessClientId], null)
+    awarenessProtocol.removeAwarenessStates(
+        room.awareness,
+        [ws.data.awarenessClientId],
+        null,
+    )
     const awarenessMessage = room.awareness.meta.has(ws.data.awarenessClientId)
         ? createAwarenessMessage(room.awareness, [ws.data.awarenessClientId])
         : null
@@ -102,7 +116,11 @@ export function applyPadDocSync(room: PadDocRoom, data: Uint8Array) {
     }
 }
 
-export function applyPadDocAwareness(room: PadDocRoom, sender: ServerWebSocket<WsData>, data: Uint8Array) {
+export function applyPadDocAwareness(
+    room: PadDocRoom,
+    sender: ServerWebSocket<WsData>,
+    data: Uint8Array,
+) {
     applyAwarenessMessage(room.awareness, data, sender)
     return { kind: 'awareness', data } satisfies AwarenessRoomMessage
 }
@@ -131,7 +149,8 @@ function assertDocWithinLimit(room: PadDocRoom, docBytes: number) {
 function nextDocBytes(room: PadDocRoom, data: Uint8Array) {
     const limit = room.kind === 'text' ? MAX_TEXT_BYTES : MAX_DRAWING_BYTES
     const projectedBytes = room.docBytes + data.byteLength
-    if (projectedBytes < limit - DOC_SIZE_PROBE_MARGIN_BYTES) return projectedBytes
+    if (projectedBytes < limit - DOC_SIZE_PROBE_MARGIN_BYTES)
+        return projectedBytes
     return probeDocBytes(room.doc, data)
 }
 

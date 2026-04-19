@@ -1,16 +1,9 @@
-import {
-    expect,
-    openLanding,
-    openPad,
-    test,
-    waitForPad,
-} from './mpad-test'
+import { expect, openLanding, openPad, test, waitForPad } from '$/e2e/mpad-test'
 
 test('renders the landing shell', async ({ page }) => {
-    await openLanding(page)
+    await openLanding(page, { colorScheme: 'dark' })
     await expect(page).toHaveScreenshot('landing-page.png')
 })
-
 
 test('opens a pad from the landing input', async ({ page }) => {
     const path = `landing-${Date.now()}`
@@ -22,7 +15,6 @@ test('opens a pad from the landing input', async ({ page }) => {
     await expect(page).toHaveURL(new RegExp(`/${path}$`))
 })
 
-
 test('shows related pads from the real tree', async ({ browser }) => {
     const root = `docs-${Date.now()}`
     const context = await browser.newContext()
@@ -33,15 +25,28 @@ test('shows related pads from the real tree', async ({ browser }) => {
     await openPad(page, `${root}/branch/start`)
     await page.getByTitle('Toggle sidebar (Ctrl+B)').click()
 
-    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${root}`)
-    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${root}/two`)
-    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${root}/one/child`)
+    await expect
+        .poll(async () =>
+            page.locator('.pad-explorer .pad-explorer-item').allTextContents(),
+        )
+        .toContain(`/${root}`)
+    await expect
+        .poll(async () =>
+            page.locator('.pad-explorer .pad-explorer-item').allTextContents(),
+        )
+        .toContain(`/${root}/two`)
+    await expect
+        .poll(async () =>
+            page.locator('.pad-explorer .pad-explorer-item').allTextContents(),
+        )
+        .toContain(`/${root}/one/child`)
 
     await context.close()
 })
 
-
-test('shows pads in ascending path order in the sidebar', async ({ browser }) => {
+test('shows pads in ascending path order in the sidebar', async ({
+    browser,
+}) => {
     const root = `test-${Date.now()}`
     const context = await browser.newContext()
     const page = await context.newPage()
@@ -52,11 +57,11 @@ test('shows pads in ascending path order in the sidebar', async ({ browser }) =>
     await openPad(page, `${root}`)
     await page.getByTitle('Toggle sidebar (Ctrl+B)').click()
 
-    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toEqual([
-        `/${root}`,
-        `/${root}/foo`,
-        `/${root}/foo/bar`,
-    ])
+    await expect
+        .poll(async () =>
+            page.locator('.pad-explorer .pad-explorer-item').allTextContents(),
+        )
+        .toEqual([`/${root}`, `/${root}/foo`, `/${root}/foo/bar`])
 
     await context.close()
 })

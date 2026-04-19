@@ -10,13 +10,15 @@
         "noEmit": true,
         "paths": {
             "@/*": ["packages/client/src/*"],
+            "#/*": ["packages/server/src/*"],
+            "$/*": ["tests/*"],
             "@mpad/testkit/*": ["packages/testkit/src/*"]
         },
         "types": ["@playwright/test"]
     },
     "include": [
-        "e2e/**/*.ts",
-        "e2e/**/*.d.ts",
+        "**/*.ts",
+        "**/*.d.ts",
         "../packages/client/tests/**/*.ts",
         "../packages/server/tests/**/*.ts"
     ]

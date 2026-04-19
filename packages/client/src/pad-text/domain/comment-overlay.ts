@@ -1,4 +1,7 @@
-import type { TextCommentSelection, TextCommentThreadView } from '@/pad-text/infrastructure/text-comment-store'
+import type {
+    TextCommentSelection,
+    TextCommentThreadView,
+} from '@/pad-text/infrastructure/text-comment-store'
 
 export type TextCommentOverlay =
     | { kind: 'closed' }
@@ -17,9 +20,14 @@ export type TextCommentMarker = {
     active: boolean
 }
 
-export function closeMissingOverlayThread(overlay: TextCommentOverlay, threads: TextCommentThreadView[]): TextCommentOverlay {
+export function closeMissingOverlayThread(
+    overlay: TextCommentOverlay,
+    threads: TextCommentThreadView[],
+): TextCommentOverlay {
     if (overlay.kind !== 'thread') return overlay
-    return threads.some((thread) => thread.id === overlay.threadId) ? overlay : { kind: 'closed' }
+    return threads.some((thread) => thread.id === overlay.threadId)
+        ? overlay
+        : { kind: 'closed' }
 }
 
 export function buildCommentMarkers(input: {
@@ -64,7 +72,10 @@ export function buildCommentMarkers(input: {
     })
 }
 
-export function readOverlayThread(overlay: TextCommentOverlay, threads: TextCommentThreadView[]) {
+export function readOverlayThread(
+    overlay: TextCommentOverlay,
+    threads: TextCommentThreadView[],
+) {
     if (overlay.kind !== 'thread') return null
     return threads.find((thread) => thread.id === overlay.threadId) ?? null
 }

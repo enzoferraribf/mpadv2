@@ -1,12 +1,11 @@
 import type { PadPath } from '@mpad/core/pad-path'
 
 type PadServerConfig = {
-    httpServerOrigin: string
+    serverOrigin: string
     wsServerOrigin: string
 }
 
-const DEFAULT_HTTP_SERVER_ORIGIN = 'http://localhost:4000'
-const DEFAULT_WS_SERVER_ORIGIN = 'ws://localhost:4000'
+const DEFAULT_SERVER_ORIGIN = 'http://localhost:4000'
 
 export function roomWebSocketUrl(roomName: string, clientId: number) {
     const { wsServerOrigin } = readPadServerConfig()
@@ -15,8 +14,8 @@ export function roomWebSocketUrl(roomName: string, clientId: number) {
 }
 
 export function padApiUrl(path: PadPath, suffix: string) {
-    const { httpServerOrigin } = readPadServerConfig()
-    return `${httpServerOrigin}/api/pads${encodePadPath(path)}${suffix}`
+    const { serverOrigin } = readPadServerConfig()
+    return `${serverOrigin}/api/pads${encodePadPath(path)}${suffix}`
 }
 
 export async function fetchApiJson<T>(url: string, signal: AbortSignal) {
@@ -45,14 +44,39 @@ async function readJson<T>(response: Response) {
 }
 
 export function readPadServerConfig(): PadServerConfig {
-    const runtimeConfig = typeof window === 'object'
-        ? window.__MPAD_CONFIG__
-        : undefined
+    const runtimeConfig =
+        typeof window === 'object' ? window.__MPAD_CONFIG__ : undefined
+    const serverOrigin = normalizeServerOrigin(
+        runtimeConfig?.serverOrigin ??
+            import.meta.env.VITE_SERVER_ORIGIN ??
+            DEFAULT_SERVER_ORIGIN,
+    )
+    const wsServerOrigin = normalizeWebSocketOrigin(
+        runtimeConfig?.wsServerOrigin ??
+            import.meta.env.VITE_WS_SERVER_ORIGIN ??
+            deriveWebSocketOrigin(serverOrigin),
+    )
 
     return {
-        httpServerOrigin: stripTrailingSlash(runtimeConfig?.httpServerOrigin ?? import.meta.env.VITE_HTTP_SERVER_ORIGIN ?? DEFAULT_HTTP_SERVER_ORIGIN),
-        wsServerOrigin: stripTrailingSlash(runtimeConfig?.wsServerOrigin ?? import.meta.env.VITE_WS_SERVER_ORIGIN ?? DEFAULT_WS_SERVER_ORIGIN),
+        serverOrigin,
+        wsServerOrigin,
     }
+}
+
+function normalizeServerOrigin(value: string) {
+    const url = new URL(value)
+    return stripTrailingSlash(url.origin)
+}
+
+function normalizeWebSocketOrigin(value: string) {
+    const url = new URL(value)
+    return stripTrailingSlash(url.origin)
+}
+
+function deriveWebSocketOrigin(serverOrigin: string) {
+    const url = new URL(serverOrigin)
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    return url.origin
 }
 
 function stripTrailingSlash(value: string) {

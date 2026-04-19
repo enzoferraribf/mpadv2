@@ -1,25 +1,41 @@
-import { MessageSquare } from 'lucide-react'
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
-import type { TextCommentResult } from '@/pad-text/infrastructure/text-comment-store'
 import {
+    type TextCommentRangeRect,
     buildCommentMarkers,
     readOverlayThreadId,
-    type TextCommentRangeRect,
 } from '@/pad-text/domain/comment-overlay'
+import type { TextCommentResult } from '@/pad-text/infrastructure/text-comment-store'
+import type {
+    CursorPosition,
+    TextEditorHandle,
+    TextEditorSelection,
+} from '@/pad-text/infrastructure/text-editor'
 import type { TextWorkspaceComments } from '@/pad-workspace/application/use-text-workspace'
+import { MessageSquare } from 'lucide-react'
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { TextCommentsPane } from './text-comments-pane'
-import type { CursorPosition, TextEditorHandle, TextEditorSelection } from '@/pad-text/infrastructure/text-editor'
 
 export function MarkdownEditorPane(input: {
     comments: TextWorkspaceComments
     editor: TextEditorHandle
     onCloseCommentOverlay: () => void
-    onCommentCreateThread: (body: string) => TextCommentResult<{ threadId: string }>
-    onCommentDeleteMessage: (input: { threadId: string; messageId: string }) => TextCommentResult
+    onCommentCreateThread: (
+        body: string,
+    ) => TextCommentResult<{ threadId: string }>
+    onCommentDeleteMessage: (input: {
+        threadId: string
+        messageId: string
+    }) => TextCommentResult
     onCommentDeleteThread: (threadId: string) => TextCommentResult
-    onCommentEditMessage: (input: { threadId: string; messageId: string; body: string }) => TextCommentResult
+    onCommentEditMessage: (input: {
+        threadId: string
+        messageId: string
+        body: string
+    }) => TextCommentResult
     onCommentOpenThread: (threadId: string | null) => void
-    onCommentReply: (input: { threadId: string; body: string }) => TextCommentResult<{ messageId: string }>
+    onCommentReply: (input: {
+        threadId: string
+        body: string
+    }) => TextCommentResult<{ messageId: string }>
     onCommentStartDraft: () => void
     onCursorChange?: (cursor: CursorPosition) => void
     onSelectionChange: (selection: TextEditorSelection | null) => void
@@ -30,9 +46,11 @@ export function MarkdownEditorPane(input: {
         if (!input.onCursorChange) return
         input.onCursorChange(cursor)
     })
-    const onSelectionChange = useEffectEvent((selection: TextEditorSelection | null) => {
-        input.onSelectionChange(selection)
-    })
+    const onSelectionChange = useEffectEvent(
+        (selection: TextEditorSelection | null) => {
+            input.onSelectionChange(selection)
+        },
+    )
     const onCommentClick = useEffectEvent((threadId: string) => {
         input.onCommentOpenThread(threadId)
     })
@@ -72,7 +90,13 @@ export function MarkdownEditorPane(input: {
         const anchors = new Map<string, TextCommentRangeRect | null>()
         for (const thread of input.comments.threads) {
             if (thread.anchor.detached) continue
-            anchors.set(thread.id, input.editor.measureCommentRange(thread.anchor.from, thread.anchor.to))
+            anchors.set(
+                thread.id,
+                input.editor.measureCommentRange(
+                    thread.anchor.from,
+                    thread.anchor.to,
+                ),
+            )
         }
 
         return buildCommentMarkers({
@@ -95,44 +119,61 @@ export function MarkdownEditorPane(input: {
         if (input.comments.overlay.kind !== 'thread') return null
         const { threadId } = input.comments.overlay
         return markers.find((marker) => marker.threadId === threadId)?.top ?? 16
-    }, [input.comments.currentSelection, input.comments.overlay, input.editor, markers, layoutTick])
+    }, [
+        input.comments.currentSelection,
+        input.comments.overlay,
+        input.editor,
+        markers,
+        layoutTick,
+    ])
 
     const containerHeight = rootRef.current?.clientHeight ?? 0
 
     return (
-        <div ref={rootRef} className="comment-editor-shell relative h-full overflow-hidden">
+        <div
+            ref={rootRef}
+            className='comment-editor-shell relative h-full overflow-hidden'
+        >
             {input.comments.currentSelection?.canCreate ? (
                 <button
-                    aria-label="Comment"
-                    className="comment-selection-action"
+                    aria-label='Comment'
+                    className='comment-selection-action'
                     onClick={input.onCommentStartDraft}
                     style={{
                         left: `${input.comments.currentSelection.rect.left}px`,
                         top: `${Math.max(input.comments.currentSelection.rect.top - 8, 12)}px`,
                     }}
-                    title="Comment"
-                    type="button"
+                    title='Comment'
+                    type='button'
                 >
-                    <MessageSquare aria-hidden="true" />
+                    <MessageSquare aria-hidden='true' />
                 </button>
             ) : null}
 
             {markers.map((marker, index) => (
                 <button
                     key={marker.threadId}
-                    aria-label={marker.kind === 'detached' ? `Open detached comment ${index + 1}` : `Open comment ${index + 1}`}
+                    aria-label={
+                        marker.kind === 'detached'
+                            ? `Open detached comment ${index + 1}`
+                            : `Open comment ${index + 1}`
+                    }
                     className={`comment-thread-marker${marker.active ? ' active' : ''}${marker.kind === 'detached' ? ' detached' : ''}`}
-                    data-testid="comment-marker"
+                    data-testid='comment-marker'
                     onClick={() => input.onCommentOpenThread(marker.threadId)}
                     style={{ top: `${marker.top}px` }}
-                    type="button"
+                    type='button'
                 />
             ))}
 
             {overlayTop !== null ? (
                 <TextCommentsPane
                     containerHeight={containerHeight}
-                    draftSelection={input.comments.overlay.kind === 'draft' ? input.comments.overlay.selection : null}
+                    draftSelection={
+                        input.comments.overlay.kind === 'draft'
+                            ? input.comments.overlay.selection
+                            : null
+                    }
                     onClose={input.onCloseCommentOverlay}
                     onCreateThread={input.onCommentCreateThread}
                     onDeleteMessage={input.onCommentDeleteMessage}

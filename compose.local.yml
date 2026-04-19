@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${MPAD_LOCAL_POSTGRES_DB:-mpad_local}
+      POSTGRES_PASSWORD: ${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}
+      POSTGRES_USER: ${MPAD_LOCAL_POSTGRES_USER:-mpad}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 1s
+      timeout: 5s
+      retries: 60
+    ports:
+      - "${MPAD_LOCAL_POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - mpad-local-postgres-data:/var/lib/postgresql/data
+
+  schema-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    command: ["bun", "run", "schema-migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${MPAD_LOCAL_POSTGRES_USER:-mpad}:${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}@postgres:5432/${MPAD_LOCAL_POSTGRES_DB:-mpad_local}
+    working_dir: /app/packages/server
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    command: ["bun", "run", "start"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ORIGIN: http://127.0.0.1:${MPAD_LOCAL_CLIENT_PORT:-13000}
+      DATABASE_URL: postgres://${MPAD_LOCAL_POSTGRES_USER:-mpad}:${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}@postgres:5432/${MPAD_LOCAL_POSTGRES_DB:-mpad_local}
+      PORT: 4000
+      RUN_SCHEMA_MIGRATIONS_ON_BOOT: 0
+    ports:
+      - "${MPAD_LOCAL_API_PORT:-14000}:4000"
+    working_dir: /app/packages/server
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    depends_on:
+      - server
+    environment:
+      MPAD_SERVER_ORIGIN: http://127.0.0.1:${MPAD_LOCAL_API_PORT:-14000}
+      MPAD_WS_SERVER_ORIGIN: ws://127.0.0.1:${MPAD_LOCAL_API_PORT:-14000}
+    ports:
+      - "${MPAD_LOCAL_CLIENT_PORT:-13000}:80"
+
+volumes:
+  mpad-local-postgres-data:

@@ -4,18 +4,25 @@ export type ServerConfig = {
     runSchemaMigrationsOnBoot: boolean
 }
 
-export function readServerConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
+export function readServerConfig(
+    env: NodeJS.ProcessEnv = process.env,
+): ServerConfig {
     return {
         appOrigin: readOptionalOrigin(env.APP_ORIGIN ?? null),
         port: readPort(env.PORT),
-        runSchemaMigrationsOnBoot: readBoolean(env.RUN_SCHEMA_MIGRATIONS_ON_BOOT, false),
+        runSchemaMigrationsOnBoot: readBoolean(
+            env.RUN_SCHEMA_MIGRATIONS_ON_BOOT,
+            false,
+        ),
     }
 }
 
 export function readDatabaseUrl(env: NodeJS.ProcessEnv = process.env) {
     const value = env.DATABASE_URL
     if (!value) {
-        throw new Error('Missing DATABASE_URL. Start Postgres and set DATABASE_URL before running the server.')
+        throw new Error(
+            'Missing DATABASE_URL. Start Postgres and set DATABASE_URL before running the server.',
+        )
     }
 
     return value
@@ -45,8 +52,20 @@ function readBoolean(value: string | undefined, fallback: boolean) {
     if (value === undefined) return fallback
 
     const normalized = value.trim().toLowerCase()
-    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') return true
-    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') return false
+    if (
+        normalized === '1' ||
+        normalized === 'true' ||
+        normalized === 'yes' ||
+        normalized === 'on'
+    )
+        return true
+    if (
+        normalized === '0' ||
+        normalized === 'false' ||
+        normalized === 'no' ||
+        normalized === 'off'
+    )
+        return false
 
     throw new Error(`Invalid boolean value: ${value}`)
 }

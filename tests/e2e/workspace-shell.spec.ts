@@ -9,9 +9,11 @@ import {
     test,
     waitForPad,
     waitForText,
-} from './mpad-test'
+} from '$/e2e/mpad-test'
 
-test('keeps the same pad stable across two tabs in one browser context', async ({ browser }) => {
+test('keeps the same pad stable across two tabs in one browser context', async ({
+    browser,
+}) => {
     const path = `notes/${Date.now()}-same-context`
     const context = await browser.newContext()
     const pageA = await context.newPage()
@@ -23,12 +25,13 @@ test('keeps the same pad stable across two tabs in one browser context', async (
     await expect(pageB.getByTestId('workspace-shell')).toBeVisible()
     await expect(pageB.getByText('Something went wrong!')).toHaveCount(0)
 
-    await pageA.evaluate(() => (window as any).__mpad__.appendText('# mirrored'))
+    await pageA.evaluate(() =>
+        (window as any).__mpad__.appendText('# mirrored'),
+    )
     await waitForText(pageB, '# mirrored')
 
     await context.close()
 })
-
 
 test('renders the pad shell', async ({ browser }) => {
     const path = 'visuals/pad-shell'
@@ -38,7 +41,7 @@ test('renders the pad shell', async ({ browser }) => {
     })
     const page = await context.newPage()
 
-    await openPad(page, path)
+    await openPad(page, path, { colorScheme: 'dark' })
     await seedDocument(page)
     await hideEditorCaret(page)
     await hideSidebarEntries(page)
@@ -55,13 +58,42 @@ test('renders the pad shell', async ({ browser }) => {
     await context.close()
 })
 
+test('renders the legacy pad shell under light media', async ({ browser }) => {
+    const path = 'visuals/pad-shell-light-media'
+    const context = await browser.newContext({
+        viewport: { width: 1600, height: 900 },
+    })
+    const page = await context.newPage()
+
+    await openPad(page, path, { colorScheme: 'light' })
+    await seedDocument(page)
+    await hideEditorCaret(page)
+    await hideSidebarEntries(page)
+
+    expect(
+        await page.evaluate(
+            () => getComputedStyle(document.documentElement).colorScheme,
+        ),
+    ).toBe('dark')
+
+    await expect(page).toHaveScreenshot('pad-shell-light-media.png', {
+        maxDiffPixels: 200,
+        mask: [
+            page.locator('.pad-statusbar-conn'),
+            page.getByTestId('status-cursor'),
+            page.getByTestId('status-clock'),
+        ],
+    })
+
+    await context.close()
+})
 
 test('renders the command menu', async ({ browser }) => {
     const path = 'visuals/command-menu'
     const context = await browser.newContext()
     const page = await context.newPage()
 
-    await openPad(page, path)
+    await openPad(page, path, { colorScheme: 'dark' })
     await seedDocument(page)
     await page.keyboard.press('Control+,')
 
@@ -70,8 +102,9 @@ test('renders the command menu', async ({ browser }) => {
     await context.close()
 })
 
-
-test('keeps the shell height stable when switching layouts', async ({ browser }) => {
+test('keeps the shell height stable when switching layouts', async ({
+    browser,
+}) => {
     const path = `notes/${Date.now()}-layout`
     const context = await browser.newContext()
     const page = await context.newPage()
@@ -95,8 +128,9 @@ test('keeps the shell height stable when switching layouts', async ({ browser })
     await context.close()
 })
 
-
-test('keeps the shell height stable when switching tabs', async ({ browser }) => {
+test('keeps the shell height stable when switching tabs', async ({
+    browser,
+}) => {
     const path = `notes/${Date.now()}-tabs`
     const padName = path.split('/').at(-1)!
     const context = await browser.newContext()
@@ -126,7 +160,9 @@ test('keeps the shell height stable when switching tabs', async ({ browser }) =>
     await context.close()
 })
 
-test('keeps the top bar mounted when navigating from the explorer', async ({ browser }) => {
+test('keeps the top bar mounted when navigating from the explorer', async ({
+    browser,
+}) => {
     const root = `notes/${Date.now()}-explorer-nav`
     const firstPath = `${root}/one`
     const secondPath = `${root}/two`
@@ -138,15 +174,24 @@ test('keeps the top bar mounted when navigating from the explorer', async ({ bro
     await openPad(page, firstPath)
     await page.getByTitle('Toggle sidebar (Ctrl+B)').click()
 
-    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${secondPath}`)
+    await expect
+        .poll(async () =>
+            page.locator('.pad-explorer .pad-explorer-item').allTextContents(),
+        )
+        .toContain(`/${secondPath}`)
     await page.locator('.app-topbar').evaluate((node) => {
         node.setAttribute('data-stable-token', 'topbar-stable')
     })
 
-    await page.getByRole('button', { name: `/${secondPath}`, exact: true }).click()
+    await page
+        .getByRole('button', { name: `/${secondPath}`, exact: true })
+        .click()
     await waitForPad(page)
     await expect(page).toHaveURL(new RegExp(`/${root}/two$`))
-    await expect(page.locator('.app-topbar')).toHaveAttribute('data-stable-token', 'topbar-stable')
+    await expect(page.locator('.app-topbar')).toHaveAttribute(
+        'data-stable-token',
+        'topbar-stable',
+    )
 
     await context.close()
 })

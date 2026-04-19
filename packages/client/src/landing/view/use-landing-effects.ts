@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react'
+import { type RefObject, useEffect } from 'react'
 
 const TILT_MAX = 12
 
@@ -28,12 +28,15 @@ export function useLandingEffects(ref: RefObject<HTMLDivElement | null>) {
 }
 
 function setupScrollReveal(root: HTMLElement) {
-    const elements = root.querySelectorAll<HTMLElement>('.landing-feature-cell, .landing-how-step')
+    const elements = root.querySelectorAll<HTMLElement>(
+        '.landing-feature-cell, .landing-how-step',
+    )
     const observer = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry, index) => {
                 if (!entry.isIntersecting) return
-                ;(entry.target as HTMLElement).style.transitionDelay = `${index * 70}ms`
+                ;(entry.target as HTMLElement).style.transitionDelay =
+                    `${index * 70}ms`
                 entry.target.classList.add('visible')
                 observer.unobserve(entry.target)
             })
@@ -53,10 +56,11 @@ function setupParallax(root: HTMLElement) {
     function update() {
         elements.forEach((element) => {
             if (tilting.has(element)) return
-            const speed = parseFloat(element.dataset.parallax ?? '0')
-            const baseY = parseFloat(element.dataset.rotatey ?? '0')
+            const speed = Number.parseFloat(element.dataset.parallax ?? '0')
+            const baseY = Number.parseFloat(element.dataset.rotatey ?? '0')
             const rect = element.getBoundingClientRect()
-            const offset = (rect.top + rect.height / 2 - window.innerHeight / 2) * speed
+            const offset =
+                (rect.top + rect.height / 2 - window.innerHeight / 2) * speed
             element.style.transform = `rotateY(${baseY}deg) translateY(${offset}px)`
         })
         ticking = false
@@ -70,14 +74,18 @@ function setupParallax(root: HTMLElement) {
 
     window.addEventListener('scroll', onScroll, { passive: true })
     update()
-
-    ;(root as { __landingTilting?: WeakSet<Element> }).__landingTilting = tilting
+    ;(root as { __landingTilting?: WeakSet<Element> }).__landingTilting =
+        tilting
     return () => window.removeEventListener('scroll', onScroll)
 }
 
 function setupTilt(root: HTMLElement) {
-    const elements = root.querySelectorAll<HTMLElement>('.landing-hero-frame, .landing-features-shot-frame')
-    const tilting = (root as { __landingTilting?: WeakSet<Element> }).__landingTilting ?? new WeakSet<Element>()
+    const elements = root.querySelectorAll<HTMLElement>(
+        '.landing-hero-frame, .landing-features-shot-frame',
+    )
+    const tilting =
+        (root as { __landingTilting?: WeakSet<Element> }).__landingTilting ??
+        new WeakSet<Element>()
     const controllers: AbortController[] = []
 
     elements.forEach((element) => {
@@ -88,7 +96,8 @@ function setupTilt(root: HTMLElement) {
             'mouseenter',
             () => {
                 tilting.add(element)
-                element.style.transition = 'transform 100ms ease-out, box-shadow 400ms ease'
+                element.style.transition =
+                    'transform 100ms ease-out, box-shadow 400ms ease'
             },
             { signal: controller.signal },
         )
@@ -105,11 +114,17 @@ function setupTilt(root: HTMLElement) {
                     '0 0 0 1px var(--stone-accent)',
                     '0 0 0 4px var(--stone-bg)',
                     '0 0 0 5px var(--stone-border-strong)',
-                    `${-nx * 20}px ${ny * 20 + 16}px 48px rgba(0,0,0,0.5)`,
-                    '0 0 80px rgba(201,168,124,0.1)',
+                    `${-nx * 20}px ${ny * 20 + 16}px 48px var(--stone-landing-tilt-shadow-color)`,
+                    '0 0 80px var(--stone-landing-tilt-glow)',
                 ].join(', ')
-                element.style.setProperty('--mouse-x', `${((event.clientX - rect.left) / rect.width) * 100}%`)
-                element.style.setProperty('--mouse-y', `${((event.clientY - rect.top) / rect.height) * 100}%`)
+                element.style.setProperty(
+                    '--mouse-x',
+                    `${((event.clientX - rect.left) / rect.width) * 100}%`,
+                )
+                element.style.setProperty(
+                    '--mouse-y',
+                    `${((event.clientY - rect.top) / rect.height) * 100}%`,
+                )
             },
             { signal: controller.signal },
         )
@@ -119,7 +134,8 @@ function setupTilt(root: HTMLElement) {
             () => {
                 tilting.delete(element)
                 const baseY = element.dataset.rotatey ?? '-6'
-                element.style.transition = 'transform 500ms ease, box-shadow 500ms ease'
+                element.style.transition =
+                    'transform 500ms ease, box-shadow 500ms ease'
                 element.style.transform = `rotateY(${baseY}deg)`
                 element.style.boxShadow = ''
             },

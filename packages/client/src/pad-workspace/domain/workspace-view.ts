@@ -1,4 +1,9 @@
-export type PadWorkspaceDialog = 'command' | 'tree' | 'files' | 'drawing-settings' | null
+export type PadWorkspaceDialog =
+    | 'command'
+    | 'tree'
+    | 'files'
+    | 'drawing-settings'
+    | null
 
 export type PadWorkspaceTab = 'text' | 'diffs' | 'drawing' | 'files'
 

@@ -1,11 +1,8 @@
-import {
-    expect,
-    test,
-    openDrawingRoom,
-    openPad,
-} from './mpad-test'
+import { expect, openDrawingRoom, openPad, test } from '$/e2e/mpad-test'
 
-test('does not load drawing javascript before the drawing tab opens', async ({ page }) => {
+test('does not load drawing javascript before the drawing tab opens', async ({
+    page,
+}) => {
     const requests: string[] = []
     page.on('request', (request) => {
         requests.push(request.url())

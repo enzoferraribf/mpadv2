@@ -5,21 +5,25 @@
     "workspaces": [
         "packages/client",
         "packages/server",
-        "packages/legacy-import",
         "packages/core",
         "packages/protocol",
         "packages/text-core",
-        "packages/testkit"
+        "packages/testkit",
+        "tools/legacy-import"
     ],
     "scripts": {
         "dev": "turbo dev",
         "build": "turbo build",
-        "legacy:import": "cd packages/legacy-import && bun run import",
+        "lint": "biome lint .",
+        "lint:fix": "biome lint --write .",
+        "format": "biome check --write --linter-enabled=false .",
+        "format:check": "biome check --formatter-enabled=true --organize-imports-enabled=true --linter-enabled=false .",
+        "check": "bun run format:check && bun run lint && bun run typecheck",
+        "legacy:import": "cd tools/legacy-import && bun run import",
         "server:schema-migrate": "cd packages/server && bun run schema-migrate",
         "docker:build-client": "docker build -f Dockerfile.client -t mpad-client .",
         "docker:build-server": "docker build -f Dockerfile.server -t mpad-server .",
-        "docker:build-schema-migrate": "docker build -f Dockerfile.schema-migrate -t mpad-schema-migrate .",
-        "docker:build-all": "bun run docker:build-client && bun run docker:build-server && bun run docker:build-schema-migrate",
+        "docker:build-all": "bun run docker:build-client && bun run docker:build-server",
         "docker:local-up": "./scripts/docker-local.sh up",
         "docker:local-down": "./scripts/docker-local.sh down",
         "docker:local-import": "./scripts/docker-local.sh import",
@@ -27,9 +31,10 @@
         "client:test": "cd packages/client && bun run test",
         "server:test": "./scripts/docker-test-db.sh sh -lc 'cd packages/server && bun run schema-migrate && bun run test'",
         "e2e:test": "./scripts/run-playwright.sh --config playwright.config.ts",
-        "typecheck": "turbo typecheck"
+        "typecheck": "turbo typecheck --filter=@mpad/client --filter=@mpad/server --filter=@mpad/core --filter=@mpad/protocol --filter=@mpad/testkit --filter=@mpad/text-core"
     },
     "devDependencies": {
+        "@biomejs/biome": "^1.9.4",
         "@playwright/test": "^1.54.2",
         "turbo": "^2.9.4",
         "typescript": "^5.9"

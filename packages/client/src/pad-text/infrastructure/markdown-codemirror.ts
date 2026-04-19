@@ -1,7 +1,7 @@
 import { markdown } from '@codemirror/lang-markdown'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { tags } from '@lezer/highlight'
 import { EditorView, lineNumbers } from '@codemirror/view'
+import { tags } from '@lezer/highlight'
 import { createMarkdownImageWidgetExtension } from './markdown-image-widgets'
 
 const editorMuted = 'var(--stone-text-muted)'
@@ -9,8 +9,8 @@ const editorMuted = 'var(--stone-text-muted)'
 const editorTheme = EditorView.theme({
     '&': {
         height: '100%',
-        backgroundColor: '#201f1b',
-        color: '#e6e0d6',
+        backgroundColor: 'var(--stone-editor-bg)',
+        color: 'var(--stone-text)',
         fontSize: '13px',
     },
     '.cm-scroller': {
@@ -41,19 +41,19 @@ const editorTheme = EditorView.theme({
         backgroundColor: 'transparent',
     },
     '.cm-activeLine': {
-        backgroundColor: 'rgba(201, 168, 124, 0.04)',
+        backgroundColor: 'var(--stone-active-line-bg)',
     },
     '& .cm-cursorLayer .cm-cursor': {
         display: 'block',
         borderLeft: 'none !important',
-        border: '1px solid #ffffff !important',
+        border: '1px solid var(--stone-editor-cursor) !important',
         backgroundColor: 'transparent !important',
         width: '1ch',
         marginLeft: '0 !important',
         boxSizing: 'border-box',
     },
     '.cm-selectionBackground': {
-        backgroundColor: 'rgba(201, 168, 124, 0.15) !important',
+        backgroundColor: 'var(--stone-editor-selection) !important',
     },
     '.cm-ySelectionInfo': {
         top: '-1.9em',
@@ -66,7 +66,7 @@ const editorTheme = EditorView.theme({
         fontWeight: '700',
         letterSpacing: '0.02em',
         lineHeight: '1.2',
-        boxShadow: '0 1px 0 rgba(12, 12, 12, 0.35)',
+        boxShadow: 'var(--stone-overlay-shadow)',
         transition: 'none',
         pointerEvents: 'none',
         userSelect: 'none',
@@ -84,7 +84,7 @@ const editorTheme = EditorView.theme({
         height: '0.5em',
         top: '-0.25em',
         left: '-0.25em',
-        boxShadow: '0 0 0 2px #201f1b',
+        boxShadow: '0 0 0 2px var(--stone-editor-caret-shadow)',
         pointerEvents: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none',
@@ -94,24 +94,64 @@ const editorTheme = EditorView.theme({
     },
 })
 
-const editorHighlight = syntaxHighlighting(HighlightStyle.define([
-    { tag: tags.heading1, color: '#e6e0d6', fontWeight: '700', fontSize: '1.4em' },
-    { tag: tags.heading2, color: '#e6e0d6', fontWeight: '600', fontSize: '1.2em' },
-    { tag: tags.heading3, color: '#c9a87c', fontWeight: '600', fontSize: '1.05em' },
-    { tag: [tags.heading4, tags.heading5, tags.heading6], color: '#c9a87c', fontWeight: '600' },
-    { tag: tags.strong, color: '#e6e0d6', fontWeight: '600' },
-    { tag: tags.emphasis, color: '#b5afa5', fontStyle: 'italic' },
-    { tag: tags.strikethrough, textDecoration: 'line-through', color: 'var(--stone-text-secondary)' },
-    { tag: tags.link, color: '#c9a87c', textDecoration: 'underline' },
-    { tag: tags.url, color: editorMuted },
-    { tag: [tags.processingInstruction, tags.inserted], color: '#7c9c8a' },
-    { tag: tags.monospace, color: '#e6e0d6', backgroundColor: 'rgba(255,255,255,0.03)' },
-    { tag: [tags.meta, tags.comment], color: editorMuted },
-    { tag: tags.labelName, color: '#c9a87c' },
-    { tag: tags.quote, color: editorMuted, fontStyle: 'italic' },
-    { tag: tags.list, color: '#c9a87c' },
-    { tag: tags.contentSeparator, color: editorMuted },
-]))
+const editorHighlight = syntaxHighlighting(
+    HighlightStyle.define([
+        {
+            tag: tags.heading1,
+            color: 'var(--stone-text)',
+            fontWeight: '700',
+            fontSize: '1.4em',
+        },
+        {
+            tag: tags.heading2,
+            color: 'var(--stone-text)',
+            fontWeight: '600',
+            fontSize: '1.2em',
+        },
+        {
+            tag: tags.heading3,
+            color: 'var(--stone-heading-accent)',
+            fontWeight: '600',
+            fontSize: '1.05em',
+        },
+        {
+            tag: [tags.heading4, tags.heading5, tags.heading6],
+            color: 'var(--stone-heading-accent)',
+            fontWeight: '600',
+        },
+        { tag: tags.strong, color: 'var(--stone-text)', fontWeight: '600' },
+        {
+            tag: tags.emphasis,
+            color: 'var(--stone-syntax-markdown)',
+            fontStyle: 'italic',
+        },
+        {
+            tag: tags.strikethrough,
+            textDecoration: 'line-through',
+            color: 'var(--stone-text-secondary)',
+        },
+        {
+            tag: tags.link,
+            color: 'var(--stone-accent)',
+            textDecoration: 'underline',
+        },
+        { tag: tags.url, color: editorMuted },
+        {
+            tag: [tags.processingInstruction, tags.inserted],
+            color: 'var(--stone-success)',
+        },
+        {
+            tag: tags.monospace,
+            color: 'var(--stone-text)',
+            backgroundColor: 'var(--stone-inline-code-bg)',
+        },
+        { tag: [tags.meta, tags.comment], color: editorMuted },
+        { tag: tags.labelName, color: 'var(--stone-heading-accent)' },
+        { tag: tags.quote, color: editorMuted, fontStyle: 'italic' },
+        { tag: tags.list, color: 'var(--stone-heading-accent)' },
+        { tag: tags.contentSeparator, color: editorMuted },
+    ]),
+)
 
 export function createMarkdownCodeMirrorExtensions() {
     return [

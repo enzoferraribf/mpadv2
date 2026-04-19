@@ -1,6 +1,6 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
-import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
+import { Outlet, createRootRoute } from '@tanstack/react-router'
+import { ThemeProvider } from 'next-themes'
 
 export const Route = createRootRoute({
     component: RootLayout,
@@ -8,7 +8,12 @@ export const Route = createRootRoute({
 
 function RootLayout() {
     return (
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider
+            attribute='class'
+            defaultTheme='system'
+            enableColorScheme={false}
+            enableSystem
+        >
             <Outlet />
             <Toaster />
         </ThemeProvider>

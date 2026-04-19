@@ -5,8 +5,8 @@ import {
     loadPadDoc,
     loadPadDocRevisionBytes,
     readPadDocRevisionText,
-} from '../../collab/infrastructure/doc-store'
-import type { DocRepository } from '../domain/doc-repository'
+} from '#/collab/infrastructure/doc-store'
+import type { DocRepository } from '#/pad-doc/domain/doc-repository'
 
 export const postgresDocRepository: DocRepository = {
     appendRevision: appendPadDocRevision,

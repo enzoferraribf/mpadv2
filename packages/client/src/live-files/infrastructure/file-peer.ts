@@ -1,7 +1,12 @@
 import type { FileSignal, LiveFileMeta } from '@mpad/protocol/live-files'
 import type { Instance as PeerInstance, SignalData } from 'simple-peer'
 import Peer from 'simple-peer/simplepeer.min.js'
-import { createDownloadTarget, readLocalFileChunks, type DownloadTarget, type LocalFile } from './local-file-store'
+import {
+    type DownloadTarget,
+    type LocalFile,
+    createDownloadTarget,
+    readLocalFileChunks,
+} from './local-file-store'
 
 const FILE_CHUNK_BYTES = 16 * 1024
 const MAX_BUFFERED_AMOUNT = 256 * 1024
@@ -79,12 +84,17 @@ export function openFilePeer(input: OpenFilePeerInput): FilePeerSession {
                         return
                     }
 
-                    if (message.signal.kind === 'cancel' || message.signal.kind === 'reject') {
+                    if (
+                        message.signal.kind === 'cancel' ||
+                        message.signal.kind === 'reject'
+                    ) {
                         await finish()
                         return
                     }
 
-                    throw new Error(`Unexpected peer control: ${message.signal.kind}`)
+                    throw new Error(
+                        `Unexpected peer control: ${message.signal.kind}`,
+                    )
                 }
 
                 const target = await getDownloadTarget()
@@ -97,11 +107,20 @@ export function openFilePeer(input: OpenFilePeerInput): FilePeerSession {
 
     peer.on('connect', () => {
         if (!input.localFile) return
-        void sendFile(peer, input.localFile, input.fileId, input.onUploadProgress).catch((error) => finish(error))
+        void sendFile(
+            peer,
+            input.localFile,
+            input.fileId,
+            input.onUploadProgress,
+        ).catch((error) => finish(error))
     })
 
-    peer.on('close', () => { void finish() })
-    peer.on('error', (error) => { void finish(error) })
+    peer.on('close', () => {
+        void finish()
+    })
+    peer.on('error', (error) => {
+        void finish(error)
+    })
 
     return {
         peer,
@@ -110,7 +129,10 @@ export function openFilePeer(input: OpenFilePeerInput): FilePeerSession {
     }
 }
 
-export function applyFilePeerSignal(session: FilePeerSession, signal: SignalData) {
+export function applyFilePeerSignal(
+    session: FilePeerSession,
+    signal: SignalData,
+) {
     session.peer.signal(signal)
 }
 
@@ -126,7 +148,10 @@ async function sendFile(
 ) {
     let sentBytes = 0
 
-    for await (const chunk of readLocalFileChunks(localFile, FILE_CHUNK_BYTES)) {
+    for await (const chunk of readLocalFileChunks(
+        localFile,
+        FILE_CHUNK_BYTES,
+    )) {
         while (peer.bufferSize > MAX_BUFFERED_AMOUNT) {
             await sleep(10)
         }
@@ -152,7 +177,9 @@ function readPeerMessage(raw: unknown) {
     if (bytes[0] === CONTROL_MESSAGE_KIND) {
         return {
             kind: 'control',
-            signal: JSON.parse(new TextDecoder().decode(bytes.slice(1))) as FileSignal,
+            signal: JSON.parse(
+                new TextDecoder().decode(bytes.slice(1)),
+            ) as FileSignal,
         } as const
     }
 
@@ -170,7 +197,9 @@ function toUint8Array(raw: unknown) {
     if (raw instanceof Uint8Array) return raw
     if (raw instanceof ArrayBuffer) return new Uint8Array(raw)
     if (ArrayBuffer.isView(raw)) {
-        return new Uint8Array(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength))
+        return new Uint8Array(
+            raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength),
+        )
     }
     throw new Error('Unknown peer payload')
 }

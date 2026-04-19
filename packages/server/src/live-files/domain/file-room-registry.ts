@@ -1,4 +1,4 @@
-import type { LiveFilesRoom } from '../application/room'
+import type { LiveFilesRoom } from '#/live-files/application/room'
 
 export interface FileRoomRegistry {
     delete: (roomName: string) => void

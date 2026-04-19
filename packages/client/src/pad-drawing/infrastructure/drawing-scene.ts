@@ -1,5 +1,5 @@
-import { Y_DRAWING_ELEMENTS_KEY } from '@mpad/core/pad-limits'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
+import { Y_DRAWING_ELEMENTS_KEY } from '@mpad/core/pad-limits'
 import { useEffect, useState } from 'react'
 import type { Doc } from 'yjs'
 
@@ -36,17 +36,26 @@ export function readDrawingScene(doc: Doc) {
     const map = doc.getMap<string>(Y_DRAWING_ELEMENTS_KEY)
     const orderedIds = order.toArray()
     const seen = new Set(orderedIds)
-    const allIds = [...orderedIds, ...Array.from(map.keys()).filter((id) => !seen.has(id))]
+    const allIds = [
+        ...orderedIds,
+        ...Array.from(map.keys()).filter((id) => !seen.has(id)),
+    ]
 
     return allIds
         .map((id) => parseDrawingElement(map.get(id)))
         .filter((element): element is ExcalidrawElement => element !== null)
 }
 
-export function writeDrawingScene(doc: Doc, nextElements: readonly ExcalidrawElement[], origin?: unknown) {
+export function writeDrawingScene(
+    doc: Doc,
+    nextElements: readonly ExcalidrawElement[],
+    origin?: unknown,
+) {
     const order = doc.getArray<string>('order')
     const map = doc.getMap<string>(Y_DRAWING_ELEMENTS_KEY)
-    const nextOrder = Array.from(new Set(nextElements.map((element) => element.id)))
+    const nextOrder = Array.from(
+        new Set(nextElements.map((element) => element.id)),
+    )
 
     doc.transact(() => {
         for (const element of nextElements) {
@@ -58,7 +67,11 @@ export function writeDrawingScene(doc: Doc, nextElements: readonly ExcalidrawEle
             map.set(element.id, value)
         }
 
-        const mergedOrder = mergeOrder(order.toArray(), nextOrder, Array.from(map.keys()))
+        const mergedOrder = mergeOrder(
+            order.toArray(),
+            nextOrder,
+            Array.from(map.keys()),
+        )
         if (sameOrder(order.toArray(), mergedOrder)) return
         order.delete(0, order.length)
         order.insert(0, mergedOrder)
@@ -70,13 +83,21 @@ function parseDrawingElement(value: string | undefined) {
     return JSON.parse(value) as ExcalidrawElement
 }
 
-function shouldReplaceElement(current: ExcalidrawElement, next: ExcalidrawElement) {
+function shouldReplaceElement(
+    current: ExcalidrawElement,
+    next: ExcalidrawElement,
+) {
     if (next.version !== current.version) return next.version > current.version
-    if (next.versionNonce !== current.versionNonce) return next.updated >= current.updated
+    if (next.versionNonce !== current.versionNonce)
+        return next.updated >= current.updated
     return next.updated >= current.updated
 }
 
-function mergeOrder(currentOrder: string[], nextOrder: string[], allIds: string[]) {
+function mergeOrder(
+    currentOrder: string[],
+    nextOrder: string[],
+    allIds: string[],
+) {
     const merged = [...nextOrder]
     const seen = new Set(merged)
 

@@ -1,10 +1,13 @@
-import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
+import { type ComponentType, type LazyExoticComponent, lazy } from 'react'
 
-type LoadableComponent<T extends ComponentType<any>> = LazyExoticComponent<T> & {
-    preload: () => Promise<{ default: T }>
-}
+type LoadableComponent<T extends ComponentType<any>> =
+    LazyExoticComponent<T> & {
+        preload: () => Promise<{ default: T }>
+    }
 
-export function lazyWithPreload<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+export function lazyWithPreload<T extends ComponentType<any>>(
+    factory: () => Promise<{ default: T }>,
+) {
     let promise: Promise<{ default: T }> | null = null
 
     const load = () => {

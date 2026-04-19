@@ -1,5 +1,5 @@
-import type { DocRoomRegistry } from '../domain/doc-room-registry'
-import type { PadDocRoom } from '../../collab/infrastructure/doc-room'
+import type { PadDocRoom } from '#/collab/infrastructure/doc-room'
+import type { DocRoomRegistry } from '#/pad-doc/domain/doc-room-registry'
 
 export function createInMemoryDocRoomRegistry(): DocRoomRegistry {
     const rooms = new Map<string, PadDocRoom>()

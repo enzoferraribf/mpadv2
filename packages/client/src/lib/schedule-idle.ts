@@ -1,7 +1,11 @@
-type WindowWithIdle = Window & typeof globalThis & {
-    cancelIdleCallback?: (id: number) => void
-    requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
-}
+type WindowWithIdle = Window &
+    typeof globalThis & {
+        cancelIdleCallback?: (id: number) => void
+        requestIdleCallback?: (
+            callback: IdleRequestCallback,
+            options?: IdleRequestOptions,
+        ) => number
+    }
 
 export function scheduleIdleTask(callback: () => void, timeoutMs = 400) {
     if (typeof window === 'undefined') {
@@ -12,7 +16,9 @@ export function scheduleIdleTask(callback: () => void, timeoutMs = 400) {
     const idleWindow = window as WindowWithIdle
 
     if (typeof idleWindow.requestIdleCallback === 'function') {
-        const id = idleWindow.requestIdleCallback(() => callback(), { timeout: timeoutMs })
+        const id = idleWindow.requestIdleCallback(() => callback(), {
+            timeout: timeoutMs,
+        })
         return () => idleWindow.cancelIdleCallback?.(id)
     }
 

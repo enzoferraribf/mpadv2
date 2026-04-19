@@ -1,4 +1,4 @@
-import { padPath, type PadPath } from '@mpad/core/pad-path'
+import { type PadPath, padPath } from '@mpad/core/pad-path'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
@@ -26,7 +26,10 @@ export function useLandingPageModel(): LandingPageModel {
 }
 
 function readLandingHost() {
-    if (import.meta.env.VITE_E2E === '1' && typeof window.__MPAD_TEST_HOST__ === 'string') {
+    if (
+        import.meta.env.VITE_E2E === '1' &&
+        typeof window.__MPAD_TEST_HOST__ === 'string'
+    ) {
         return window.__MPAD_TEST_HOST__
     }
 

@@ -1,8 +1,13 @@
-import path from 'node:path'
-import { readFile } from 'node:fs/promises'
 import { Database } from 'bun:sqlite'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 import { createClient } from '@libsql/client'
-import { parentPadPath, padPath, padPathAncestors, type PadPath } from '@mpad/core/pad-path'
+import {
+    type PadPath,
+    padPath,
+    padPathAncestors,
+    parentPadPath,
+} from '@mpad/core/pad-path'
 import { Doc, applyUpdateV2, encodeStateAsUpdate } from 'yjs'
 
 type SourceRow = {
@@ -54,34 +59,44 @@ type LegacyDrawingScene = {
     elements: LegacyDrawingElement[]
 }
 
-const LEGACY_EMPTY_PAD_PLACEHOLDER = 'This pad existed but it had no content, I migrated it either way :)'
+const LEGACY_EMPTY_PAD_PLACEHOLDER =
+    'This pad existed but it had no content, I migrated it either way :)'
 const Y_TEXT_KEY = 'text'
 const Y_DRAWING_ELEMENTS_KEY = 'elements'
 
 const repoRoot = path.resolve(import.meta.dir, '../../..')
-const sqlitePath = resolvePath(process.env.LEGACY_SQLITE_PATH ?? path.join(repoRoot, '.tmp/legacy-turso.db'))
+const sqlitePath = resolvePath(
+    process.env.LEGACY_SQLITE_PATH ??
+        path.join(repoRoot, '.tmp/legacy-turso.db'),
+)
 const targetDatabaseUrl = process.env.TARGET_DATABASE_URL
 const turso = await readTursoConfig(path.join(repoRoot, '.turso'))
 
 if (!targetDatabaseUrl) {
-    throw new Error('Missing TARGET_DATABASE_URL. Point it at the target Postgres database before running legacy:import.')
+    throw new Error(
+        'Missing TARGET_DATABASE_URL. Point it at the target Postgres database before running legacy:import.',
+    )
 }
 
 await syncLegacySqlite()
 
 process.env.DATABASE_URL = targetDatabaseUrl
 
-const { migrate } = await import('../../server/src/infrastructure/migration-runner')
-const { sql } = await import('../../server/src/infrastructure/db')
+const { migrate } = await import(
+    '../../../packages/server/src/infrastructure/migration-runner'
+)
+const { sql } = await import('../../../packages/server/src/infrastructure/db')
 
 await migrate()
 
 const sqlite = new Database(sqlitePath, { readonly: true, create: false })
-const sourceRows = sqlite.query(`
+const sourceRows = sqlite
+    .query(`
     SELECT id, content, last_update, last_transaction
     FROM pads
     ORDER BY id ASC
-`).all() as SourceRow[]
+`)
+    .all() as SourceRow[]
 
 const selected = selectLegacyPadRows(sourceRows.map(toLegacyPadRow))
 const pads = selected.rows.map(convertLegacyPadRow)
@@ -91,7 +106,9 @@ let importedTextDocs = 0
 let importedDrawingDocs = 0
 
 await sql.begin(async (tx: typeof sql) => {
-    await tx.unsafe('TRUNCATE pad_revisions, pad_docs, pads RESTART IDENTITY CASCADE')
+    await tx.unsafe(
+        'TRUNCATE pad_revisions, pad_docs, pads RESTART IDENTITY CASCADE',
+    )
 
     for (const row of padRows) {
         await tx`
@@ -128,18 +145,28 @@ await sql.begin(async (tx: typeof sql) => {
 sqlite.close()
 await sql.close()
 
-console.log(JSON.stringify({
-    duplicatePathsCollapsed: selected.duplicatePaths,
-    emptyPads: pads.filter((pad) => pad.text.length === 0 && pad.drawingElements.length === 0).length,
-    importedDrawingDocs,
-    importedTextDocs,
-    insertedPads: padRows.length,
-    placeholderPadsSkipped: pads.filter((pad) => pad.usedPlaceholder).length,
-    sourceRows: sourceRows.length,
-    sqlitePath,
-    targetDatabaseUrl,
-    targetPads: pads.length,
-}, null, 2))
+console.log(
+    JSON.stringify(
+        {
+            duplicatePathsCollapsed: selected.duplicatePaths,
+            emptyPads: pads.filter(
+                (pad) =>
+                    pad.text.length === 0 && pad.drawingElements.length === 0,
+            ).length,
+            importedDrawingDocs,
+            importedTextDocs,
+            insertedPads: padRows.length,
+            placeholderPadsSkipped: pads.filter((pad) => pad.usedPlaceholder)
+                .length,
+            sourceRows: sourceRows.length,
+            sqlitePath,
+            targetDatabaseUrl,
+            targetPads: pads.length,
+        },
+        null,
+        2,
+    ),
+)
 
 async function syncLegacySqlite() {
     const client = createClient({
@@ -153,7 +180,7 @@ async function syncLegacySqlite() {
 }
 
 async function insertPadDoc(
-    tx: typeof import('../../server/src/infrastructure/db').sql,
+    tx: typeof import('../../../packages/server/src/infrastructure/db').sql,
     input: {
         bytes: Uint8Array
         kind: 'drawing' | 'text'
@@ -166,7 +193,8 @@ async function insertPadDoc(
         VALUES (${input.path}, ${input.kind}, ${input.timestamp}, ${input.timestamp})
         RETURNING id
     `
-    if (!doc) throw new Error(`Failed to insert ${input.kind} doc for ${input.path}`)
+    if (!doc)
+        throw new Error(`Failed to insert ${input.kind} doc for ${input.path}`)
 
     const [revision] = await tx<{ id: number | string }[]>`
         INSERT INTO pad_revisions (
@@ -191,7 +219,10 @@ async function insertPadDoc(
         )
         RETURNING id
     `
-    if (!revision) throw new Error(`Failed to insert ${input.kind} revision for ${input.path}`)
+    if (!revision)
+        throw new Error(
+            `Failed to insert ${input.kind} revision for ${input.path}`,
+        )
 
     await tx`
         UPDATE pad_docs
@@ -214,7 +245,8 @@ async function readTursoConfig(filePath: string) {
 
     const databaseUrl = values.get('DATABASE_URL')
     const databaseToken = values.get('DATABASE_TOKEN')
-    if (!databaseUrl || !databaseToken) throw new Error('Missing DATABASE_URL or DATABASE_TOKEN in .turso')
+    if (!databaseUrl || !databaseToken)
+        throw new Error('Missing DATABASE_URL or DATABASE_TOKEN in .turso')
 
     return {
         databaseToken,
@@ -283,7 +315,10 @@ function convertLegacyPadRow(row: SelectedLegacyPadRow): ConvertedLegacyPad {
 }
 
 function buildPadRows(pads: ConvertedLegacyPad[]): ImportedPadRow[] {
-    const rows = new Map<PadPath, { createdAtMs: number; updatedAtMs: number }>()
+    const rows = new Map<
+        PadPath,
+        { createdAtMs: number; updatedAtMs: number }
+    >()
 
     for (const pad of pads) {
         for (const path of padPathAncestors(pad.path)) {
@@ -344,10 +379,13 @@ function normalizeLegacyPadPath(value: string): PadPath {
 }
 
 function compareLegacyRows(left: LegacyPadRow, right: LegacyPadRow) {
-    const timestampDiff = resolveLegacyTimestampMs(right) - resolveLegacyTimestampMs(left)
+    const timestampDiff =
+        resolveLegacyTimestampMs(right) - resolveLegacyTimestampMs(left)
     if (timestampDiff !== 0) return timestampDiff
 
-    const canonicalDiff = Number(isCanonicalLegacyId(right.id)) - Number(isCanonicalLegacyId(left.id))
+    const canonicalDiff =
+        Number(isCanonicalLegacyId(right.id)) -
+        Number(isCanonicalLegacyId(left.id))
     if (canonicalDiff !== 0) return canonicalDiff
 
     const contentDiff = right.content.length - left.content.length
@@ -388,9 +426,7 @@ function readLegacyText(doc: Doc) {
         }
     }
 
-    const fallbackText = doc.share.has('')
-        ? doc.getText('').toString()
-        : ''
+    const fallbackText = doc.share.has('') ? doc.getText('').toString() : ''
     if (fallbackText.length === 0) {
         return {
             text: '',
@@ -414,7 +450,10 @@ function readLegacyText(doc: Doc) {
 function readLegacyDrawingElements(doc: Doc) {
     if (!doc.share.has('drawings')) return []
 
-    const drawings = doc.getMap<unknown>('drawings').toJSON() as Record<string, unknown>
+    const drawings = doc.getMap<unknown>('drawings').toJSON() as Record<
+        string,
+        unknown
+    >
     const scenes = Object.entries(drawings)
         .flatMap(([key, value]) => parseLegacyDrawingScene(key, value))
         .sort(compareLegacyDrawingScenes)
@@ -438,10 +477,15 @@ function readLegacyDrawingElements(doc: Doc) {
 
     return order
         .map((id) => elementsById.get(id))
-        .filter((element): element is LegacyDrawingElement => element !== undefined)
+        .filter(
+            (element): element is LegacyDrawingElement => element !== undefined,
+        )
 }
 
-function parseLegacyDrawingScene(key: string, value: unknown): LegacyDrawingScene[] {
+function parseLegacyDrawingScene(
+    key: string,
+    value: unknown,
+): LegacyDrawingScene[] {
     if (!isRecord(value) || typeof value.url !== 'string') return []
 
     let parsed: unknown
@@ -456,25 +500,37 @@ function parseLegacyDrawingScene(key: string, value: unknown): LegacyDrawingScen
     const elements = parsed.elements.filter(isLegacyDrawingElement)
     if (elements.length === 0) return []
 
-    return [{
-        createdAtMs: parseLegacyCreatedAt(value.created),
-        key,
-        elements,
-    }]
+    return [
+        {
+            createdAtMs: parseLegacyCreatedAt(value.created),
+            key,
+            elements,
+        },
+    ]
 }
 
-function compareLegacyDrawingScenes(left: LegacyDrawingScene, right: LegacyDrawingScene) {
-    if (left.createdAtMs !== right.createdAtMs) return left.createdAtMs - right.createdAtMs
+function compareLegacyDrawingScenes(
+    left: LegacyDrawingScene,
+    right: LegacyDrawingScene,
+) {
+    if (left.createdAtMs !== right.createdAtMs)
+        return left.createdAtMs - right.createdAtMs
     return left.key.localeCompare(right.key)
 }
 
-function shouldReplaceDrawingElement(current: LegacyDrawingElement, next: LegacyDrawingElement) {
+function shouldReplaceDrawingElement(
+    current: LegacyDrawingElement,
+    next: LegacyDrawingElement,
+) {
     const nextVersion = typeof next.version === 'number' ? next.version : 0
-    const currentVersion = typeof current.version === 'number' ? current.version : 0
+    const currentVersion =
+        typeof current.version === 'number' ? current.version : 0
     if (nextVersion !== currentVersion) return nextVersion > currentVersion
 
-    const nextNonce = typeof next.versionNonce === 'number' ? next.versionNonce : 0
-    const currentNonce = typeof current.versionNonce === 'number' ? current.versionNonce : 0
+    const nextNonce =
+        typeof next.versionNonce === 'number' ? next.versionNonce : 0
+    const currentNonce =
+        typeof current.versionNonce === 'number' ? current.versionNonce : 0
     if (nextNonce !== currentNonce) {
         return readDrawingUpdatedAt(next) >= readDrawingUpdatedAt(current)
     }
@@ -523,7 +579,5 @@ function toNumber(value: number | string) {
 }
 
 function resolvePath(value: string) {
-    return path.isAbsolute(value)
-        ? value
-        : path.resolve(repoRoot, value)
+    return path.isAbsolute(value) ? value : path.resolve(repoRoot, value)
 }

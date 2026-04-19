@@ -1,22 +1,24 @@
 import { afterEach, beforeAll, describe, expect, test } from 'bun:test'
-import { Doc, encodeStateAsUpdate } from 'yjs'
 import { padPath } from '@mpad/core/pad-path'
 import { padRoomName } from '@mpad/core/pad-room'
 import { createDocUpdateMessage } from '@mpad/protocol/room-message-codec'
-import { createServer } from '../src/bootstrap/create-server'
-import { sql } from '../src/infrastructure/db'
-import { migrate } from '../src/infrastructure/migration-runner'
-import { flushPadRooms } from '../src/transport/ws-router'
+import { Doc, encodeStateAsUpdate } from 'yjs'
+import { createServer } from '#/bootstrap/create-server'
+import { createServerRuntime } from '#/bootstrap/runtime'
+import { sql } from '#/infrastructure/db'
+import { migrate } from '#/infrastructure/migration-runner'
+import { flushWorkspaceRooms } from '#/pad-workspace/application/socket-service'
 
 let port = 0
 let server: ReturnType<typeof createServer> | null = null
+let runtime = createServerRuntime()
 
 beforeAll(async () => {
     await migrate()
 })
 
 afterEach(async () => {
-    await flushPadRooms()
+    await flushWorkspaceRooms(runtime)
     if (server) {
         server.stop(true)
         server = null
@@ -25,8 +27,11 @@ afterEach(async () => {
 
 describe('http and websocket integration', () => {
     test('persists websocket text updates and serves them over http', async () => {
-        const path = padPath(`integration/${Date.now()}-${crypto.randomUUID().slice(0, 8)}`)
-        server = createServer({ port: 0, appOrigin: null })
+        const path = padPath(
+            `integration/${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        )
+        runtime = createServerRuntime()
+        server = createServer({ port: 0, appOrigin: null, runtime })
         port = server.port ?? 0
         expect(port).toBeGreaterThan(0)
 
@@ -37,21 +42,30 @@ describe('http and websocket integration', () => {
         const doc = new Doc()
         doc.getText('text').insert(0, 'hello integration')
         const message = createDocUpdateMessage(encodeStateAsUpdate(doc)).data
-        socket.send(message.buffer.slice(message.byteOffset, message.byteOffset + message.byteLength))
+        socket.send(
+            message.buffer.slice(
+                message.byteOffset,
+                message.byteOffset + message.byteLength,
+            ),
+        )
         await Bun.sleep(100)
-        await flushPadRooms()
+        await flushWorkspaceRooms(runtime)
 
         const health = await fetch(`http://127.0.0.1:${port}/health`)
         expect(health.status).toBe(200)
 
-        const historyResponse = await fetch(`http://127.0.0.1:${port}/api/pads${path}/text/history`)
+        const historyResponse = await fetch(
+            `http://127.0.0.1:${port}/api/pads${path}/text/history`,
+        )
         expect(historyResponse.status).toBe(200)
-        const history = await historyResponse.json() as Array<{ id: number }>
+        const history = (await historyResponse.json()) as Array<{ id: number }>
         expect(history).toHaveLength(1)
 
-        const revisionResponse = await fetch(`http://127.0.0.1:${port}/api/pads${path}/text/history/${history[0]!.id}`)
+        const revisionResponse = await fetch(
+            `http://127.0.0.1:${port}/api/pads${path}/text/history/${history[0]!.id}`,
+        )
         expect(revisionResponse.status).toBe(200)
-        const revision = await revisionResponse.json() as { content: string }
+        const revision = (await revisionResponse.json()) as { content: string }
         expect(revision.content).toBe('hello integration')
 
         socket.close()
@@ -60,7 +74,12 @@ describe('http and websocket integration', () => {
     })
 
     test('returns the configured cors origin', async () => {
-        server = createServer({ port: 0, appOrigin: 'https://app.example.com' })
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
         port = server.port ?? 0
 
         const response = await fetch(`http://127.0.0.1:${port}/health`, {
@@ -70,7 +89,9 @@ describe('http and websocket integration', () => {
         })
 
         expect(response.status).toBe(200)
-        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com')
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
+            'https://app.example.com',
+        )
     })
 })
 

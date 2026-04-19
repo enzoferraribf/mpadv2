@@ -1,66 +1,74 @@
-import type { ServerWebSocket } from 'bun'
 import { assertNever } from '@mpad/core/assert'
 import { readClientRoomMessage } from '@mpad/protocol/room-message-codec'
-import { flushPadDrawingRooms, handlePadDrawingMessage, joinPadDrawingRoom, leavePadDrawingRoom } from '../../pad-drawing/application/drawing-room-service'
-import { flushPadTextRooms, handlePadTextMessage, joinPadTextRoom, leavePadTextRoom } from '../../pad-text/application/text-room-service'
+import type { ServerWebSocket } from 'bun'
+import type { ServerRuntime } from '#/bootstrap/runtime'
+import {
+    flushPadDocRooms,
+    handlePadDocMessage,
+    joinPadDocRoom,
+    leavePadDocRoom,
+} from '#/collab/infrastructure/doc-room-service'
 import {
     closeLiveFileRoomClient,
     handleLiveFileRoomMessage,
     openLiveFileRoomClient,
-} from '../../live-files/application/live-file-room-service'
-import type { WsData } from '../../transport/ws-data'
+} from '#/live-files/application/live-file-room-service'
+import type { WsData } from '#/transport/ws-data'
 
-export async function openWorkspaceSocket(ws: ServerWebSocket<WsData>) {
+export async function openWorkspaceSocket(
+    runtime: ServerRuntime,
+    ws: ServerWebSocket<WsData>,
+) {
     switch (ws.data.roomKind) {
         case 'files':
-            await openLiveFileRoomClient(ws)
+            await openLiveFileRoomClient(runtime, ws)
             return
         case 'text':
-            await joinPadTextRoom(ws)
-            return
         case 'drawing':
-            await joinPadDrawingRoom(ws)
+            await joinPadDocRoom(runtime, ws)
             return
     }
 
     assertNever(ws.data.roomKind)
 }
 
-export async function closeWorkspaceSocket(ws: ServerWebSocket<WsData>) {
+export async function closeWorkspaceSocket(
+    runtime: ServerRuntime,
+    ws: ServerWebSocket<WsData>,
+) {
     switch (ws.data.roomKind) {
         case 'files':
-            await closeLiveFileRoomClient(ws)
+            await closeLiveFileRoomClient(runtime, ws)
             return
         case 'text':
-            await leavePadTextRoom(ws)
-            return
         case 'drawing':
-            await leavePadDrawingRoom(ws)
+            await leavePadDocRoom(runtime, ws)
             return
     }
 
     assertNever(ws.data.roomKind)
 }
 
-export function handleWorkspaceSocketMessage(ws: ServerWebSocket<WsData>, data: Uint8Array) {
+export function handleWorkspaceSocketMessage(
+    runtime: ServerRuntime,
+    ws: ServerWebSocket<WsData>,
+    data: Uint8Array,
+) {
     const message = readClientRoomMessage(data)
 
     switch (ws.data.roomKind) {
         case 'files':
-            handleLiveFileRoomMessage(ws, message)
+            handleLiveFileRoomMessage(runtime, ws, message)
             return
         case 'text':
-            handlePadTextMessage(ws, message)
-            return
         case 'drawing':
-            handlePadDrawingMessage(ws, message)
+            handlePadDocMessage(runtime, ws, message)
             return
     }
 
     assertNever(ws.data.roomKind)
 }
 
-export async function flushWorkspaceRooms() {
-    await flushPadTextRooms()
-    await flushPadDrawingRooms()
+export async function flushWorkspaceRooms(runtime: ServerRuntime) {
+    await flushPadDocRooms(runtime)
 }

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test'
+import { createTextCommentController } from '@/pad-text/infrastructure/text-comment-store'
 import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import type { LocalPeer } from '@mpad/protocol/peer'
 import { restoreTextDocFromUpdate } from '@mpad/text-core/text-revert'
 import { Doc, encodeStateAsUpdate } from 'yjs'
-import { createTextCommentController } from '../src/pad-text/infrastructure/text-comment-store'
 
 describe('text revert', () => {
     test('restores text, comments, and attached or detached anchors from a saved update', () => {
@@ -38,16 +38,20 @@ describe('text revert', () => {
         const threads = liveController.listThreads()
         expect(live.getText(Y_TEXT_KEY).toString()).toBe('alpha beta ')
         expect(threads).toHaveLength(2)
-        expect(threads[0]).toEqual(expect.objectContaining({
-            quote: 'beta',
-            anchor: { from: 6, to: 10, detached: false },
-            messages: [expect.objectContaining({ body: 'Track beta' })],
-        }))
-        expect(threads[1]).toEqual(expect.objectContaining({
-            quote: 'gamma',
-            anchor: { from: 0, to: 0, detached: true },
-            messages: [expect.objectContaining({ body: 'Track gamma' })],
-        }))
+        expect(threads[0]).toEqual(
+            expect.objectContaining({
+                quote: 'beta',
+                anchor: { from: 6, to: 10, detached: false },
+                messages: [expect.objectContaining({ body: 'Track beta' })],
+            }),
+        )
+        expect(threads[1]).toEqual(
+            expect.objectContaining({
+                quote: 'gamma',
+                anchor: { from: 0, to: 0, detached: true },
+                messages: [expect.objectContaining({ body: 'Track gamma' })],
+            }),
+        )
     })
 })
 

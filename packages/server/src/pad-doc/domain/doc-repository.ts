@@ -1,5 +1,5 @@
-import type { PadDocKind } from '@mpad/core/pad-room'
 import type { PadPath } from '@mpad/core/pad-path'
+import type { PadDocKind } from '@mpad/core/pad-room'
 
 export type StoredPadDoc = {
     snapshot: Uint8Array | null
@@ -39,10 +39,20 @@ export interface DocRepository {
         chunkSeq: number,
         snapshot: Uint8Array,
     ) => Promise<number>
-    listRevisions: (path: PadPath, kind: PadDocKind) => Promise<PadDocRevisionSummary[]>
+    listRevisions: (
+        path: PadPath,
+        kind: PadDocKind,
+    ) => Promise<PadDocRevisionSummary[]>
     loadDoc: (path: PadPath, kind: PadDocKind) => Promise<StoredPadDoc>
-    loadRevisionBytes: (path: PadPath, kind: PadDocKind, revisionId: number) => Promise<Uint8Array>
-    readRevisionText: (path: PadPath, revisionId: number) => Promise<{
+    loadRevisionBytes: (
+        path: PadPath,
+        kind: PadDocKind,
+        revisionId: number,
+    ) => Promise<Uint8Array>
+    readRevisionText: (
+        path: PadPath,
+        revisionId: number,
+    ) => Promise<{
         id: number
         revisionNumber: number
         createdAt: string

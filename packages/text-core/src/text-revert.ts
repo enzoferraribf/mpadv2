@@ -1,23 +1,23 @@
 import {
-    type TextCommentAuthor,
-    type TextCommentMessage,
-} from '@mpad/protocol/text-comments'
-import {
     Y_TEXT_COMMENT_MESSAGES_KEY,
     Y_TEXT_COMMENT_THREADS_KEY,
     Y_TEXT_KEY,
 } from '@mpad/core/pad-limits'
+import type {
+    TextCommentAuthor,
+    TextCommentMessage,
+} from '@mpad/protocol/text-comments'
 import {
-    Array as YArray,
     Doc,
+    Array as YArray,
+    type Doc as YDoc,
     Map as YMap,
-    Text as YText,
+    type Text as YText,
     applyUpdate,
     createAbsolutePositionFromRelativePosition,
     createRelativePositionFromTypeIndex,
     decodeRelativePosition,
     encodeRelativePosition,
-    type Doc as YDoc,
 } from 'yjs'
 
 type RestoredAnchor =
@@ -34,7 +34,11 @@ type RestoredThread = {
     anchor: RestoredAnchor
 }
 
-export function restoreTextDocFromUpdate(doc: YDoc, update: Uint8Array, origin: unknown = null) {
+export function restoreTextDocFromUpdate(
+    doc: YDoc,
+    update: Uint8Array,
+    origin: unknown = null,
+) {
     const source = new Doc()
     applyUpdate(source, update)
 
@@ -50,7 +54,8 @@ export function restoreTextDocFromUpdate(doc: YDoc, update: Uint8Array, origin: 
 
         const ythreads = doc.getMap<YMap<unknown>>(Y_TEXT_COMMENT_THREADS_KEY)
         for (const key of Array.from(ythreads.keys())) ythreads.delete(key)
-        for (const thread of threads) ythreads.set(thread.id, createThreadMap(thread, ytext))
+        for (const thread of threads)
+            ythreads.set(thread.id, createThreadMap(thread, ytext))
     }, origin)
 }
 
@@ -73,7 +78,15 @@ function readRestoredThread(threadId: string, value: unknown, ytext: YText) {
     const messages = readMessages(value)
     const anchor = readAnchor(value, ytext)
 
-    if (!quote || !createdAt || !updatedAt || !author || !anchor || messages.length === 0) return null
+    if (
+        !quote ||
+        !createdAt ||
+        !updatedAt ||
+        !author ||
+        !anchor ||
+        messages.length === 0
+    )
+        return null
 
     return {
         id: threadId,
@@ -90,7 +103,8 @@ function readMessages(thread: YMap<unknown>) {
     const value = thread.get(Y_TEXT_COMMENT_MESSAGES_KEY)
     if (!(value instanceof YArray)) return []
 
-    return value.toArray()
+    return value
+        .toArray()
         .map((message) => readMessage(message))
         .filter((message): message is TextCommentMessage => message !== null)
 }
@@ -115,10 +129,17 @@ function readMessage(value: unknown) {
     } satisfies TextCommentMessage
 }
 
-function readAnchor(thread: YMap<unknown>, ytext: YText): RestoredAnchor | null {
+function readAnchor(
+    thread: YMap<unknown>,
+    ytext: YText,
+): RestoredAnchor | null {
     const startBytes = thread.get('anchorStart')
     const endBytes = thread.get('anchorEnd')
-    if (!(startBytes instanceof Uint8Array) || !(endBytes instanceof Uint8Array)) return null
+    if (
+        !(startBytes instanceof Uint8Array) ||
+        !(endBytes instanceof Uint8Array)
+    )
+        return null
 
     const doc = ytext.doc
     if (!doc) {
@@ -129,9 +150,21 @@ function readAnchor(thread: YMap<unknown>, ytext: YText): RestoredAnchor | null 
         }
     }
 
-    const start = createAbsolutePositionFromRelativePosition(decodeRelativePosition(startBytes), doc)
-    const end = createAbsolutePositionFromRelativePosition(decodeRelativePosition(endBytes), doc)
-    if (!start || !end || start.type !== ytext || end.type !== ytext || start.index >= end.index) {
+    const start = createAbsolutePositionFromRelativePosition(
+        decodeRelativePosition(startBytes),
+        doc,
+    )
+    const end = createAbsolutePositionFromRelativePosition(
+        decodeRelativePosition(endBytes),
+        doc,
+    )
+    if (
+        !start ||
+        !end ||
+        start.type !== ytext ||
+        end.type !== ytext ||
+        start.index >= end.index
+    ) {
         return {
             kind: 'detached',
             start: new Uint8Array(startBytes),
@@ -157,14 +190,33 @@ function createThreadMap(thread: RestoredThread, ytext: YText) {
     writeAuthor(map, thread.author)
 
     if (thread.anchor.kind === 'attached') {
-        map.set('anchorStart', encodeRelativePosition(createRelativePositionFromTypeIndex(ytext, thread.anchor.from, 0)))
-        map.set('anchorEnd', encodeRelativePosition(createRelativePositionFromTypeIndex(ytext, thread.anchor.to, -1)))
+        map.set(
+            'anchorStart',
+            encodeRelativePosition(
+                createRelativePositionFromTypeIndex(
+                    ytext,
+                    thread.anchor.from,
+                    0,
+                ),
+            ),
+        )
+        map.set(
+            'anchorEnd',
+            encodeRelativePosition(
+                createRelativePositionFromTypeIndex(
+                    ytext,
+                    thread.anchor.to,
+                    -1,
+                ),
+            ),
+        )
     } else {
         map.set('anchorStart', new Uint8Array(thread.anchor.start))
         map.set('anchorEnd', new Uint8Array(thread.anchor.end))
     }
 
-    for (const message of thread.messages) messages.push([createMessageMap(message)])
+    for (const message of thread.messages)
+        messages.push([createMessageMap(message)])
     map.set(Y_TEXT_COMMENT_MESSAGES_KEY, messages)
 
     return map

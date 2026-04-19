@@ -1,7 +1,12 @@
-import { assertNever } from '@mpad/core/assert'
-import type { LiveFileMeta, LiveFileOwner, LiveFileState, LiveFileTransfer } from '@mpad/protocol/live-files'
 import type { FileAwarenessState } from '@/collab/domain/pad-room-session'
 import type { LocalFile } from '@/live-files/infrastructure/local-file-store'
+import { assertNever } from '@mpad/core/assert'
+import type {
+    LiveFileMeta,
+    LiveFileOwner,
+    LiveFileState,
+    LiveFileTransfer,
+} from '@mpad/protocol/live-files'
 
 export type LocalFileMap = Record<string, LocalFile>
 export type TransferMap = Record<string, LiveFileTransfer>
@@ -16,10 +21,20 @@ export type FileMachineEvent =
     | { kind: 'local-file-added'; localFile: LocalFile }
     | { kind: 'local-file-removed'; fileId: string }
     | { kind: 'download-started'; fileId: string; peerId: number }
-    | { kind: 'download-progress'; fileId: string; peerId: number; receivedBytes: number }
+    | {
+          kind: 'download-progress'
+          fileId: string
+          peerId: number
+          receivedBytes: number
+      }
     | { kind: 'download-completed'; localFile: LocalFile }
     | { kind: 'upload-started'; fileId: string; peerId: number }
-    | { kind: 'upload-progress'; fileId: string; peerId: number; sentBytes: number }
+    | {
+          kind: 'upload-progress'
+          fileId: string
+          peerId: number
+          sentBytes: number
+      }
     | { kind: 'transfer-cleared'; fileId: string }
 
 export function createFileMachineState(): FileMachineState {
@@ -29,7 +44,10 @@ export function createFileMachineState(): FileMachineState {
     }
 }
 
-export function reduceFileMachine(state: FileMachineState, event: FileMachineEvent): FileMachineState {
+export function reduceFileMachine(
+    state: FileMachineState,
+    event: FileMachineEvent,
+): FileMachineState {
     if (event.kind === 'reset') return createFileMachineState()
 
     if (event.kind === 'local-file-added') {
@@ -136,7 +154,10 @@ export function buildLiveFileList(
     localFiles: LocalFileMap,
     transfers: TransferMap,
 ) {
-    const grouped = new Map<string, { meta: LiveFileMeta; owners: LiveFileOwner[] }>()
+    const grouped = new Map<
+        string,
+        { meta: LiveFileMeta; owners: LiveFileOwner[] }
+    >()
 
     for (const [peerId, state] of states) {
         for (const meta of state.files) {
@@ -153,15 +174,33 @@ export function buildLiveFileList(
     return Array.from(grouped.values(), ({ meta, owners }) => {
         const transfer = transfers[meta.id]
         const isLocal = localFiles[meta.id] !== undefined
-        if (transfer) return { kind: 'transferring', meta, owners, isLocal, transfer } satisfies LiveFileState
-        return { kind: 'available', meta, owners, isLocal } satisfies LiveFileState
+        if (transfer)
+            return {
+                kind: 'transferring',
+                meta,
+                owners,
+                isLocal,
+                transfer,
+            } satisfies LiveFileState
+        return {
+            kind: 'available',
+            meta,
+            owners,
+            isLocal,
+        } satisfies LiveFileState
     }).sort((left, right) => left.meta.name.localeCompare(right.meta.name))
 }
 
-export function chooseRemoteOwner(owners: LiveFileOwner[], localPeerId: number) {
+export function chooseRemoteOwner(
+    owners: LiveFileOwner[],
+    localPeerId: number,
+) {
     return owners.find((owner) => owner.peerId !== localPeerId) ?? null
 }
 
 export function totalLocalFileBytes(files: LocalFileMap) {
-    return Object.values(files).reduce((total, file) => total + file.meta.sizeBytes, 0)
+    return Object.values(files).reduce(
+        (total, file) => total + file.meta.sizeBytes,
+        0,
+    )
 }

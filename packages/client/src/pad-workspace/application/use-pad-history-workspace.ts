@@ -1,13 +1,14 @@
-import type { PadPath } from '@mpad/core/pad-path'
-import type { PadDocRevisionSummary } from '@mpad/protocol/pad-text-history'
-import { PERSIST_DEBOUNCE_MS } from '@mpad/core/pad-limits'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
 import {
-    browserPadTextHistoryQuery,
     type PadTextHistoryEntry,
     type PadTextHistoryRevision,
+    browserPadTextHistoryQuery,
 } from '@/pad-text/infrastructure/browser-pad-text-history'
+import { assertNever } from '@mpad/core/assert'
+import { PERSIST_DEBOUNCE_MS } from '@mpad/core/pad-limits'
+import type { PadPath } from '@mpad/core/pad-path'
+import type { PadDocRevisionSummary } from '@mpad/protocol/pad-text-history'
+import { useEffect, useReducer, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 type CompareSource =
     | { kind: 'current' }
@@ -24,15 +25,51 @@ type RevisionLoadState =
     | { kind: 'error'; message: string }
     | { kind: 'ready'; revision: PadTextHistoryRevision }
 
+type HistoryWorkspaceState =
+    | {
+          kind: 'closed'
+          entries: PadTextHistoryEntry[]
+          selection: DiffSelection
+      }
+    | {
+          kind: 'loading'
+          entries: PadTextHistoryEntry[]
+          selection: DiffSelection
+      }
+    | {
+          kind: 'error'
+          entries: PadTextHistoryEntry[]
+          message: string
+          selection: DiffSelection
+      }
+    | {
+          kind: 'ready'
+          entries: PadTextHistoryEntry[]
+          pendingRevertRevisionId: number | null
+          selection: DiffSelection
+      }
+
+type HistoryWorkspaceEvent =
+    | { kind: 'closed' }
+    | { kind: 'loading-started' }
+    | { kind: 'loading-succeeded'; entries: PadTextHistoryEntry[] }
+    | { kind: 'loading-failed'; message: string }
+    | { kind: 'left-selected'; revisionId: number }
+    | { kind: 'right-current-selected' }
+    | { kind: 'right-selected'; revisionId: number }
+    | { kind: 'revert-started'; revisionId: number }
+    | { kind: 'revert-succeeded'; entry: PadTextHistoryEntry }
+    | { kind: 'revert-finished' }
+
 export type PadHistoryMainState =
     | { kind: 'loading'; label: string }
     | { kind: 'empty'; label: string }
     | { kind: 'error'; label: string }
     | {
-        kind: 'ready'
-        leftContent: string
-        rightContent: string
-    }
+          kind: 'ready'
+          leftContent: string
+          rightContent: string
+      }
 
 export type PadHistoryWorkspaceModel = {
     entries: PadTextHistoryEntry[]
@@ -53,149 +90,273 @@ export function usePadHistoryWorkspace(input: {
     path: PadPath
     currentContent: string
     open: boolean
-    onRevertToRevision: (input: { revisionId: number; revisionNumber: number }) => Promise<PadDocRevisionSummary>
+    onRevertToRevision: (input: {
+        revisionId: number
+        revisionNumber: number
+    }) => Promise<PadDocRevisionSummary>
 }): PadHistoryWorkspaceModel {
-    const [entries, setEntries] = useState<PadTextHistoryEntry[]>([])
-    const [historyError, setHistoryError] = useState<string | null>(null)
-    const [loadingHistory, setLoadingHistory] = useState(false)
-    const [pendingRevertRevisionId, setPendingRevertRevisionId] = useState<number | null>(null)
-    const [refreshToken, setRefreshToken] = useState(0)
-    const [selection, setSelection] = useState<DiffSelection>({
-        leftRevisionId: null,
-        rightSource: currentSource,
-    })
+    const [state, dispatch] = useReducer(
+        reduceHistoryWorkspaceState,
+        undefined,
+        createClosedHistoryWorkspaceState,
+    )
+    const refreshArmedRef = useRef(false)
 
     useEffect(() => {
-        setEntries([])
-        setHistoryError(null)
-        setLoadingHistory(input.open)
-        setPendingRevertRevisionId(null)
-        setSelection({
-            leftRevisionId: null,
-            rightSource: currentSource,
-        })
-        setRefreshToken((value) => value + 1)
+        refreshArmedRef.current = false
+
+        if (!input.open) {
+            dispatch({ kind: 'closed' })
+            return
+        }
+
+        const controller = new AbortController()
+        void loadHistory(input.path, controller.signal, dispatch)
+        return () => controller.abort()
     }, [input.open, input.path])
 
     useEffect(() => {
         if (!input.open) return
 
-        const id = window.setTimeout(() => setRefreshToken((value) => value + 1), PERSIST_DEBOUNCE_MS + 250)
-        return () => window.clearTimeout(id)
-    }, [input.currentContent, input.open, input.path])
-
-    useEffect(() => {
-        if (!input.open) {
-            setLoadingHistory(false)
+        if (!refreshArmedRef.current) {
+            refreshArmedRef.current = true
             return
         }
 
-        let active = true
         const controller = new AbortController()
-        setLoadingHistory(true)
-
-        void browserPadTextHistoryQuery.listRevisions(input.path, controller.signal)
-            .then((nextEntries) => {
-                if (!active) return
-                setEntries(nextEntries)
-                setHistoryError(null)
-                setSelection((current) => reconcileSelection(nextEntries, current))
-            })
-            .catch((error: Error) => {
-                if (error.name === 'AbortError' || !active) return
-                setEntries([])
-                setHistoryError(error.message)
-                setSelection({
-                    leftRevisionId: null,
-                    rightSource: currentSource,
-                })
-            })
-            .finally(() => {
-                if (!active) return
-                setLoadingHistory(false)
-            })
+        const id = window.setTimeout(() => {
+            void loadHistory(input.path, controller.signal, dispatch)
+        }, PERSIST_DEBOUNCE_MS + 250)
 
         return () => {
-            active = false
             controller.abort()
+            window.clearTimeout(id)
         }
-    }, [input.open, input.path, refreshToken])
+    }, [input.currentContent, input.open, input.path])
 
-    const leftEntry = readEntry(entries, selection.leftRevisionId)
-    const rightEntry = selection.rightSource.kind === 'revision'
-        ? readEntry(entries, selection.rightSource.revisionId)
-        : null
-    const leftRevision = usePadTextRevision(input.path, input.open ? selection.leftRevisionId : null)
+    const leftEntry = readEntry(state.entries, state.selection.leftRevisionId)
+    const rightEntry =
+        state.selection.rightSource.kind === 'revision'
+            ? readEntry(state.entries, state.selection.rightSource.revisionId)
+            : null
+    const leftRevision = usePadTextRevision(
+        input.path,
+        input.open ? state.selection.leftRevisionId : null,
+    )
     const rightRevision = usePadTextRevision(
         input.path,
-        input.open && selection.rightSource.kind === 'revision' ? selection.rightSource.revisionId : null,
+        input.open && state.selection.rightSource.kind === 'revision'
+            ? state.selection.rightSource.revisionId
+            : null,
     )
 
     return {
-        entries,
-        loadingHistory,
-        historyError,
-        pendingRevertRevisionId,
-        selection,
+        entries: state.entries,
+        loadingHistory: state.kind === 'loading',
+        historyError: state.kind === 'error' ? state.message : null,
+        pendingRevertRevisionId:
+            state.kind === 'ready' ? state.pendingRevertRevisionId : null,
+        selection: state.selection,
         mainState: readMainState({
             currentContent: input.currentContent,
             leftEntry,
             leftRevision,
             rightEntry,
             rightRevision,
-            rightSource: selection.rightSource,
+            rightSource: state.selection.rightSource,
         }),
         selectLeftRevision(revisionId) {
-            setSelection((current) => reconcileSelection(entries, {
-                leftRevisionId: revisionId,
-                rightSource: current.rightSource,
-            }))
+            dispatch({ kind: 'left-selected', revisionId })
         },
         selectRightCurrent() {
-            setSelection((current) => reconcileSelection(entries, {
-                leftRevisionId: current.leftRevisionId,
-                rightSource: currentSource,
-            }))
+            dispatch({ kind: 'right-current-selected' })
         },
         selectRightRevision(revisionId) {
-            setSelection((current) => reconcileSelection(entries, {
-                leftRevisionId: current.leftRevisionId,
-                rightSource: { kind: 'revision', revisionId },
-            }))
+            dispatch({ kind: 'right-selected', revisionId })
         },
         revertRevision(entry) {
-            if (!input.open || pendingRevertRevisionId !== null) return
+            if (
+                state.kind !== 'ready' ||
+                state.pendingRevertRevisionId !== null
+            )
+                return
 
-            setPendingRevertRevisionId(entry.id)
+            dispatch({ kind: 'revert-started', revisionId: entry.id })
 
-            void input.onRevertToRevision({
-                revisionId: entry.id,
-                revisionNumber: entry.revisionNumber,
-            })
+            void input
+                .onRevertToRevision({
+                    revisionId: entry.id,
+                    revisionNumber: entry.revisionNumber,
+                })
                 .then((nextEntry) => {
-                    const nextEntries = [
-                        nextEntry,
-                        ...entries.map((value) => ({
-                            ...value,
-                            isHead: false,
-                        })),
-                    ]
-                    setEntries(nextEntries)
-                    setSelection((current) => reconcileSelection(nextEntries, current))
-                    toast.success(`Reverted to snapshot ${entry.revisionNumber}`)
-                    setRefreshToken((value) => value + 1)
+                    dispatch({ kind: 'revert-succeeded', entry: nextEntry })
+                    toast.success(
+                        `Reverted to snapshot ${entry.revisionNumber}`,
+                    )
                 })
                 .catch((error: unknown) => {
-                    toast.error(error instanceof Error ? error.message : 'Failed to revert snapshot')
+                    toast.error(
+                        error instanceof Error
+                            ? error.message
+                            : 'Failed to revert snapshot',
+                    )
                 })
                 .finally(() => {
-                    setPendingRevertRevisionId(null)
+                    dispatch({ kind: 'revert-finished' })
                 })
         },
     }
 }
 
-function usePadTextRevision(path: PadPath, revisionId: number | null): RevisionLoadState {
+function createClosedHistoryWorkspaceState(): HistoryWorkspaceState {
+    return {
+        kind: 'closed',
+        entries: [],
+        selection: createDefaultSelection(),
+    }
+}
+
+function reduceHistoryWorkspaceState(
+    state: HistoryWorkspaceState,
+    event: HistoryWorkspaceEvent,
+): HistoryWorkspaceState {
+    switch (event.kind) {
+        case 'closed':
+            return createClosedHistoryWorkspaceState()
+        case 'loading-started':
+            return {
+                kind: 'loading',
+                entries: state.entries,
+                selection: state.selection,
+            }
+        case 'loading-succeeded':
+            return {
+                kind: 'ready',
+                entries: event.entries,
+                pendingRevertRevisionId: null,
+                selection: reconcileSelection(event.entries, state.selection),
+            }
+        case 'loading-failed':
+            return {
+                kind: 'error',
+                entries: [],
+                message: event.message,
+                selection: createDefaultSelection(),
+            }
+        case 'left-selected':
+            return updateSelection(state, {
+                leftRevisionId: event.revisionId,
+                rightSource: state.selection.rightSource,
+            })
+        case 'right-current-selected':
+            return updateSelection(state, {
+                leftRevisionId: state.selection.leftRevisionId,
+                rightSource: currentSource,
+            })
+        case 'right-selected':
+            return updateSelection(state, {
+                leftRevisionId: state.selection.leftRevisionId,
+                rightSource: { kind: 'revision', revisionId: event.revisionId },
+            })
+        case 'revert-started':
+            if (state.kind !== 'ready') return state
+            return {
+                ...state,
+                pendingRevertRevisionId: event.revisionId,
+            }
+        case 'revert-succeeded': {
+            const entries = [
+                event.entry,
+                ...state.entries.map((value) => ({
+                    ...value,
+                    isHead: false,
+                })),
+            ]
+
+            return {
+                kind: 'ready',
+                entries,
+                pendingRevertRevisionId:
+                    state.kind === 'ready'
+                        ? state.pendingRevertRevisionId
+                        : null,
+                selection: reconcileSelection(entries, state.selection),
+            }
+        }
+        case 'revert-finished':
+            if (state.kind !== 'ready') return state
+            return {
+                ...state,
+                pendingRevertRevisionId: null,
+            }
+    }
+
+    return assertNever(event)
+}
+
+async function loadHistory(
+    path: PadPath,
+    signal: AbortSignal,
+    dispatch: React.ActionDispatch<[HistoryWorkspaceEvent]>,
+) {
+    dispatch({ kind: 'loading-started' })
+
+    try {
+        const entries = await browserPadTextHistoryQuery.listRevisions(
+            path,
+            signal,
+        )
+        if (signal.aborted) return
+        dispatch({ kind: 'loading-succeeded', entries })
+    } catch (error) {
+        if (
+            !(error instanceof Error) ||
+            error.name === 'AbortError' ||
+            signal.aborted
+        )
+            return
+        dispatch({ kind: 'loading-failed', message: error.message })
+    }
+}
+
+function updateSelection(
+    state: HistoryWorkspaceState,
+    selection: DiffSelection,
+): HistoryWorkspaceState {
+    const nextSelection = reconcileSelection(state.entries, selection)
+
+    if (state.kind === 'ready') {
+        return {
+            ...state,
+            selection: nextSelection,
+        }
+    }
+
+    if (state.kind === 'error') {
+        return {
+            ...state,
+            selection: nextSelection,
+        }
+    }
+
+    return {
+        kind: state.kind,
+        entries: state.entries,
+        selection: nextSelection,
+    }
+}
+
+function createDefaultSelection(): DiffSelection {
+    return {
+        leftRevisionId: null,
+        rightSource: currentSource,
+    }
+}
+
+function usePadTextRevision(
+    path: PadPath,
+    revisionId: number | null,
+): RevisionLoadState {
     const [state, setState] = useState<RevisionLoadState>({ kind: 'idle' })
 
     useEffect(() => {
@@ -208,7 +369,8 @@ function usePadTextRevision(path: PadPath, revisionId: number | null): RevisionL
         const controller = new AbortController()
         setState({ kind: 'loading' })
 
-        void browserPadTextHistoryQuery.readRevision(path, revisionId, controller.signal)
+        void browserPadTextHistoryQuery
+            .readRevision(path, revisionId, controller.signal)
             .then((revision) => {
                 if (!active) return
                 setState({ kind: 'ready', revision })
@@ -242,9 +404,12 @@ function readMainState(input: {
         }
     }
 
-    if (input.leftRevision.kind === 'loading') return { kind: 'loading', label: 'Loading left snapshot…' }
-    if (input.leftRevision.kind === 'error') return { kind: 'error', label: input.leftRevision.message }
-    if (input.leftRevision.kind !== 'ready') return { kind: 'empty', label: 'Select a snapshot on the left.' }
+    if (input.leftRevision.kind === 'loading')
+        return { kind: 'loading', label: 'Loading left snapshot…' }
+    if (input.leftRevision.kind === 'error')
+        return { kind: 'error', label: input.leftRevision.message }
+    if (input.leftRevision.kind !== 'ready')
+        return { kind: 'empty', label: 'Select a snapshot on the left.' }
 
     if (input.rightSource.kind === 'current') {
         return {
@@ -254,10 +419,14 @@ function readMainState(input: {
         }
     }
 
-    if (!input.rightEntry) return { kind: 'empty', label: 'Choose a newer snapshot on the right.' }
-    if (input.rightRevision.kind === 'loading') return { kind: 'loading', label: 'Loading right snapshot…' }
-    if (input.rightRevision.kind === 'error') return { kind: 'error', label: input.rightRevision.message }
-    if (input.rightRevision.kind !== 'ready') return { kind: 'empty', label: 'Choose a newer snapshot on the right.' }
+    if (!input.rightEntry)
+        return { kind: 'empty', label: 'Choose a newer snapshot on the right.' }
+    if (input.rightRevision.kind === 'loading')
+        return { kind: 'loading', label: 'Loading right snapshot…' }
+    if (input.rightRevision.kind === 'error')
+        return { kind: 'error', label: input.rightRevision.message }
+    if (input.rightRevision.kind !== 'ready')
+        return { kind: 'empty', label: 'Choose a newer snapshot on the right.' }
 
     return {
         kind: 'ready',
@@ -266,22 +435,25 @@ function readMainState(input: {
     }
 }
 
-function reconcileSelection(entries: PadTextHistoryEntry[], current: DiffSelection): DiffSelection {
-    const leftRevisionId = entries.some((entry) => entry.id === current.leftRevisionId)
+function reconcileSelection(
+    entries: PadTextHistoryEntry[],
+    current: DiffSelection,
+): DiffSelection {
+    const leftRevisionId = entries.some(
+        (entry) => entry.id === current.leftRevisionId,
+    )
         ? current.leftRevisionId
         : chooseDefaultLeftRevisionId(entries)
     const leftEntry = readEntry(entries, leftRevisionId)
 
-    if (!leftEntry) {
-        return {
-            leftRevisionId: null,
-            rightSource: currentSource,
-        }
-    }
+    if (!leftEntry) return createDefaultSelection()
 
     if (current.rightSource.kind === 'revision') {
         const rightEntry = readEntry(entries, current.rightSource.revisionId)
-        if (rightEntry && rightEntry.revisionNumber > leftEntry.revisionNumber) {
+        if (
+            rightEntry &&
+            rightEntry.revisionNumber > leftEntry.revisionNumber
+        ) {
             return {
                 leftRevisionId,
                 rightSource: current.rightSource,

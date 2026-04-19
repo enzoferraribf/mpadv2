@@ -6,14 +6,14 @@ import {
 import type { LocalPeer } from '@mpad/protocol/peer'
 import type { TextCommentAuthor } from '@mpad/protocol/text-comments'
 import {
+    type Doc,
     Array as YArray,
     Map as YMap,
-    Text as YText,
+    type Text as YText,
     createAbsolutePositionFromRelativePosition,
     createRelativePositionFromTypeIndex,
     decodeRelativePosition,
     encodeRelativePosition,
-    type Doc,
 } from 'yjs'
 
 export type TextCommentSelection = {
@@ -55,9 +55,7 @@ export type TextCommentHighlight = {
     to: number
 }
 
-type Result<T = void> =
-    | { ok: true; value: T }
-    | { ok: false; error: string }
+type Result<T = void> = { ok: true; value: T } | { ok: false; error: string }
 
 export type TextCommentResult<T = void> = Result<T>
 
@@ -67,19 +65,32 @@ type ControllerDeps = {
 }
 
 export type TextCommentController = {
-    createThread: (input: { selection: TextCommentSelection; body: string }) => Result<{ threadId: string }>
+    createThread: (input: {
+        selection: TextCommentSelection
+        body: string
+    }) => Result<{ threadId: string }>
     deleteMessage: (input: { threadId: string; messageId: string }) => Result
     deleteThread: (threadId: string) => Result
-    editMessage: (input: { threadId: string; messageId: string; body: string }) => Result
+    editMessage: (input: {
+        threadId: string
+        messageId: string
+        body: string
+    }) => Result
     getHighlightSpans: () => TextCommentHighlight[]
     getThread: (threadId: string) => TextCommentThreadView | null
     listThreads: () => TextCommentThreadView[]
-    replyToThread: (input: { threadId: string; body: string }) => Result<{ messageId: string }>
+    replyToThread: (input: { threadId: string; body: string }) => Result<{
+        messageId: string
+    }>
     subscribe: (listener: () => void) => () => void
     validateSelection: (selection: TextCommentSelection | null) => Result
 }
 
-export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps: ControllerDeps = {}): TextCommentController {
+export function createTextCommentController(
+    doc: Doc,
+    localPeer: LocalPeer,
+    deps: ControllerDeps = {},
+): TextCommentController {
     const createId = deps.createId ?? (() => crypto.randomUUID())
     const now = deps.now ?? (() => new Date().toISOString())
     const ytext = doc.getText(Y_TEXT_KEY)
@@ -111,8 +122,26 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
                 thread.set('createdAt', timestamp)
                 thread.set('updatedAt', timestamp)
                 writeAuthor(thread, toAuthor(localPeer))
-                thread.set('anchorStart', encodeRelativePosition(createRelativePositionFromTypeIndex(ytext, input.selection.from, 0)))
-                thread.set('anchorEnd', encodeRelativePosition(createRelativePositionFromTypeIndex(ytext, input.selection.to, -1)))
+                thread.set(
+                    'anchorStart',
+                    encodeRelativePosition(
+                        createRelativePositionFromTypeIndex(
+                            ytext,
+                            input.selection.from,
+                            0,
+                        ),
+                    ),
+                )
+                thread.set(
+                    'anchorEnd',
+                    encodeRelativePosition(
+                        createRelativePositionFromTypeIndex(
+                            ytext,
+                            input.selection.to,
+                            -1,
+                        ),
+                    ),
+                )
                 messages.push([message])
                 thread.set(Y_TEXT_COMMENT_MESSAGES_KEY, messages)
                 readThreads(doc).set(threadId, thread)
@@ -127,9 +156,11 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
             const index = findMessageIndex(messages, input.messageId)
             if (index < 0) return error('Comment message not found')
             const message = messages.get(index)
-            if (!(message instanceof YMap)) return error('Comment message is invalid')
+            if (!(message instanceof YMap))
+                return error('Comment message is invalid')
             if (index === 0) return error('Delete the full thread instead')
-            if (readAuthorId(message) !== localPeer.id) return error('Only the author can delete this reply')
+            if (readAuthorId(message) !== localPeer.id)
+                return error('Only the author can delete this reply')
 
             doc.transact(() => {
                 messages.delete(index, 1)
@@ -141,7 +172,8 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
         deleteThread(threadId) {
             const thread = readThreadMap(doc, threadId)
             if (!thread) return error('Comment thread not found')
-            if (readAuthorId(thread) !== localPeer.id) return error('Only the author can delete this thread')
+            if (readAuthorId(thread) !== localPeer.id)
+                return error('Only the author can delete this thread')
 
             doc.transact(() => {
                 readThreads(doc).delete(threadId)
@@ -159,8 +191,10 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
             const index = findMessageIndex(messages, input.messageId)
             if (index < 0) return error('Comment message not found')
             const message = messages.get(index)
-            if (!(message instanceof YMap)) return error('Comment message is invalid')
-            if (readAuthorId(message) !== localPeer.id) return error('Only the author can edit this comment')
+            if (!(message instanceof YMap))
+                return error('Comment message is invalid')
+            if (readAuthorId(message) !== localPeer.id)
+                return error('Only the author can edit this comment')
 
             const timestamp = now()
 
@@ -182,7 +216,11 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
                 }))
         },
         getThread(threadId) {
-            return readThreadViews(doc, localPeer.id).find((thread) => thread.id === threadId) ?? null
+            return (
+                readThreadViews(doc, localPeer.id).find(
+                    (thread) => thread.id === threadId,
+                ) ?? null
+            )
         },
         listThreads() {
             return readThreadViews(doc, localPeer.id)
@@ -198,12 +236,14 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
             const timestamp = now()
 
             doc.transact(() => {
-                messages.push([createMessageMap({
-                    author: toAuthor(localPeer),
-                    body: input.body,
-                    id: messageId,
-                    timestamp,
-                })])
+                messages.push([
+                    createMessageMap({
+                        author: toAuthor(localPeer),
+                        body: input.body,
+                        id: messageId,
+                        timestamp,
+                    }),
+                ])
                 thread.set('updatedAt', timestamp)
             })
 
@@ -222,23 +262,36 @@ export function createTextCommentController(doc: Doc, localPeer: LocalPeer, deps
 function readThreadViews(doc: Doc, localAuthorId: string) {
     const ytext = doc.getText(Y_TEXT_KEY)
     const threads = Array.from(readThreads(doc).entries())
-        .map(([threadId, value]) => readThreadView(threadId, value, ytext, localAuthorId))
+        .map(([threadId, value]) =>
+            readThreadView(threadId, value, ytext, localAuthorId),
+        )
         .filter((thread): thread is TextCommentThreadView => thread !== null)
 
     return threads.sort((left, right) => {
-        if (left.anchor.detached !== right.anchor.detached) return left.anchor.detached ? 1 : -1
-        if (left.anchor.from !== right.anchor.from) return left.anchor.from - right.anchor.from
+        if (left.anchor.detached !== right.anchor.detached)
+            return left.anchor.detached ? 1 : -1
+        if (left.anchor.from !== right.anchor.from)
+            return left.anchor.from - right.anchor.from
         return right.updatedAt.localeCompare(left.updatedAt)
     })
 }
 
-function readThreadView(threadId: string, value: unknown, ytext: YText, localAuthorId: string): TextCommentThreadView | null {
+function readThreadView(
+    threadId: string,
+    value: unknown,
+    ytext: YText,
+    localAuthorId: string,
+): TextCommentThreadView | null {
     if (!(value instanceof YMap)) return null
 
     const messages = readMessages(value, false)
         .toArray()
-        .map((message, index) => readMessageView(message, localAuthorId, index > 0))
-        .filter((message): message is TextCommentMessageView => message !== null)
+        .map((message, index) =>
+            readMessageView(message, localAuthorId, index > 0),
+        )
+        .filter(
+            (message): message is TextCommentMessageView => message !== null,
+        )
 
     if (messages.length === 0) return null
 
@@ -262,7 +315,11 @@ function readThreadView(threadId: string, value: unknown, ytext: YText, localAut
     }
 }
 
-function readMessageView(value: unknown, localAuthorId: string, canDelete: boolean): TextCommentMessageView | null {
+function readMessageView(
+    value: unknown,
+    localAuthorId: string,
+    canDelete: boolean,
+): TextCommentMessageView | null {
     if (!(value instanceof YMap)) return null
 
     const id = readString(value, 'id')
@@ -286,18 +343,36 @@ function readMessageView(value: unknown, localAuthorId: string, canDelete: boole
     }
 }
 
-function readAnchor(thread: YMap<unknown>, ytext: YText): TextCommentAnchorView {
+function readAnchor(
+    thread: YMap<unknown>,
+    ytext: YText,
+): TextCommentAnchorView {
     const startBytes = thread.get('anchorStart')
     const endBytes = thread.get('anchorEnd')
     const doc = ytext.doc
-    if (!(startBytes instanceof Uint8Array) || !(endBytes instanceof Uint8Array)) {
+    if (
+        !(startBytes instanceof Uint8Array) ||
+        !(endBytes instanceof Uint8Array)
+    ) {
         return { from: 0, to: 0, detached: true }
     }
     if (!doc) return { from: 0, to: 0, detached: true }
 
-    const start = createAbsolutePositionFromRelativePosition(decodeRelativePosition(startBytes), doc)
-    const end = createAbsolutePositionFromRelativePosition(decodeRelativePosition(endBytes), doc)
-    if (!start || !end || start.type !== ytext || end.type !== ytext || start.index >= end.index) {
+    const start = createAbsolutePositionFromRelativePosition(
+        decodeRelativePosition(startBytes),
+        doc,
+    )
+    const end = createAbsolutePositionFromRelativePosition(
+        decodeRelativePosition(endBytes),
+        doc,
+    )
+    if (
+        !start ||
+        !end ||
+        start.type !== ytext ||
+        end.type !== ytext ||
+        start.index >= end.index
+    ) {
         return { from: 0, to: 0, detached: true }
     }
 
@@ -308,19 +383,27 @@ function readAnchor(thread: YMap<unknown>, ytext: YText): TextCommentAnchorView 
     }
 }
 
-function validateSelection(doc: Doc, selection: TextCommentSelection | null): Result {
+function validateSelection(
+    doc: Doc,
+    selection: TextCommentSelection | null,
+): Result {
     if (!selection) return error('Select some text first')
-    if (!Number.isInteger(selection.from) || !Number.isInteger(selection.to)) return error('Invalid comment range')
-    if (selection.from < 0 || selection.to <= selection.from) return error('Select some text first')
-    if (selection.quote.trim().length === 0) return error('Comments need real text, not blank space')
+    if (!Number.isInteger(selection.from) || !Number.isInteger(selection.to))
+        return error('Invalid comment range')
+    if (selection.from < 0 || selection.to <= selection.from)
+        return error('Select some text first')
+    if (selection.quote.trim().length === 0)
+        return error('Comments need real text, not blank space')
 
     const ytext = doc.getText(Y_TEXT_KEY)
-    if (selection.to > ytext.length) return error('Comment range is outside the document')
+    if (selection.to > ytext.length)
+        return error('Comment range is outside the document')
 
-    const overlap = readThreadViews(doc, '').find((thread) =>
-        !thread.anchor.detached &&
-        selection.from < thread.anchor.to &&
-        selection.to > thread.anchor.from,
+    const overlap = readThreadViews(doc, '').find(
+        (thread) =>
+            !thread.anchor.detached &&
+            selection.from < thread.anchor.to &&
+            selection.to > thread.anchor.from,
     )
     if (overlap) return error('Comments cannot overlap')
 
@@ -351,7 +434,12 @@ function readMessages(thread: YMap<unknown>, create: boolean) {
 }
 
 function findMessageIndex(messages: YArray<YMap<unknown>>, messageId: string) {
-    return messages.toArray().findIndex((value) => value instanceof YMap && readString(value, 'id') === messageId)
+    return messages
+        .toArray()
+        .findIndex(
+            (value) =>
+                value instanceof YMap && readString(value, 'id') === messageId,
+        )
 }
 
 function createMessageMap(input: {

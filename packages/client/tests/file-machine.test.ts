@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { createFileMachineState, reduceFileMachine } from '../src/live-files/domain/live-files-machine'
+import {
+    createFileMachineState,
+    reduceFileMachine,
+} from '@/live-files/domain/live-files-machine'
 
 describe('file machine', () => {
     test('stores a completed download and clears its transfer', () => {

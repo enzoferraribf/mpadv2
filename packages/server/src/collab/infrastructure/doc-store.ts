@@ -1,14 +1,14 @@
 import { assert } from '@mpad/core/assert'
 import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
-import { type PadDocKind } from '@mpad/core/pad-room'
 import type { PadPath } from '@mpad/core/pad-path'
+import type { PadDocKind } from '@mpad/core/pad-room'
 import { Doc, applyUpdate, mergeUpdates } from 'yjs'
-import { sql } from '../../infrastructure/db'
+import { sql } from '#/infrastructure/db'
 import type {
     AppendPadDocRevisionResult,
     PadDocRevisionSummary,
     StoredPadDoc,
-} from '../../pad-doc/domain/doc-repository'
+} from '#/pad-doc/domain/doc-repository'
 
 type DocHeadRow = {
     doc_id: number | string
@@ -48,9 +48,16 @@ type RevisionListRow = {
     reverted_from_revision_number: number | string | null
 }
 
-export async function loadPadDoc(path: PadPath, kind: PadDocKind): Promise<StoredPadDoc> {
+export async function loadPadDoc(
+    path: PadPath,
+    kind: PadDocKind,
+): Promise<StoredPadDoc> {
     const doc = await loadPadDocHead(path, kind)
-    if (!doc || doc.head_revision_id === null || doc.head_revision_number === null) {
+    if (
+        !doc ||
+        doc.head_revision_id === null ||
+        doc.head_revision_number === null
+    ) {
         return {
             snapshot: null,
             updates: [],
@@ -64,7 +71,11 @@ export async function loadPadDoc(path: PadPath, kind: PadDocKind): Promise<Store
     const headRevisionId = toNumber(doc.head_revision_id)
     const headRevisionNumber = toNumber(doc.head_revision_number)
     const checkpoint = await loadNearestCheckpoint(docId, headRevisionNumber)
-    const updates = await loadRevisionUpdates(docId, checkpoint ? toNumber(checkpoint.revision_number) : 0, headRevisionNumber)
+    const updates = await loadRevisionUpdates(
+        docId,
+        checkpoint ? toNumber(checkpoint.revision_number) : 0,
+        headRevisionNumber,
+    )
 
     return {
         snapshot: checkpoint ? new Uint8Array(checkpoint.snapshot) : null,
@@ -100,11 +111,19 @@ export async function appendPadDocRevision(
         `
         assert(doc !== undefined, 'Missing pad doc')
 
-        const previousRevision = doc.head_revision_id === null
-            ? null
-            : await loadRevisionNumberById(tx, toNumber(doc.head_revision_id))
-        const previousRevisionNumber = previousRevision === null ? 0 : previousRevision
-        const parentRevisionId = doc.head_revision_id === null ? null : toNumber(doc.head_revision_id)
+        const previousRevision =
+            doc.head_revision_id === null
+                ? null
+                : await loadRevisionNumberById(
+                      tx,
+                      toNumber(doc.head_revision_id),
+                  )
+        const previousRevisionNumber =
+            previousRevision === null ? 0 : previousRevision
+        const parentRevisionId =
+            doc.head_revision_id === null
+                ? null
+                : toNumber(doc.head_revision_id)
 
         const [revision] = await tx<RevisionInsertRow[]>`
             INSERT INTO pad_revisions (
@@ -171,7 +190,10 @@ export async function createPadDocCheckpoint(
     return revisionId
 }
 
-export async function listPadDocRevisions(path: PadPath, kind: PadDocKind): Promise<PadDocRevisionSummary[]> {
+export async function listPadDocRevisions(
+    path: PadPath,
+    kind: PadDocKind,
+): Promise<PadDocRevisionSummary[]> {
     const rows = await sql<RevisionListRow[]>`
         SELECT
             r.id,
@@ -191,15 +213,25 @@ export async function listPadDocRevisions(path: PadPath, kind: PadDocKind): Prom
         revisionNumber: toNumber(row.revision_number),
         createdAt: toIsoString(row.created_at),
         isHead: row.is_head,
-        revertedFromRevisionNumber: row.reverted_from_revision_number === null ? null : toNumber(row.reverted_from_revision_number),
+        revertedFromRevisionNumber:
+            row.reverted_from_revision_number === null
+                ? null
+                : toNumber(row.reverted_from_revision_number),
     }))
 }
 
-export async function readPadDocRevisionText(path: PadPath, revisionId: number) {
+export async function readPadDocRevisionText(
+    path: PadPath,
+    revisionId: number,
+) {
     const revision = await loadRevisionById(path, 'text', revisionId)
     if (!revision) return null
 
-    const bytes = await loadPadDocRevisionBytes(path, 'text', toNumber(revision.id))
+    const bytes = await loadPadDocRevisionBytes(
+        path,
+        'text',
+        toNumber(revision.id),
+    )
     const doc = new Doc()
     if (bytes.byteLength > 0) applyUpdate(doc, bytes)
     const content = doc.getText(Y_TEXT_KEY).toString()
@@ -213,14 +245,22 @@ export async function readPadDocRevisionText(path: PadPath, revisionId: number) 
     }
 }
 
-export async function loadPadDocRevisionBytes(path: PadPath, kind: PadDocKind, revisionId: number) {
+export async function loadPadDocRevisionBytes(
+    path: PadPath,
+    kind: PadDocKind,
+    revisionId: number,
+) {
     const revision = await loadRevisionById(path, kind, revisionId)
     assert(revision !== null, `Missing revision ${revisionId}`)
 
     const docId = toNumber(revision.doc_id)
     const revisionNumber = toNumber(revision.revision_number)
     const checkpoint = await loadNearestCheckpoint(docId, revisionNumber)
-    const updates = await loadRevisionUpdates(docId, checkpoint ? toNumber(checkpoint.revision_number) : 0, revisionNumber)
+    const updates = await loadRevisionUpdates(
+        docId,
+        checkpoint ? toNumber(checkpoint.revision_number) : 0,
+        revisionNumber,
+    )
 
     return mergePadDoc(
         checkpoint ? new Uint8Array(checkpoint.snapshot) : null,
@@ -228,7 +268,10 @@ export async function loadPadDocRevisionBytes(path: PadPath, kind: PadDocKind, r
     )
 }
 
-export function mergePadDoc(snapshot: Uint8Array | null, updates: Uint8Array[]) {
+export function mergePadDoc(
+    snapshot: Uint8Array | null,
+    updates: Uint8Array[],
+) {
     if (!snapshot && updates.length === 0) return new Uint8Array()
     if (!snapshot) return mergeUpdates(updates)
     if (updates.length === 0) return snapshot
@@ -248,9 +291,13 @@ async function loadPadDocHead(path: PadPath, kind: PadDocKind) {
 
     return {
         ...doc,
-        head_revision_number: doc.head_revision_id === null
-            ? null
-            : await loadRevisionNumberById(sql, toNumber(doc.head_revision_id)),
+        head_revision_number:
+            doc.head_revision_id === null
+                ? null
+                : await loadRevisionNumberById(
+                      sql,
+                      toNumber(doc.head_revision_id),
+                  ),
     }
 }
 
@@ -269,7 +316,11 @@ async function loadNearestCheckpoint(docId: number, revisionNumber: number) {
     return checkpoint ?? null
 }
 
-async function loadRevisionUpdates(docId: number, afterRevisionNumber: number, upToRevisionNumber: number) {
+async function loadRevisionUpdates(
+    docId: number,
+    afterRevisionNumber: number,
+    upToRevisionNumber: number,
+) {
     return sql<RevisionUpdateRow[]>`
         SELECT update
         FROM pad_revisions
@@ -281,7 +332,11 @@ async function loadRevisionUpdates(docId: number, afterRevisionNumber: number, u
     `
 }
 
-async function loadRevisionById(path: PadPath, kind: PadDocKind, revisionId: number) {
+async function loadRevisionById(
+    path: PadPath,
+    kind: PadDocKind,
+    revisionId: number,
+) {
     const [revision] = await sql<RevisionRow[]>`
         SELECT
             r.id,

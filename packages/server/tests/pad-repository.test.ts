@@ -1,17 +1,34 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { CHECKPOINT_INTERVAL, Y_TEXT_COMMENT_MESSAGES_KEY, Y_TEXT_COMMENT_THREADS_KEY, Y_TEXT_KEY } from '@mpad/core/pad-limits'
+import {
+    CHECKPOINT_INTERVAL,
+    Y_TEXT_COMMENT_MESSAGES_KEY,
+    Y_TEXT_COMMENT_THREADS_KEY,
+    Y_TEXT_KEY,
+} from '@mpad/core/pad-limits'
 import { padPath } from '@mpad/core/pad-path'
-import { Array as YArray, Doc, Map as YMap, applyUpdate, createRelativePositionFromTypeIndex, encodeRelativePosition, encodeStateAsUpdate, mergeUpdates } from 'yjs'
-import { ensurePad, listRelatedPads } from '../src/pad-tree/infrastructure/repository'
+import {
+    Doc,
+    Array as YArray,
+    Map as YMap,
+    applyUpdate,
+    createRelativePositionFromTypeIndex,
+    encodeRelativePosition,
+    encodeStateAsUpdate,
+    mergeUpdates,
+} from 'yjs'
 import {
     appendPadDocRevision,
     createPadDocCheckpoint,
     listPadDocRevisions,
     loadPadDoc,
     loadPadDocRevisionBytes,
-} from '../src/collab/infrastructure/doc-store'
-import { sql } from '../src/infrastructure/db'
-import { migrate } from '../src/infrastructure/migration-runner'
+} from '#/collab/infrastructure/doc-store'
+import { sql } from '#/infrastructure/db'
+import { migrate } from '#/infrastructure/migration-runner'
+import {
+    ensurePad,
+    listRelatedPads,
+} from '#/pad-tree/infrastructure/repository'
 
 beforeAll(async () => {
     await migrate()
@@ -32,7 +49,12 @@ describe('pad doc repository', () => {
         text.insert(0, 'hello')
         text.insert(5, ' world')
 
-        const revision = await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
+        const revision = await appendPadDocRevision(
+            path,
+            'text',
+            mergeUpdates(updates),
+            updates.length,
+        )
         const stored = await loadPadDoc(path, 'text')
         const history = await listPadDocRevisions(path, 'text')
 
@@ -100,25 +122,56 @@ describe('pad doc repository', () => {
         thread.set('authorName', 'Naruto Uzumaki')
         thread.set('authorTextColor', '#ea580c')
         thread.set('authorTextColorLight', '#fdba7433')
-        thread.set('anchorStart', encodeRelativePosition(createRelativePositionFromTypeIndex(text, 6, 0)))
-        thread.set('anchorEnd', encodeRelativePosition(createRelativePositionFromTypeIndex(text, 10, -1)))
+        thread.set(
+            'anchorStart',
+            encodeRelativePosition(
+                createRelativePositionFromTypeIndex(text, 6, 0),
+            ),
+        )
+        thread.set(
+            'anchorEnd',
+            encodeRelativePosition(
+                createRelativePositionFromTypeIndex(text, 10, -1),
+            ),
+        )
         thread.set(Y_TEXT_COMMENT_MESSAGES_KEY, messages)
         threads.set('thread-1', thread)
 
-        const revision = await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
-        const bytes = await loadPadDocRevisionBytes(path, 'text', revision.revisionId)
+        const revision = await appendPadDocRevision(
+            path,
+            'text',
+            mergeUpdates(updates),
+            updates.length,
+        )
+        const bytes = await loadPadDocRevisionBytes(
+            path,
+            'text',
+            revision.revisionId,
+        )
         const restored = new Doc()
         applyUpdate(restored, bytes)
 
-        const restoredThread = restored.getMap<YMap<unknown>>(Y_TEXT_COMMENT_THREADS_KEY).get('thread-1')
+        const restoredThread = restored
+            .getMap<YMap<unknown>>(Y_TEXT_COMMENT_THREADS_KEY)
+            .get('thread-1')
         expect(restored.getText(Y_TEXT_KEY).toString()).toBe('alpha beta gamma')
         expect(restoredThread).toBeInstanceOf(YMap)
         expect((restoredThread as YMap<unknown>).get('quote')).toBe('beta')
-        expect((restoredThread as YMap<unknown>).get('anchorStart')).toBeInstanceOf(Uint8Array)
+        expect(
+            (restoredThread as YMap<unknown>).get('anchorStart'),
+        ).toBeInstanceOf(Uint8Array)
 
-        const restoredMessages = (restoredThread as YMap<unknown>).get(Y_TEXT_COMMENT_MESSAGES_KEY)
+        const restoredMessages = (restoredThread as YMap<unknown>).get(
+            Y_TEXT_COMMENT_MESSAGES_KEY,
+        )
         expect(restoredMessages).toBeInstanceOf(YArray)
-        expect(((restoredMessages as YArray<YMap<unknown>>).get(0) as YMap<unknown>).get('body')).toBe('Root note')
+        expect(
+            (
+                (restoredMessages as YArray<YMap<unknown>>).get(
+                    0,
+                ) as YMap<unknown>
+            ).get('body'),
+        ).toBe('Root note')
 
         doc.destroy()
         restored.destroy()
@@ -139,12 +192,26 @@ describe('pad doc repository', () => {
         let latestRevisionId = 0
 
         for (let index = 1; index <= CHECKPOINT_INTERVAL + 2; index += 1) {
-            doc.getText(Y_TEXT_KEY).insert(doc.getText(Y_TEXT_KEY).length, `${index}\n`)
-            const revision = await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
+            doc.getText(Y_TEXT_KEY).insert(
+                doc.getText(Y_TEXT_KEY).length,
+                `${index}\n`,
+            )
+            const revision = await appendPadDocRevision(
+                path,
+                'text',
+                mergeUpdates(updates),
+                updates.length,
+            )
             updates.length = 0
 
             if (revision.revisionNumber % CHECKPOINT_INTERVAL === 0) {
-                await createPadDocCheckpoint(path, 'text', revision.revisionId, revision.chunkSeq, encodeStateAsUpdate(doc))
+                await createPadDocCheckpoint(
+                    path,
+                    'text',
+                    revision.revisionId,
+                    revision.chunkSeq,
+                    encodeStateAsUpdate(doc),
+                )
             }
 
             if (index === 1) firstRevisionId = revision.revisionId
@@ -167,23 +234,35 @@ describe('pad doc repository', () => {
         `
 
         expect(history).toHaveLength(CHECKPOINT_INTERVAL + 2)
-        expect(history[0]).toEqual(expect.objectContaining({
-            id: latestRevisionId,
-            revisionNumber: CHECKPOINT_INTERVAL + 2,
-            isHead: true,
-        }))
-        expect(history.at(-1)).toEqual(expect.objectContaining({
-            id: firstRevisionId,
-            revisionNumber: 1,
-            isHead: false,
-        }))
+        expect(history[0]).toEqual(
+            expect.objectContaining({
+                id: latestRevisionId,
+                revisionNumber: CHECKPOINT_INTERVAL + 2,
+                isHead: true,
+            }),
+        )
+        expect(history.at(-1)).toEqual(
+            expect.objectContaining({
+                id: firstRevisionId,
+                revisionNumber: 1,
+                isHead: false,
+            }),
+        )
         expect(checkpointCount?.count).toBe(1)
         expect(revisionCount?.count).toBe(CHECKPOINT_INTERVAL + 2)
         expect(stored.snapshot).not.toBeNull()
         expect(stored.updates).toHaveLength(2)
 
-        const oldBytes = await loadPadDocRevisionBytes(path, 'text', firstRevisionId)
-        const latestBytes = await loadPadDocRevisionBytes(path, 'text', latestRevisionId)
+        const oldBytes = await loadPadDocRevisionBytes(
+            path,
+            'text',
+            firstRevisionId,
+        )
+        const latestBytes = await loadPadDocRevisionBytes(
+            path,
+            'text',
+            latestRevisionId,
+        )
         const oldDoc = new Doc()
         const latestDoc = new Doc()
         applyUpdate(oldDoc, oldBytes)
@@ -191,7 +270,10 @@ describe('pad doc repository', () => {
 
         expect(oldDoc.getText(Y_TEXT_KEY).toString()).toBe('1\n')
         expect(latestDoc.getText(Y_TEXT_KEY).toString()).toBe(
-            Array.from({ length: CHECKPOINT_INTERVAL + 2 }, (_, index) => `${index + 1}\n`).join(''),
+            Array.from(
+                { length: CHECKPOINT_INTERVAL + 2 },
+                (_, index) => `${index + 1}\n`,
+            ).join(''),
         )
 
         doc.destroy()
@@ -211,23 +293,41 @@ describe('pad doc repository', () => {
         doc.on('update', (update) => updates.push(update))
 
         doc.getText(Y_TEXT_KEY).insert(0, 'alpha')
-        const first = await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
+        const first = await appendPadDocRevision(
+            path,
+            'text',
+            mergeUpdates(updates),
+            updates.length,
+        )
         updates.length = 0
 
         doc.getText(Y_TEXT_KEY).insert(5, '\nbeta')
-        await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length)
+        await appendPadDocRevision(
+            path,
+            'text',
+            mergeUpdates(updates),
+            updates.length,
+        )
         updates.length = 0
 
         doc.getText(Y_TEXT_KEY).delete(5, 5)
-        await appendPadDocRevision(path, 'text', mergeUpdates(updates), updates.length, first.revisionId)
+        await appendPadDocRevision(
+            path,
+            'text',
+            mergeUpdates(updates),
+            updates.length,
+            first.revisionId,
+        )
 
         const history = await listPadDocRevisions(path, 'text')
 
-        expect(history[0]).toEqual(expect.objectContaining({
-            revisionNumber: 3,
-            revertedFromRevisionNumber: 1,
-            isHead: true,
-        }))
+        expect(history[0]).toEqual(
+            expect.objectContaining({
+                revisionNumber: 3,
+                revertedFromRevisionNumber: 1,
+                isHead: true,
+            }),
+        )
 
         doc.destroy()
         await cleanupRoot(root)
@@ -251,13 +351,9 @@ describe('pad tree repository', () => {
 
         const tree = await listRelatedPads(current)
 
-        expect(tree.map((item) => item.path)).toEqual(sortPaths([
-            padPath(root),
-            current,
-            alpha,
-            nestedAlpha,
-            zeta,
-        ]))
+        expect(tree.map((item) => item.path)).toEqual(
+            sortPaths([padPath(root), current, alpha, nestedAlpha, zeta]),
+        )
 
         const [row] = await sql<{ count: number }[]>`
             SELECT COUNT(*)::int AS count
@@ -281,11 +377,9 @@ describe('pad tree repository', () => {
 
         const tree = await listRelatedPads(current)
 
-        expect(tree.map((item) => item.path)).toEqual(sortPaths([
-            padPath(root),
-            current,
-            known,
-        ]))
+        expect(tree.map((item) => item.path)).toEqual(
+            sortPaths([padPath(root), current, known]),
+        )
         expect(tree.some((item) => item.path === missingAncestor)).toBe(false)
 
         await cleanupRoot(root)

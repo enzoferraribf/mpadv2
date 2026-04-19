@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 import {
+    type PadWorkspaceViewState,
     createPadWorkspaceViewState,
     reducePadWorkspaceViewState,
-    type PadWorkspaceViewState,
-} from '../src/pad-workspace/domain/workspace-view-state'
+} from '@/pad-workspace/domain/workspace-view-state'
 
 describe('workspace view state', () => {
     test('starts with editor layout and sidebar closed', () => {
@@ -54,7 +54,10 @@ describe('workspace view state', () => {
         const next = reducePadWorkspaceViewState(
             reducePadWorkspaceViewState(
                 reducePadWorkspaceViewState(
-                    reducePadWorkspaceViewState(state, { kind: 'tab-opened', tab: 'drawing' }),
+                    reducePadWorkspaceViewState(state, {
+                        kind: 'tab-opened',
+                        tab: 'drawing',
+                    }),
                     { kind: 'layout-set', layout: 'preview' },
                 ),
                 { kind: 'cursor-set', cursor: { line: 8, column: 3 } },

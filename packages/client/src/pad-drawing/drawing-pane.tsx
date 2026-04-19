@@ -1,11 +1,19 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
-import type { Collaborator, ExcalidrawImperativeAPI, SocketId } from '@excalidraw/excalidraw/types'
+import type {
+    Collaborator,
+    ExcalidrawImperativeAPI,
+    SocketId,
+} from '@excalidraw/excalidraw/types'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import '@excalidraw/excalidraw/index.css'
-import type { DrawingTheme } from './drawing-theme'
 import type { DrawingHandle } from '@/pad-drawing/infrastructure/drawing-handle'
+import type { DrawingTheme } from './drawing-theme'
 
-const ExcalidrawEditor = lazy(() => import('@excalidraw/excalidraw').then((mod) => ({ default: mod.Excalidraw })))
+const ExcalidrawEditor = lazy(() =>
+    import('@excalidraw/excalidraw').then((mod) => ({
+        default: mod.Excalidraw,
+    })),
+)
 
 declare global {
     interface Window {
@@ -13,10 +21,16 @@ declare global {
     }
 }
 
-export function DrawingPane(input: { drawing: DrawingHandle | null; theme: DrawingTheme }) {
+export function DrawingPane(input: {
+    drawing: DrawingHandle | null
+    theme: DrawingTheme
+}) {
     const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null)
     const localOriginRef = useRef({})
-    const { collaborators, elements } = useDrawingState(input.drawing, localOriginRef.current)
+    const { collaborators, elements } = useDrawingState(
+        input.drawing,
+        localOriginRef.current,
+    )
     const applyingRemoteRef = useRef(false)
     const pointerActiveRef = useRef(false)
     const pendingElementsRef = useRef<readonly ExcalidrawElement[] | null>(null)
@@ -29,7 +43,10 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
     }
 
     function getCurrentElements() {
-        return pendingElementsRef.current ?? api?.getSceneElementsIncludingDeleted()
+        return (
+            pendingElementsRef.current ??
+            api?.getSceneElementsIncludingDeleted()
+        )
     }
 
     function flushScene(drawing: DrawingHandle) {
@@ -117,20 +134,36 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
     }, [api])
 
     if (!input.drawing) {
-        return <div className="flex h-full items-center justify-center text-sm text-[--stone-text-dim]">Connecting drawing…</div>
+        return (
+            <div className='flex h-full items-center justify-center text-sm text-[--stone-text-dim]'>
+                Connecting drawing…
+            </div>
+        )
     }
 
     const drawing = input.drawing
 
     return (
-        <div className="h-full w-full overflow-hidden">
-            <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-[--stone-text-dim]">Loading drawing…</div>}>
+        <div className='h-full w-full overflow-hidden'>
+            <Suspense
+                fallback={
+                    <div className='flex h-full items-center justify-center text-sm text-[--stone-text-dim]'>
+                        Loading drawing…
+                    </div>
+                }
+            >
                 <ExcalidrawEditor
                     excalidrawAPI={setApi}
                     isCollaborating
                     onChange={(nextElements, appState) => {
                         if (applyingRemoteRef.current) return
-                        if (sameElements(pendingElementsRef.current ?? [], nextElements)) return
+                        if (
+                            sameElements(
+                                pendingElementsRef.current ?? [],
+                                nextElements,
+                            )
+                        )
+                            return
                         pendingElementsRef.current = nextElements
 
                         if (pointerActiveRef.current) {
@@ -183,9 +216,14 @@ export function DrawingPane(input: { drawing: DrawingHandle | null; theme: Drawi
     )
 }
 
-function useDrawingState(drawing: DrawingHandle | null, ignoredOrigin: unknown) {
+function useDrawingState(
+    drawing: DrawingHandle | null,
+    ignoredOrigin: unknown,
+) {
     const [elements, setElements] = useState<readonly ExcalidrawElement[]>([])
-    const [collaborators, setCollaborators] = useState(new Map<SocketId, Collaborator>())
+    const [collaborators, setCollaborators] = useState(
+        new Map<SocketId, Collaborator>(),
+    )
     useEffect(() => {
         if (!drawing) {
             setElements([])
@@ -208,7 +246,10 @@ function useDrawingState(drawing: DrawingHandle | null, ignoredOrigin: unknown) 
     return { elements, collaborators }
 }
 
-function sameElements(left: readonly ExcalidrawElement[], right: readonly ExcalidrawElement[]) {
+function sameElements(
+    left: readonly ExcalidrawElement[],
+    right: readonly ExcalidrawElement[],
+) {
     if (left.length !== right.length) return false
 
     return left.every((element, index) => {

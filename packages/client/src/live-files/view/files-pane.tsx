@@ -1,8 +1,8 @@
+import { formatFileSize } from '@/lib/file'
+import { FileTransferProgress } from '@/live-files/view/file-transfer-progress'
+import type { LiveFileState } from '@mpad/protocol/live-files'
 import { useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import type { LiveFileState } from '@mpad/protocol/live-files'
-import { FileTransferProgress } from '@/live-files/view/file-transfer-progress'
-import { formatFileSize } from '@/lib/file'
 
 export function FilesPane(input: {
     files: LiveFileState[]
@@ -21,55 +21,75 @@ export function FilesPane(input: {
                 setDragging(true)
             }}
             onDragLeave={() => setDragging(false)}
-            onDrop={(event) => handleDrop(event, input.onUploadFile, setDragging)}
-            data-testid="workspace-shell"
+            onDrop={(event) =>
+                handleDrop(event, input.onUploadFile, setDragging)
+            }
+            data-testid='workspace-shell'
         >
             <input
                 ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={() => handleFileSelect(fileInputRef.current, input.onUploadFile)}
+                type='file'
+                className='hidden'
+                onChange={() =>
+                    handleFileSelect(fileInputRef.current, input.onUploadFile)
+                }
             />
             {input.files.length === 0 ? (
-                <div className="files-empty" role="button" tabIndex={0} onClick={() => fileInputRef.current?.click()}>
+                <div
+                    className='files-empty'
+                    role='button'
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                >
                     Tap or drop files to share
                 </div>
             ) : (
-                <div className="files-grid">
+                <div className='files-grid'>
                     {input.files.map((file) => (
                         <div
                             key={file.meta.id}
-                            className="files-card"
-                            role="button"
+                            className='files-card'
+                            role='button'
                             tabIndex={0}
                             onClick={() => input.onDownloadFile(file)}
                             onKeyDown={(event) => {
-                                if (event.key !== 'Enter' && event.key !== ' ') return
+                                if (event.key !== 'Enter' && event.key !== ' ')
+                                    return
                                 event.preventDefault()
                                 input.onDownloadFile(file)
                             }}
                         >
-                            <div className="files-card-icon">&#x1F4C4;</div>
-                            <div className="files-card-name" title={file.meta.name}>{file.meta.name}</div>
-                            <div className="files-card-size">{formatFileSize(file.meta.sizeBytes)}</div>
+                            <div className='files-card-icon'>&#x1F4C4;</div>
+                            <div
+                                className='files-card-name'
+                                title={file.meta.name}
+                            >
+                                {file.meta.name}
+                            </div>
+                            <div className='files-card-size'>
+                                {formatFileSize(file.meta.sizeBytes)}
+                            </div>
                             <FileTransferProgress file={file} compact />
                             {file.isLocal ? (
                                 <button
-                                    className="files-card-delete"
+                                    className='files-card-delete'
                                     onClick={(event) => {
                                         event.stopPropagation()
                                         input.onDeleteFile(file.meta.id)
                                     }}
-                                    title="Remove"
+                                    title='Remove'
                                 >
                                     &times;
                                 </button>
                             ) : null}
                         </div>
                     ))}
-                    <button className="files-card files-card-add" onClick={() => fileInputRef.current?.click()}>
-                        <div className="files-card-icon">&#x2B;</div>
-                        <div className="files-card-name">Add file</div>
+                    <button
+                        className='files-card files-card-add'
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <div className='files-card-icon'>&#x2B;</div>
+                        <div className='files-card-name'>Add file</div>
                     </button>
                 </div>
             )}
@@ -88,7 +108,10 @@ function handleDrop(
     if (file) onUploadFile(file)
 }
 
-function handleFileSelect(input: HTMLInputElement | null, onUploadFile: (file: File) => void) {
+function handleFileSelect(
+    input: HTMLInputElement | null,
+    onUploadFile: (file: File) => void,
+) {
     const file = input?.files?.[0]
     if (file) onUploadFile(file)
     if (input) input.value = ''

@@ -1,3 +1,3 @@
-import { migrate } from './infrastructure/migration-runner'
+import { migrate } from '#/infrastructure/migration-runner'
 
 await migrate()

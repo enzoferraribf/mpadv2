@@ -1,42 +1,53 @@
-import type { ServerWebSocket } from 'bun'
-import {
-    encodeServerRoomMessage,
-    type ClientRoomMessage,
-} from '@mpad/protocol/room-message-codec'
 import type { OutboundFileSignal } from '@mpad/protocol/live-files'
-import { appContext } from '../../bootstrap/app-context'
-import type { WsData } from '../../transport/ws-data'
 import {
+    type ClientRoomMessage,
+    encodeServerRoomMessage,
+} from '@mpad/protocol/room-message-codec'
+import type { ServerWebSocket } from 'bun'
+import type { ServerRuntime } from '#/bootstrap/runtime'
+import {
+    type LiveFilesRoom,
     applyLiveFilesMessage,
     connectLiveFilesClient,
     createLiveFilesRoom,
     destroyLiveFilesRoom,
     disconnectLiveFilesClient,
     relayLiveFilesSignal,
-    type LiveFilesRoom,
-} from './room'
+} from '#/live-files/application/room'
+import type { WsData } from '#/transport/ws-data'
 
-export async function openLiveFileRoomClient(ws: ServerWebSocket<WsData>) {
-    const room = loadLiveFilesRoom(ws.data.roomName)
+export async function openLiveFileRoomClient(
+    runtime: ServerRuntime,
+    ws: ServerWebSocket<WsData>,
+) {
+    const room = loadLiveFilesRoom(runtime, ws.data.roomName)
     for (const message of connectLiveFilesClient(room, ws)) {
         sendBytes(ws, message.data)
     }
 }
 
-export async function closeLiveFileRoomClient(ws: ServerWebSocket<WsData>) {
-    const room = appContext.fileRoomRegistry.get(ws.data.roomName)
+export async function closeLiveFileRoomClient(
+    runtime: ServerRuntime,
+    ws: ServerWebSocket<WsData>,
+) {
+    const room = runtime.fileRoomRegistry.get(ws.data.roomName)
     if (!room) return
 
     const result = disconnectLiveFilesClient(room, ws)
-    if (result.awarenessMessage) broadcast(room, ws, result.awarenessMessage.data)
+    if (result.awarenessMessage)
+        broadcast(room, ws, result.awarenessMessage.data)
     if (!result.isEmpty) return
 
     destroyLiveFilesRoom(room)
-    appContext.fileRoomRegistry.delete(room.roomName)
+    runtime.fileRoomRegistry.delete(room.roomName)
 }
 
-export function handleLiveFileRoomMessage(ws: ServerWebSocket<WsData>, message: ClientRoomMessage) {
-    const room = appContext.fileRoomRegistry.get(ws.data.roomName)
+export function handleLiveFileRoomMessage(
+    runtime: ServerRuntime,
+    ws: ServerWebSocket<WsData>,
+    message: ClientRoomMessage,
+) {
+    const room = runtime.fileRoomRegistry.get(ws.data.roomName)
     if (!room) return
 
     const result = applyLiveFilesMessage(room, ws, message)
@@ -54,25 +65,33 @@ export function routeLiveFileSignal(
     sender: ServerWebSocket<WsData>,
     signal: OutboundFileSignal,
 ) {
-    relayLiveFilesSignal(room, signal.targetPeerId, encodeServerRoomMessage({
-        kind: 'file-signal',
-        signal: {
-            sourcePeerId: sender.data.awarenessClientId,
-            signal: signal.signal,
-        },
-    }))
+    relayLiveFilesSignal(
+        room,
+        signal.targetPeerId,
+        encodeServerRoomMessage({
+            kind: 'file-signal',
+            signal: {
+                sourcePeerId: sender.data.awarenessClientId,
+                signal: signal.signal,
+            },
+        }),
+    )
 }
 
-function loadLiveFilesRoom(roomName: string) {
-    const current = appContext.fileRoomRegistry.get(roomName)
+function loadLiveFilesRoom(runtime: ServerRuntime, roomName: string) {
+    const current = runtime.fileRoomRegistry.get(roomName)
     if (current) return current
 
     const room = createLiveFilesRoom(roomName)
-    appContext.fileRoomRegistry.set(roomName, room)
+    runtime.fileRoomRegistry.set(roomName, room)
     return room
 }
 
-function broadcast(room: LiveFilesRoom, sender: ServerWebSocket<WsData>, bytes: Uint8Array) {
+function broadcast(
+    room: LiveFilesRoom,
+    sender: ServerWebSocket<WsData>,
+    bytes: Uint8Array,
+) {
     for (const client of room.clients) {
         if (client === sender) continue
         sendBytes(client, bytes)

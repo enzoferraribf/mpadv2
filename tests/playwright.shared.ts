@@ -24,21 +24,28 @@ export function createMpadPlaywrightConfig(input: CreatePlaywrightConfigInput) {
         webServer: [
             {
                 command:
-                    'cd packages/server'
-                    + ' && DATABASE_URL=' + databaseUrl + ' bun run schema-migrate'
-                    + ' && PORT=' + serverPort + ' DATABASE_URL=' + databaseUrl + ' bun run start',
+                    'cd packages/server' +
+                    ' && DATABASE_URL=' +
+                    databaseUrl +
+                    ' bun run schema-migrate' +
+                    ' && PORT=' +
+                    serverPort +
+                    ' DATABASE_URL=' +
+                    databaseUrl +
+                    ' bun run start',
                 port: serverPort,
                 reuseExistingServer: false,
                 timeout: 120_000,
             },
             {
                 command:
-                    'cd packages/client'
-                    + ' && VITE_E2E=1'
-                    + ' VITE_HTTP_SERVER_ORIGIN=' + serverUrl
-                    + ' VITE_WS_SERVER_ORIGIN=ws://127.0.0.1:' + serverPort
-                    + ' bun run build'
-                    + ' && bun run preview -- --port ' + clientPort,
+                    'cd packages/client' +
+                    ' && VITE_E2E=1' +
+                    ' VITE_SERVER_ORIGIN=' +
+                    serverUrl +
+                    ' bun run build' +
+                    ' && bun run preview -- --port ' +
+                    clientPort,
                 port: clientPort,
                 reuseExistingServer: false,
                 timeout: 120_000,

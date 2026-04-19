@@ -1,28 +1,40 @@
 import { WS_IDLE_TIMEOUT_S, WS_MAX_PAYLOAD } from '@mpad/core/pad-limits'
 import type { ServerWebSocket } from 'bun'
-import { handleRequest } from '../transport/http-router'
-import { isAllowedWebSocketOrigin } from '../infrastructure/origin'
-import { closeSocket, flushPadRooms, handleSocketMessage, openSocket } from '../transport/ws-router'
-import type { WsData } from '../transport/ws-data'
+import type { ServerRuntime } from '#/bootstrap/runtime'
+import { isAllowedWebSocketOrigin } from '#/infrastructure/origin'
+import { handleWorkspaceRequest } from '#/pad-workspace/application/http-service'
+import {
+    closeWorkspaceSocket,
+    flushWorkspaceRooms,
+    handleWorkspaceSocketMessage,
+    openWorkspaceSocket,
+} from '#/pad-workspace/application/socket-service'
+import type { WsData } from '#/transport/ws-data'
 
 type CreateServerInput = {
-    port: number
     appOrigin: string | null
+    port: number
+    runtime: ServerRuntime
 }
 
-export function createServer(input: number | CreateServerInput) {
-    const config = typeof input === 'number'
-        ? { port: input, appOrigin: null }
-        : input
-
+export function createServer(input: CreateServerInput) {
     return Bun.serve<WsData>({
-        port: config.port,
+        port: input.port,
         hostname: '0.0.0.0',
 
         async fetch(req, server) {
-            const route = await handleRequest(req, config.appOrigin)
+            const route = await handleWorkspaceRequest(
+                input.runtime,
+                req,
+                input.appOrigin,
+            )
             if (!(route instanceof Response)) {
-                if (!isAllowedWebSocketOrigin(config.appOrigin, req.headers.get('origin'))) {
+                if (
+                    !isAllowedWebSocketOrigin(
+                        input.appOrigin,
+                        req.headers.get('origin'),
+                    )
+                ) {
                     return new Response('Forbidden', { status: 403 })
                 }
 
@@ -47,24 +59,30 @@ export function createServer(input: number | CreateServerInput) {
             perMessageDeflate: false,
 
             open(ws) {
-                void openSocket(ws)
+                void openWorkspaceSocket(input.runtime, ws)
             },
 
             message(ws, data) {
                 if (typeof data === 'string') return
-                const bytes = data instanceof ArrayBuffer
-                    ? new Uint8Array(data)
-                    : new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength))
-                handleSocketMessage(ws, bytes)
+                const bytes =
+                    data instanceof ArrayBuffer
+                        ? new Uint8Array(data)
+                        : new Uint8Array(
+                              data.buffer.slice(
+                                  data.byteOffset,
+                                  data.byteOffset + data.byteLength,
+                              ),
+                          )
+                handleWorkspaceSocketMessage(input.runtime, ws, bytes)
             },
 
             close(ws: ServerWebSocket<WsData>) {
-                void closeSocket(ws)
+                void closeWorkspaceSocket(input.runtime, ws)
             },
         },
     })
 }
 
-export async function shutdownServer() {
-    await flushPadRooms()
+export async function shutdownServer(runtime: ServerRuntime) {
+    await flushWorkspaceRooms(runtime)
 }

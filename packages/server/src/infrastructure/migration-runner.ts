@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
-import { sql } from './db'
+import { sql } from '#/infrastructure/db'
 
 type MigrationRecord = {
     version: string
@@ -26,12 +26,19 @@ export async function migrate() {
 
 export async function ensureDatabaseReady() {
     const migrationTableReady = await hasTable(MIGRATIONS_TABLE)
-    if (!migrationTableReady) throw new Error('Database is not migrated. Run `bun run server:schema-migrate`.')
+    if (!migrationTableReady)
+        throw new Error(
+            'Database is not migrated. Run `bun run server:schema-migrate`.',
+        )
 
     const applied = new Set(await loadAppliedMigrations())
-    const pending = listMigrationVersions().filter((version) => !applied.has(version))
+    const pending = listMigrationVersions().filter(
+        (version) => !applied.has(version),
+    )
     if (pending.length > 0) {
-        throw new Error(`Database has pending migrations: ${pending.join(', ')}. Run \`bun run server:schema-migrate\`.`)
+        throw new Error(
+            `Database has pending migrations: ${pending.join(', ')}. Run \`bun run server:schema-migrate\`.`,
+        )
     }
 }
 

@@ -1,4 +1,4 @@
-import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
+import type { TextCommentRangeRect } from '@/pad-text/domain/comment-overlay'
 import { StateEffect, StateField } from '@codemirror/state'
 import {
     Decoration,
@@ -8,12 +8,12 @@ import {
     highlightActiveLine,
     highlightActiveLineGutter,
 } from '@codemirror/view'
-import type { Awareness } from 'y-protocols/awareness'
+import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import { yCollab } from 'y-codemirror.next'
+import type { Awareness } from 'y-protocols/awareness'
 import type { Doc } from 'yjs'
 import { createMarkdownCodeMirrorExtensions } from './markdown-codemirror'
 import type { TextCommentHighlight } from './text-comment-store'
-import type { TextCommentRangeRect } from '@/pad-text/domain/comment-overlay'
 
 export type CursorPosition = {
     line: number
@@ -37,10 +37,15 @@ export type TextEditorHandle = {
         onCursorChange: ((cursor: CursorPosition) => void) | null
         onCommentClick: ((threadId: string) => void) | null
         onLayoutChange: (() => void) | null
-        onSelectionChange: ((selection: TextEditorSelection | null) => void) | null
+        onSelectionChange:
+            | ((selection: TextEditorSelection | null) => void)
+            | null
     }) => () => void
     appendText: (content: string) => void
-    measureCommentRange: (from: number, to: number) => TextCommentRangeRect | null
+    measureCommentRange: (
+        from: number,
+        to: number,
+    ) => TextCommentRangeRect | null
     readContent: () => string
     selectRange: (from: number, to: number) => void
     setActiveCommentThread: (threadId: string | null) => void
@@ -49,15 +54,17 @@ export type TextEditorHandle = {
     subscribe: (listener: () => void) => () => void
 }
 
-const remoteCursorGuard = ViewPlugin.fromClass(class {
-    constructor(view: EditorView) {
-        scheduleRemoteCursorProtection(view.dom)
-    }
+const remoteCursorGuard = ViewPlugin.fromClass(
+    class {
+        constructor(view: EditorView) {
+            scheduleRemoteCursorProtection(view.dom)
+        }
 
-    update(update: { view: EditorView }) {
-        scheduleRemoteCursorProtection(update.view.dom)
-    }
-})
+        update(update: { view: EditorView }) {
+            scheduleRemoteCursorProtection(update.view.dom)
+        }
+    },
+)
 
 const setCommentHighlightsEffect = StateEffect.define<TextCommentHighlight[]>()
 const setActiveCommentThreadEffect = StateEffect.define<string | null>()
@@ -103,24 +110,31 @@ const commentDecorationsField = StateField.define<{
     },
 })
 
-export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEditorHandle {
+export function createTextEditorHandle(
+    doc: Doc,
+    awareness: Awareness,
+): TextEditorHandle {
     const callbacks = {
         onCommentClick: null as ((threadId: string) => void) | null,
         onCursorChange: null as ((cursor: CursorPosition) => void) | null,
         onLayoutChange: null as (() => void) | null,
-        onSelectionChange: null as ((selection: TextEditorSelection | null) => void) | null,
+        onSelectionChange: null as
+            | ((selection: TextEditorSelection | null) => void)
+            | null,
         root: null as HTMLDivElement | null,
     }
     let activeCommentThreadId: string | null = null
     let commentHighlights: TextCommentHighlight[] = []
     let view: EditorView | null = null
-    const commentInteraction = ViewPlugin.fromClass(class {
-    }, {
+    const commentInteraction = ViewPlugin.fromClass(class {}, {
         eventHandlers: {
             click(event) {
-                const target = event.target instanceof HTMLElement
-                    ? event.target.closest<HTMLElement>('[data-comment-thread-id]')
-                    : null
+                const target =
+                    event.target instanceof HTMLElement
+                        ? event.target.closest<HTMLElement>(
+                              '[data-comment-thread-id]',
+                          )
+                        : null
                 const threadId = target?.dataset.commentThreadId
                 if (!threadId) return false
                 callbacks.onCommentClick?.(threadId)
@@ -154,7 +168,9 @@ export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEdit
                     EditorView.updateListener.of((update) => {
                         if (!update.selectionSet && !update.docChanged) return
                         callbacks.onCursorChange?.(readCursor(update.state))
-                        callbacks.onSelectionChange?.(readSelection(update.view, callbacks.root))
+                        callbacks.onSelectionChange?.(
+                            readSelection(update.view, callbacks.root),
+                        )
                         callbacks.onLayoutChange?.()
                     }),
                 ],
@@ -163,7 +179,11 @@ export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEdit
             const onScroll = () => callbacks.onLayoutChange?.()
             view.scrollDOM.addEventListener('scroll', onScroll)
 
-            syncCommentDecorations(view, commentHighlights, activeCommentThreadId)
+            syncCommentDecorations(
+                view,
+                commentHighlights,
+                activeCommentThreadId,
+            )
             callbacks.onCursorChange?.(readCursor(view.state))
             callbacks.onSelectionChange?.(readSelection(view, callbacks.root))
             callbacks.onLayoutChange?.()
@@ -204,13 +224,21 @@ export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEdit
         setActiveCommentThread(threadId) {
             activeCommentThreadId = threadId
             if (!view) return
-            syncCommentDecorations(view, commentHighlights, activeCommentThreadId)
+            syncCommentDecorations(
+                view,
+                commentHighlights,
+                activeCommentThreadId,
+            )
             callbacks.onLayoutChange?.()
         },
         setCommentHighlights(highlights) {
             commentHighlights = highlights
             if (!view) return
-            syncCommentDecorations(view, commentHighlights, activeCommentThreadId)
+            syncCommentDecorations(
+                view,
+                commentHighlights,
+                activeCommentThreadId,
+            )
             callbacks.onLayoutChange?.()
         },
         setText(content) {
@@ -225,7 +253,11 @@ export function createTextEditorHandle(doc: Doc, awareness: Awareness): TextEdit
     }
 }
 
-function syncCommentDecorations(view: EditorView, highlights: TextCommentHighlight[], activeThreadId: string | null) {
+function syncCommentDecorations(
+    view: EditorView,
+    highlights: TextCommentHighlight[],
+    activeThreadId: string | null,
+) {
     view.dispatch({
         effects: [
             setCommentHighlightsEffect.of(highlights),
@@ -235,7 +267,9 @@ function syncCommentDecorations(view: EditorView, highlights: TextCommentHighlig
 }
 
 function protectRemoteCursorDom(root: HTMLElement) {
-    for (const element of root.querySelectorAll<HTMLElement>('.cm-ySelectionCaret, .cm-ySelectionInfo, .cm-ySelectionCaretDot')) {
+    for (const element of root.querySelectorAll<HTMLElement>(
+        '.cm-ySelectionCaret, .cm-ySelectionInfo, .cm-ySelectionCaretDot',
+    )) {
         element.setAttribute('contenteditable', 'false')
         element.setAttribute('aria-hidden', 'true')
         element.setAttribute('draggable', 'false')
@@ -257,7 +291,10 @@ function readCursor(state: EditorView['state']): CursorPosition {
     }
 }
 
-function readSelection(view: EditorView, root: HTMLDivElement | null): TextEditorSelection | null {
+function readSelection(
+    view: EditorView,
+    root: HTMLDivElement | null,
+): TextEditorSelection | null {
     const { main, ranges } = view.state.selection
     if (ranges.length !== 1 || main.empty || !root) return null
 
@@ -278,15 +315,25 @@ function readSelection(view: EditorView, root: HTMLDivElement | null): TextEdito
     }
 }
 
-function readRangeCenterX(view: EditorView, root: HTMLDivElement, from: number, to: number) {
+function readRangeCenterX(
+    view: EditorView,
+    root: HTMLDivElement,
+    from: number,
+    to: number,
+) {
     const start = view.coordsAtPos(from)
     const end = view.coordsAtPos(to)
     if (!start || !end) return 24
     const rootRect = root.getBoundingClientRect()
-    return ((start.left + end.right) / 2) - rootRect.left
+    return (start.left + end.right) / 2 - rootRect.left
 }
 
-function readRangeRect(view: EditorView | null, root: HTMLDivElement | null, from: number, to: number): TextCommentRangeRect | null {
+function readRangeRect(
+    view: EditorView | null,
+    root: HTMLDivElement | null,
+    from: number,
+    to: number,
+): TextCommentRangeRect | null {
     if (!view || !root || to <= from) return null
     const start = view.coordsAtPos(from)
     const end = view.coordsAtPos(to)
@@ -300,21 +347,30 @@ function readRangeRect(view: EditorView | null, root: HTMLDivElement | null, fro
     }
 }
 
-function buildCommentDecorations(highlights: TextCommentHighlight[], activeThreadId: string | null) {
+function buildCommentDecorations(
+    highlights: TextCommentHighlight[],
+    activeThreadId: string | null,
+) {
     const ranges = highlights
         .filter((highlight) => highlight.to > highlight.from)
-        .map((highlight) => Decoration.mark({
-            attributes: {
-                'data-comment-thread-id': highlight.threadId,
-            },
-            class: readCommentClassName(highlight, activeThreadId),
-        }).range(highlight.from, highlight.to))
+        .map((highlight) =>
+            Decoration.mark({
+                attributes: {
+                    'data-comment-thread-id': highlight.threadId,
+                },
+                class: readCommentClassName(highlight, activeThreadId),
+            }).range(highlight.from, highlight.to),
+        )
 
     return Decoration.set(ranges, true)
 }
 
-function readCommentClassName(highlight: TextCommentHighlight, activeThreadId: string | null) {
+function readCommentClassName(
+    highlight: TextCommentHighlight,
+    activeThreadId: string | null,
+) {
     const classes = ['cm-comment-highlight']
-    if (highlight.threadId === activeThreadId) classes.push('cm-comment-highlight-active')
+    if (highlight.threadId === activeThreadId)
+        classes.push('cm-comment-highlight-active')
     return classes.join(' ')
 }

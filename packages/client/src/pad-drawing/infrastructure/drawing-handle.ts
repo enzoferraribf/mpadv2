@@ -1,31 +1,57 @@
+import type {
+    DrawingAwarenessPointer,
+    DrawingAwarenessState,
+} from '@/collab/domain/pad-room-session'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
-import type { Collaborator, CollaboratorPointer, SocketId } from '@excalidraw/excalidraw/types'
+import type {
+    Collaborator,
+    CollaboratorPointer,
+    SocketId,
+} from '@excalidraw/excalidraw/types'
 import type { Awareness } from 'y-protocols/awareness'
 import type { Doc } from 'yjs'
-import type { DrawingAwarenessPointer, DrawingAwarenessState } from '@/collab/domain/pad-room-session'
 import { readDrawingScene, writeDrawingScene } from './drawing-scene'
 
 export type DrawingHandle = {
     getElements: () => readonly ExcalidrawElement[]
     getCollaborators: () => Map<SocketId, Collaborator>
     clearPointer: () => void
-    setPointer: (pointer: DrawingAwarenessPointer, button: 'up' | 'down') => void
+    setPointer: (
+        pointer: DrawingAwarenessPointer,
+        button: 'up' | 'down',
+    ) => void
     subscribe: (listener: (origin: unknown) => void) => () => void
-    writeScene: (elements: readonly ExcalidrawElement[], origin?: unknown) => void
+    writeScene: (
+        elements: readonly ExcalidrawElement[],
+        origin?: unknown,
+    ) => void
 }
 
-export function createDrawingHandle(doc: Doc, awareness: Awareness): DrawingHandle {
+export function createDrawingHandle(
+    doc: Doc,
+    awareness: Awareness,
+): DrawingHandle {
     return {
         subscribe(listener) {
-            const onDocUpdate = (_update: Uint8Array, origin: unknown) => listener(origin)
+            const onDocUpdate = (_update: Uint8Array, origin: unknown) =>
+                listener(origin)
             const onAwarenessChange = (change: {
                 added: number[]
                 updated: number[]
                 removed: number[]
             }) => {
-                const changedClients = [...change.added, ...change.updated, ...change.removed]
+                const changedClients = [
+                    ...change.added,
+                    ...change.updated,
+                    ...change.removed,
+                ]
                 if (changedClients.length === 0) return
-                if (changedClients.every((clientId) => clientId === awareness.clientID)) return
+                if (
+                    changedClients.every(
+                        (clientId) => clientId === awareness.clientID,
+                    )
+                )
+                    return
                 listener(null)
             }
             doc.on('update', onDocUpdate)
@@ -42,7 +68,8 @@ export function createDrawingHandle(doc: Doc, awareness: Awareness): DrawingHand
             return readCollaborators(awareness)
         },
         clearPointer() {
-            const state = awareness.getLocalState() as DrawingAwarenessState | null
+            const state =
+                awareness.getLocalState() as DrawingAwarenessState | null
             if (!state || state.pointer === null) return
             awareness.setLocalState({
                 ...state,
@@ -51,7 +78,8 @@ export function createDrawingHandle(doc: Doc, awareness: Awareness): DrawingHand
             })
         },
         setPointer(pointer, button) {
-            const state = awareness.getLocalState() as DrawingAwarenessState | null
+            const state =
+                awareness.getLocalState() as DrawingAwarenessState | null
             if (!state) return
             if (
                 state.pointer?.x === pointer.x &&
@@ -100,7 +128,9 @@ function readCollaborators(awareness: Awareness) {
     return new Map<SocketId, Collaborator>(entries)
 }
 
-function readCollaboratorPointer(value: DrawingAwarenessState['pointer']): CollaboratorPointer | undefined {
+function readCollaboratorPointer(
+    value: DrawingAwarenessState['pointer'],
+): CollaboratorPointer | undefined {
     if (!value) return undefined
 
     return {

@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import path from 'path'
+import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
     plugins: [TanStackRouterVite({ routesDirectory: './src/routes' }), react()],
@@ -11,7 +11,8 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks(id) {
-                    if (id.includes('vite/preload-helper')) return 'runtime-preload'
+                    if (id.includes('vite/preload-helper'))
+                        return 'runtime-preload'
                     if (isFrameworkChunk(id)) return 'framework-core'
                     if (isUiChunk(id)) return 'ui-core'
                     if (isCollabChunk(id)) return 'collab-core'
@@ -64,10 +65,7 @@ function isCollabChunk(id: string) {
 }
 
 function isEditorChunk(id: string) {
-    return chunkIncludes(id, [
-        '/@codemirror+',
-        '/@lezer+',
-    ])
+    return chunkIncludes(id, ['/@codemirror+', '/@lezer+'])
 }
 
 function isPreviewChunk(id: string) {

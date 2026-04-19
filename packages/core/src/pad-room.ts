@@ -18,6 +18,9 @@ export function parsePadRoomName(value: string): PadRoom {
     assert(index > 0, `Invalid room name: ${value}`)
     const path = value.slice(0, index) as PadPath
     const kind = value.slice(index + 1)
-    assert(kind === 'text' || kind === 'drawing' || kind === 'files', `Unknown room kind: ${kind}`)
+    assert(
+        kind === 'text' || kind === 'drawing' || kind === 'files',
+        `Unknown room kind: ${kind}`,
+    )
     return { path, kind }
 }

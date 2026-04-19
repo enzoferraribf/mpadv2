@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
+    :root,
+    :root.light {
         --background: 40 8% 10%;
         --foreground: 35 18% 88%;
         --muted: 38 7% 14%;
@@ -29,37 +30,192 @@
         --stone-surface: #24231f;
         --stone-elevated: #2e2d28;
         --stone-text: #e6e0d6;
+        --stone-text-strong: #e6e0d6;
         --stone-text-secondary: #8a8279;
         --stone-text-muted: #91887f;
         --stone-text-dim: #524e47;
         --stone-accent: #c9a87c;
-        --stone-accent-secondary: #7c9c8a;
+        --stone-accent-secondary: #8fb7c7;
+        --stone-success: #7c9c8a;
+        --stone-warning: #d8a06b;
+        --stone-danger: #b07070;
+        --stone-danger-link: #f87171;
+        --stone-danger-text: #f0d0d0;
+        --stone-success-text: #d9efe0;
         --stone-border: #33322d;
         --stone-editor-bg: #201f1b;
         --stone-border-strong: #44423b;
+        --stone-syntax-markdown: #b5afa5;
+        --stone-heading-accent: #c9a87c;
+        --stone-syntax-comment: #6f685d;
+        --stone-syntax-keyword: #c9a87c;
+        --stone-syntax-string: #7c9c8a;
+        --stone-syntax-number: #d8a06b;
+        --stone-syntax-type: #8fb7c7;
+        --stone-syntax-meta: #9a8f80;
+        --stone-code-foreground: #e6e0d6;
+        --stone-selection: rgba(201, 168, 124, 0.25);
+        --stone-selection-remote: rgba(201, 168, 124, 0.18);
+        --stone-inline-code-bg: rgba(255, 255, 255, 0.03);
+        --stone-row-alt-bg: rgba(255, 255, 255, 0.02);
+        --stone-image-border: rgba(201, 168, 124, 0.16);
+        --stone-image-bg: rgba(17, 16, 14, 0.96);
+        --stone-image-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        --stone-hover-bg: rgba(255, 255, 255, 0.03);
+        --stone-active-bg: rgba(201, 168, 124, 0.06);
+        --stone-active-line-bg: rgba(201, 168, 124, 0.04);
+        --stone-editor-selection: rgba(201, 168, 124, 0.15);
+        --stone-editor-cursor: #ffffff;
+        --stone-editor-caret-shadow: #201f1b;
+        --stone-overlay-shadow: 0 1px 0 rgba(12, 12, 12, 0.35);
+        --stone-blockquote-bg: rgba(201, 168, 124, 0.04);
+        --stone-comment-action-border: rgba(201, 168, 124, 0.4);
+        --stone-comment-action-bg: rgba(32, 31, 27, 0.94);
+        --stone-comment-action-bg-hover: rgba(48, 45, 40, 0.98);
+        --stone-comment-action-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+        --stone-comment-highlight-bg: rgba(231, 194, 90, 0.18);
+        --stone-comment-highlight-shadow: inset 0 -1px 0
+            rgba(231, 194, 90, 0.45);
+        --stone-comment-highlight-active-text: #f3dec0;
+        --stone-comment-highlight-active-bg: rgba(231, 194, 90, 0.26);
+        --stone-comment-highlight-active-shadow: inset 0 -2px 0
+            rgba(231, 194, 90, 0.8);
+        --stone-comment-marker-border: rgba(201, 168, 124, 0.5);
+        --stone-comment-marker-bg: rgba(201, 168, 124, 0.16);
+        --stone-comment-marker-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+        --stone-comment-marker-detached-bg: rgba(32, 31, 27, 0.96);
+        --stone-comment-marker-active-border: rgba(231, 194, 90, 0.95);
+        --stone-comment-marker-active-bg: rgba(231, 194, 90, 0.35);
+        --stone-comment-card-border: rgba(201, 168, 124, 0.18);
+        --stone-comment-card-bg: linear-gradient(
+            180deg,
+            rgba(25, 24, 21, 0.98),
+            rgba(17, 16, 14, 0.98)
+        );
+        --stone-comment-card-shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
+        --stone-control-bg: rgba(255, 255, 255, 0.04);
+        --stone-focus-ring: rgba(201, 168, 124, 0.55);
+        --stone-primary-soft: rgba(201, 168, 124, 0.08);
+        --stone-primary-soft-strong: rgba(201, 168, 124, 0.12);
+        --stone-primary-border-soft: rgba(201, 168, 124, 0.5);
+        --stone-primary-border-strong: rgba(201, 168, 124, 0.65);
+        --stone-danger-soft: rgba(176, 112, 112, 0.08);
+        --stone-danger-soft-strong: rgba(176, 112, 112, 0.12);
+        --stone-danger-border-soft: rgba(176, 112, 112, 0.28);
+        --stone-success-soft: rgba(124, 156, 138, 0.08);
+        --stone-success-soft-strong: rgba(124, 156, 138, 0.14);
+        --stone-success-border-soft: rgba(124, 156, 138, 0.28);
+        --stone-diff-spacer-bg: rgba(255, 255, 255, 0.02);
+        --stone-dialog-shadow: 0 32px 120px rgba(0, 0, 0, 0.55);
+        --stone-landing-tilt-shadow-color: rgba(0, 0, 0, 0.5);
+        --stone-landing-tilt-glow: rgba(201, 168, 124, 0.1);
     }
 
-    .dark {
-        --background: 40 8% 10%;
-        --foreground: 35 18% 88%;
-        --muted: 38 7% 14%;
-        --muted-foreground: 33 6% 50%;
-        --popover: 40 10% 13%;
-        --popover-foreground: 35 18% 88%;
-        --border: 37 6% 18%;
-        --input: 37 6% 18%;
-        --card: 40 10% 13%;
-        --card-foreground: 35 18% 88%;
-        --primary: 34 36% 63%;
-        --primary-foreground: 40 8% 10%;
-        --secondary: 38 7% 14%;
-        --secondary-foreground: 35 18% 88%;
-        --accent: 38 7% 14%;
-        --accent-foreground: 35 18% 88%;
-        --destructive: 0 60% 44%;
-        --destructive-foreground: 35 18% 88%;
-        --ring: 34 36% 63%;
+    :root.dark {
+        --background: 240 15% 10%;
+        --foreground: 229 35% 75%;
+        --muted: 231 24% 22%;
+        --muted-foreground: 233 14% 54%;
+        --popover: 229 26% 16%;
+        --popover-foreground: 229 35% 75%;
+        --border: 231 24% 22%;
+        --input: 240 15% 9%;
+        --card: 230 24% 19%;
+        --card-foreground: 229 73% 86%;
+        --primary: 221 89% 72%;
+        --primary-foreground: 235 19% 13%;
+        --secondary: 229 26% 16%;
+        --secondary-foreground: 229 35% 75%;
+        --accent: 231 24% 22%;
+        --accent-foreground: 229 73% 86%;
+        --destructive: 349 89% 72%;
+        --destructive-foreground: 229 73% 86%;
+        --ring: 223 45% 44%;
         --radius: 0.375rem;
+
+        --stone-bg: #16161e;
+        --stone-surface: #1f2335;
+        --stone-elevated: #24283b;
+        --stone-text: #c0caf5;
+        --stone-text-strong: #c0caf5;
+        --stone-text-secondary: #a9b1d6;
+        --stone-text-muted: #787c99;
+        --stone-text-dim: #565f89;
+        --stone-accent: #7aa2f7;
+        --stone-accent-secondary: #7dcfff;
+        --stone-success: #73daca;
+        --stone-warning: #e0af68;
+        --stone-danger: #f7768e;
+        --stone-danger-link: #f7768e;
+        --stone-danger-text: #f7768e;
+        --stone-success-text: #73daca;
+        --stone-border: #2a2e45;
+        --stone-editor-bg: #1a1b26;
+        --stone-border-strong: #3d59a1;
+        --stone-syntax-markdown: #a9b1d6;
+        --stone-heading-accent: #7dcfff;
+        --stone-syntax-comment: #565f89;
+        --stone-syntax-keyword: #bb9af7;
+        --stone-syntax-string: #73daca;
+        --stone-syntax-number: #e0af68;
+        --stone-syntax-type: #7aa2f7;
+        --stone-syntax-meta: #787c99;
+        --stone-code-foreground: #c0caf5;
+        --stone-selection: rgba(61, 89, 161, 0.38);
+        --stone-selection-remote: rgba(125, 207, 255, 0.18);
+        --stone-inline-code-bg: rgba(36, 40, 59, 0.72);
+        --stone-row-alt-bg: rgba(36, 40, 59, 0.4);
+        --stone-image-border: rgba(61, 89, 161, 0.36);
+        --stone-image-bg: rgba(26, 27, 38, 0.96);
+        --stone-image-shadow: 0 12px 30px rgba(0, 0, 0, 0.36);
+        --stone-hover-bg: rgba(36, 40, 59, 0.55);
+        --stone-active-bg: rgba(61, 89, 161, 0.18);
+        --stone-active-line-bg: rgba(61, 89, 161, 0.14);
+        --stone-editor-selection: rgba(61, 89, 161, 0.28);
+        --stone-editor-cursor: #e0af68;
+        --stone-editor-caret-shadow: #1a1b26;
+        --stone-overlay-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+        --stone-blockquote-bg: rgba(61, 89, 161, 0.12);
+        --stone-comment-action-border: rgba(61, 89, 161, 0.55);
+        --stone-comment-action-bg: rgba(31, 35, 53, 0.94);
+        --stone-comment-action-bg-hover: rgba(36, 40, 59, 0.98);
+        --stone-comment-action-shadow: 0 14px 32px rgba(0, 0, 0, 0.42);
+        --stone-comment-highlight-bg: rgba(224, 175, 104, 0.18);
+        --stone-comment-highlight-shadow: inset 0 -1px 0
+            rgba(224, 175, 104, 0.42);
+        --stone-comment-highlight-active-text: #e0af68;
+        --stone-comment-highlight-active-bg: rgba(224, 175, 104, 0.28);
+        --stone-comment-highlight-active-shadow: inset 0 -2px 0
+            rgba(224, 175, 104, 0.72);
+        --stone-comment-marker-border: rgba(61, 89, 161, 0.72);
+        --stone-comment-marker-bg: rgba(61, 89, 161, 0.22);
+        --stone-comment-marker-shadow: 0 4px 10px rgba(0, 0, 0, 0.32);
+        --stone-comment-marker-detached-bg: rgba(31, 35, 53, 0.96);
+        --stone-comment-marker-active-border: rgba(224, 175, 104, 0.92);
+        --stone-comment-marker-active-bg: rgba(224, 175, 104, 0.28);
+        --stone-comment-card-border: rgba(61, 89, 161, 0.32);
+        --stone-comment-card-bg: linear-gradient(
+            180deg,
+            rgba(31, 35, 53, 0.98),
+            rgba(26, 27, 38, 0.98)
+        );
+        --stone-comment-card-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+        --stone-control-bg: rgba(36, 40, 59, 0.7);
+        --stone-focus-ring: rgba(61, 89, 161, 0.78);
+        --stone-primary-soft: rgba(61, 89, 161, 0.12);
+        --stone-primary-soft-strong: rgba(61, 89, 161, 0.18);
+        --stone-primary-border-soft: rgba(61, 89, 161, 0.52);
+        --stone-primary-border-strong: rgba(61, 89, 161, 0.68);
+        --stone-danger-soft: rgba(247, 118, 142, 0.12);
+        --stone-danger-soft-strong: rgba(247, 118, 142, 0.18);
+        --stone-danger-border-soft: rgba(247, 118, 142, 0.32);
+        --stone-success-soft: rgba(115, 218, 202, 0.12);
+        --stone-success-soft-strong: rgba(115, 218, 202, 0.18);
+        --stone-success-border-soft: rgba(115, 218, 202, 0.32);
+        --stone-diff-spacer-bg: rgba(36, 40, 59, 0.28);
+        --stone-dialog-shadow: 0 32px 120px rgba(0, 0, 0, 0.62);
+        --stone-landing-tilt-shadow-color: rgba(0, 0, 0, 0.62);
+        --stone-landing-tilt-glow: rgba(122, 162, 247, 0.18);
     }
 
     * {
@@ -73,9 +229,9 @@
     body {
         @apply bg-background text-foreground antialiased;
         min-height: 100svh;
-        font-family: 'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+        font-family: "Nunito Sans", "Avenir Next", "Segoe UI", sans-serif;
         background: var(--stone-bg);
-        font-feature-settings: 'rlig' 1, 'calt' 1;
+        font-feature-settings: "rlig" 1, "calt" 1;
     }
 
     button,
@@ -89,12 +245,12 @@
     }
 
     ::selection {
-        background: rgba(201, 168, 124, 0.25);
+        background: var(--stone-selection);
     }
 }
 
 .yRemoteSelection {
-    background-color: rgba(201, 168, 124, 0.18);
+    background-color: var(--stone-selection-remote);
 }
 
 .yRemoteSelectionHead {
@@ -153,9 +309,9 @@
 }
 
 .markdown-body {
-    color: #b5afa5 !important;
+    color: var(--stone-syntax-markdown) !important;
     background: transparent !important;
-    font-family: 'Nunito Sans', sans-serif !important;
+    font-family: "Nunito Sans", sans-serif !important;
     font-size: 15px !important;
     line-height: 1.8 !important;
     letter-spacing: normal;
@@ -184,7 +340,7 @@
 }
 
 .markdown-body h1 {
-    font-family: 'Fraunces', serif !important;
+    font-family: "Fraunces", serif !important;
     font-size: 2rem !important;
     font-weight: 600 !important;
     letter-spacing: -0.01em;
@@ -193,7 +349,7 @@
 }
 
 .markdown-body h2 {
-    font-family: 'Fraunces', serif !important;
+    font-family: "Fraunces", serif !important;
     font-size: 1.5rem !important;
     font-weight: 500 !important;
     margin-top: 2rem !important;
@@ -201,12 +357,12 @@
 }
 
 .markdown-body h3 {
-    font-family: 'Nunito Sans', sans-serif !important;
+    font-family: "Nunito Sans", sans-serif !important;
     font-size: 0.875rem !important;
     font-weight: 600 !important;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--stone-accent) !important;
+    color: var(--stone-heading-accent) !important;
     margin-top: 1.75rem !important;
 }
 
@@ -232,7 +388,7 @@
     padding: 0.12rem 0.32rem;
     border: 1px solid var(--stone-border);
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.03) !important;
+    background: var(--stone-inline-code-bg) !important;
     color: var(--stone-text) !important;
 }
 
@@ -251,12 +407,12 @@
 
 .markdown-body pre code.hljs {
     display: block;
-    color: #e6e0d6;
+    color: var(--stone-code-foreground);
 }
 
 .markdown-body .hljs-comment,
 .markdown-body .hljs-quote {
-    color: #6f685d;
+    color: var(--stone-syntax-comment);
     font-style: italic;
 }
 
@@ -264,7 +420,7 @@
 .markdown-body .hljs-selector-tag,
 .markdown-body .hljs-literal,
 .markdown-body .hljs-operator {
-    color: #c9a87c;
+    color: var(--stone-syntax-keyword);
 }
 
 .markdown-body .hljs-string,
@@ -273,7 +429,7 @@
 .markdown-body .hljs-attribute,
 .markdown-body .hljs-template-tag,
 .markdown-body .hljs-template-variable {
-    color: #7c9c8a;
+    color: var(--stone-syntax-string);
 }
 
 .markdown-body .hljs-number,
@@ -282,24 +438,24 @@
 .markdown-body .hljs-variable,
 .markdown-body .hljs-regexp,
 .markdown-body .hljs-link {
-    color: #d8a06b;
+    color: var(--stone-syntax-number);
 }
 
 .markdown-body .hljs-built_in,
 .markdown-body .hljs-type,
 .markdown-body .hljs-class,
 .markdown-body .hljs-function {
-    color: #8fb7c7;
+    color: var(--stone-syntax-type);
 }
 
 .markdown-body .hljs-meta {
-    color: #9a8f80;
+    color: var(--stone-syntax-meta);
 }
 
 .markdown-body blockquote {
     border-left: 2px solid var(--stone-accent) !important;
     padding: 0.75rem 1rem !important;
-    background: rgba(201, 168, 124, 0.04);
+    background: var(--stone-blockquote-bg);
     border-radius: 0 4px 4px 0;
     color: var(--stone-text-secondary) !important;
 }
@@ -329,7 +485,7 @@
 }
 
 .markdown-body table tr:nth-child(2n) {
-    background-color: rgba(255, 255, 255, 0.02) !important;
+    background-color: var(--stone-row-alt-bg) !important;
 }
 
 .markdown-body table th {
@@ -356,15 +512,15 @@
     max-width: min(100%, 520px);
     max-height: 320px;
     margin: 0 auto;
-    border: 1px solid rgba(201, 168, 124, 0.16);
+    border: 1px solid var(--stone-image-border);
     border-radius: 12px;
-    background: rgba(17, 16, 14, 0.96);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+    background: var(--stone-image-bg);
+    box-shadow: var(--stone-image-shadow);
 }
 
 .cm-editor-image-fallback {
     color: var(--stone-text-secondary);
-    font-family: 'Fira Code', monospace;
+    font-family: "Fira Code", monospace;
     font-size: 13px;
     line-height: 1.8;
     white-space: pre-wrap;
@@ -461,7 +617,7 @@
     /* Section label (reused) */
     .pad-sidebar-section-label {
         font-size: 10px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.15em;
@@ -485,7 +641,7 @@
         border: none;
         background: transparent;
         font-size: 12px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-secondary);
         text-align: left;
         overflow: hidden;
@@ -495,12 +651,12 @@
     }
 
     .pad-explorer-item:hover {
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--stone-hover-bg);
     }
 
     .pad-explorer-item.active {
         color: var(--stone-text);
-        background: rgba(201, 168, 124, 0.06);
+        background: var(--stone-active-bg);
         border-left: 2px solid var(--stone-accent);
         padding-left: 14px;
     }
@@ -553,7 +709,7 @@
 
     .files-card-name {
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text);
         text-align: center;
         max-width: 100%;
@@ -564,7 +720,7 @@
 
     .files-card-size {
         font-size: 10px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-dim);
     }
 
@@ -590,8 +746,8 @@
     }
 
     .files-card-delete:hover {
-        color: #b07070;
-        border-color: #b07070;
+        color: var(--stone-danger);
+        border-color: var(--stone-danger);
     }
 
     .files-card-add .files-card-icon {
@@ -606,7 +762,7 @@
         justify-content: center;
         height: 100%;
         font-size: 13px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-dim);
         cursor: pointer;
     }
@@ -624,7 +780,7 @@
         background: transparent;
         color: var(--stone-text-dim);
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         font-weight: 600;
         display: inline-flex;
         align-items: center;
@@ -646,13 +802,13 @@
 
     .pad-sidebar-help-row {
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-dim);
         line-height: 1.5;
     }
 
     .pad-sidebar-help-row code {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 10px;
         color: var(--stone-text-secondary);
         background: var(--stone-elevated);
@@ -673,7 +829,7 @@
         display: inline-flex;
         align-items: center;
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         color: var(--stone-text-muted);
@@ -692,7 +848,7 @@
     }
 
     .pad-tab.active::after {
-        content: '';
+        content: "";
         position: absolute;
         bottom: -1px;
         left: 0;
@@ -740,10 +896,10 @@
         justify-content: center;
         width: 32px;
         height: 32px;
-        border: 1px solid rgba(201, 168, 124, 0.4);
+        border: 1px solid var(--stone-comment-action-border);
         border-radius: 999px;
-        background: rgba(32, 31, 27, 0.94);
-        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+        background: var(--stone-comment-action-bg);
+        box-shadow: var(--stone-comment-action-shadow);
         color: var(--stone-text);
     }
 
@@ -753,21 +909,21 @@
     }
 
     .comment-selection-action:hover {
-        background: rgba(48, 45, 40, 0.98);
+        background: var(--stone-comment-action-bg-hover);
     }
 
     .cm-comment-highlight {
         color: var(--stone-text);
-        background: rgba(231, 194, 90, 0.18);
+        background: var(--stone-comment-highlight-bg);
         border-radius: 2px;
         cursor: pointer;
-        box-shadow: inset 0 -1px 0 rgba(231, 194, 90, 0.45);
+        box-shadow: var(--stone-comment-highlight-shadow);
     }
 
     .cm-comment-highlight-active {
-        color: #f3dec0;
-        background: rgba(231, 194, 90, 0.26);
-        box-shadow: inset 0 -2px 0 rgba(231, 194, 90, 0.8);
+        color: var(--stone-comment-highlight-active-text);
+        background: var(--stone-comment-highlight-active-bg);
+        box-shadow: var(--stone-comment-highlight-active-shadow);
     }
 
     .comment-thread-marker {
@@ -777,10 +933,10 @@
         width: 12px;
         height: 12px;
         margin-top: -6px;
-        border: 1px solid rgba(201, 168, 124, 0.5);
+        border: 1px solid var(--stone-comment-marker-border);
         border-radius: 999px;
-        background: rgba(201, 168, 124, 0.16);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+        background: var(--stone-comment-marker-bg);
+        box-shadow: var(--stone-comment-marker-shadow);
     }
 
     .comment-thread-marker.detached {
@@ -788,12 +944,12 @@
         width: 14px;
         height: 14px;
         margin-top: 0;
-        background: rgba(32, 31, 27, 0.96);
+        background: var(--stone-comment-marker-detached-bg);
     }
 
     .comment-thread-marker.active {
-        border-color: rgba(231, 194, 90, 0.95);
-        background: rgba(231, 194, 90, 0.35);
+        border-color: var(--stone-comment-marker-active-border);
+        background: var(--stone-comment-marker-active-bg);
     }
 
     .comment-card {
@@ -805,10 +961,10 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid rgba(201, 168, 124, 0.18);
+        border: 1px solid var(--stone-comment-card-border);
         border-radius: 12px;
-        background: linear-gradient(180deg, rgba(25, 24, 21, 0.98), rgba(17, 16, 14, 0.98));
-        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
+        background: var(--stone-comment-card-bg);
+        box-shadow: var(--stone-comment-card-shadow);
     }
 
     .comment-card-header {
@@ -821,7 +977,7 @@
 
     .comments-compose-label {
         font-size: 10px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-dim);
         text-transform: uppercase;
         letter-spacing: 0.14em;
@@ -832,7 +988,7 @@
         height: 26px;
         border: none;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.04);
+        background: var(--stone-control-bg);
         color: var(--stone-text-secondary);
         font-size: 18px;
         line-height: 1;
@@ -843,13 +999,13 @@
         background: transparent;
         color: var(--stone-accent);
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.08em;
     }
 
     .comments-pane-link.danger {
-        color: #f87171;
+        color: var(--stone-danger-link);
     }
 
     .comment-card-section {
@@ -875,8 +1031,8 @@
     .comments-quote {
         margin-top: 10px;
         padding: 10px 12px;
-        border-left: 2px solid rgba(201, 168, 124, 0.65);
-        background: rgba(201, 168, 124, 0.08);
+        border-left: 2px solid var(--stone-primary-border-strong);
+        background: var(--stone-primary-soft);
         color: var(--stone-text-secondary);
         font-size: 12px;
         line-height: 1.5;
@@ -889,7 +1045,7 @@
         padding: 10px 12px;
         border: 1px solid var(--stone-border);
         border-radius: 8px;
-        background: rgba(18, 17, 15, 0.96);
+        background: var(--stone-image-bg);
         color: var(--stone-text);
         font-size: 13px;
         line-height: 1.5;
@@ -897,7 +1053,7 @@
     }
 
     .comments-textarea:focus {
-        outline: 1px solid rgba(201, 168, 124, 0.55);
+        outline: 1px solid var(--stone-focus-ring);
         outline-offset: 0;
     }
 
@@ -922,14 +1078,14 @@
         background: transparent;
         color: var(--stone-text-secondary);
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.08em;
     }
 
     .comments-btn-primary {
-        border-color: rgba(201, 168, 124, 0.5);
-        background: rgba(201, 168, 124, 0.12);
+        border-color: var(--stone-primary-border-soft);
+        background: var(--stone-primary-soft-strong);
         color: var(--stone-text);
     }
 
@@ -950,7 +1106,7 @@
     .comments-message {
         padding: 10px 12px;
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--stone-hover-bg);
     }
 
     .comments-message-meta {
@@ -976,7 +1132,7 @@
 
     .comments-error {
         margin-top: 8px;
-        color: #fca5a5;
+        color: var(--stone-danger-link);
         font-size: 12px;
     }
 
@@ -991,7 +1147,7 @@
         border-top: 1px solid var(--stone-border);
         background: var(--stone-bg);
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-muted);
         user-select: none;
     }
@@ -1019,9 +1175,15 @@
         flex-shrink: 0;
     }
 
-    .pad-statusbar-dot.connected { background: var(--stone-accent-secondary); }
-    .pad-statusbar-dot.connecting { background: var(--stone-accent); }
-    .pad-statusbar-dot.disconnected { background: #b07070; }
+    .pad-statusbar-dot.connected {
+        background: var(--stone-success);
+    }
+    .pad-statusbar-dot.connecting {
+        background: var(--stone-accent);
+    }
+    .pad-statusbar-dot.disconnected {
+        background: var(--stone-danger);
+    }
 
     /* ---- Workspace ---- */
     .workspace-shell {
@@ -1047,7 +1209,7 @@
         padding: 14px 16px 10px;
         border-bottom: 1px solid var(--stone-border);
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: var(--stone-text-dim);
@@ -1076,21 +1238,21 @@
     }
 
     .diff-history-item:hover {
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--stone-hover-bg);
     }
 
     .diff-history-item.active-left {
-        background: rgba(176, 112, 112, 0.08);
-        border-color: rgba(176, 112, 112, 0.28);
+        background: var(--stone-danger-soft);
+        border-color: var(--stone-danger-border-soft);
     }
 
     .diff-history-item.active-right {
-        background: rgba(124, 156, 138, 0.08);
-        border-color: rgba(124, 156, 138, 0.28);
+        background: var(--stone-success-soft);
+        border-color: var(--stone-success-border-soft);
     }
 
     .diff-history-item.active-left.active-right {
-        background: rgba(201, 168, 124, 0.08);
+        background: var(--stone-primary-soft);
         border-color: var(--stone-border-strong);
     }
 
@@ -1104,19 +1266,19 @@
 
     .diff-history-item-number {
         font-size: 12px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text);
     }
 
     .diff-history-item-time {
         font-size: 11px;
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         color: var(--stone-text-dim);
     }
 
     .diff-history-item-note {
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-secondary);
     }
 
@@ -1138,7 +1300,7 @@
         background: transparent;
         color: var(--stone-text-secondary);
         font-size: 11px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.08em;
     }
@@ -1150,7 +1312,7 @@
 
     .diff-history-toggle.active {
         border-color: var(--stone-border-strong);
-        background: rgba(201, 168, 124, 0.08);
+        background: var(--stone-primary-soft);
         color: var(--stone-text);
     }
 
@@ -1198,7 +1360,7 @@
     .diff-table-title {
         padding: 12px 16px;
         font-size: 12px;
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         color: var(--stone-text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -1229,35 +1391,35 @@
 
     .diff-merge-root .cm-merge-a .cm-changedLine,
     .diff-merge-root .cm-deletedChunk {
-        background: rgba(176, 112, 112, 0.12) !important;
+        background: var(--stone-danger-soft-strong) !important;
     }
 
     .diff-merge-root .cm-merge-b .cm-changedLine {
-        background: rgba(124, 156, 138, 0.14) !important;
+        background: var(--stone-success-soft-strong) !important;
     }
 
     .diff-merge-root .cm-merge-a .cm-changedText,
     .diff-merge-root .cm-deletedChunk .cm-deletedText {
-        background: rgba(176, 112, 112, 0.24) !important;
-        color: #f0d0d0 !important;
+        background: var(--stone-danger-soft-strong) !important;
+        color: var(--stone-danger-text) !important;
     }
 
     .diff-merge-root .cm-merge-b .cm-changedText {
-        background: rgba(124, 156, 138, 0.28) !important;
-        color: #d9efe0 !important;
+        background: var(--stone-success-soft-strong) !important;
+        color: var(--stone-success-text) !important;
     }
 
     .diff-merge-root .cm-merge-a .cm-changedLineGutter,
     .diff-merge-root .cm-deletedLineGutter {
-        background: #b07070 !important;
+        background: var(--stone-danger) !important;
     }
 
     .diff-merge-root .cm-merge-b .cm-changedLineGutter {
-        background: #7c9c8a !important;
+        background: var(--stone-success) !important;
     }
 
     .diff-merge-root .cm-mergeSpacer {
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--stone-diff-spacer-bg);
     }
 
     .diff-empty {
@@ -1273,7 +1435,7 @@
 
     /* ---- MPAD Logo (shared) ---- */
     .mpad-logo {
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         font-weight: 700;
         font-size: 14px;
         letter-spacing: 0.15em;
@@ -1312,7 +1474,7 @@
     .dialog-panel {
         border: 1px solid var(--stone-border);
         background: var(--stone-surface);
-        box-shadow: 0 32px 120px rgba(0, 0, 0, 0.55);
+        box-shadow: var(--stone-dialog-shadow);
         border-radius: 6px;
         color: var(--stone-text);
     }
@@ -1379,7 +1541,7 @@
     }
 
     .landing-nav-wordmark {
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         font-size: 14px;
         font-weight: 700;
         color: var(--stone-text);
@@ -1398,7 +1560,7 @@
     }
 
     .landing-nav-label {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 11px;
         color: var(--stone-text-dim);
         letter-spacing: 0.1em;
@@ -1437,11 +1599,11 @@
 
     .landing-nav-pad-input:focus-within {
         border-color: var(--stone-accent);
-        box-shadow: 0 0 0 2px rgba(201, 168, 124, 0.1);
+        box-shadow: 0 0 0 2px var(--stone-landing-tilt-glow);
     }
 
     .landing-nav-pad-input .landing-pip-prefix {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 11px;
         color: var(--stone-text-dim);
         padding: 0 1px 0 10px;
@@ -1455,7 +1617,7 @@
         background: none;
         border: none;
         outline: none;
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 11px;
         color: var(--stone-text);
         padding: 0 4px;
@@ -1480,11 +1642,11 @@
 
     .landing-pad-input:focus-within {
         border-color: var(--stone-accent);
-        box-shadow: 0 0 0 3px rgba(201, 168, 124, 0.1);
+        box-shadow: 0 0 0 3px var(--stone-landing-tilt-glow);
     }
 
     .landing-pad-input .landing-pip-prefix {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 14px;
         color: var(--stone-text-dim);
         padding: 0 2px 0 16px;
@@ -1498,7 +1660,7 @@
         background: none;
         border: none;
         outline: none;
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 14px;
         color: var(--stone-text);
         padding: 0 4px;
@@ -1552,7 +1714,7 @@
     }
 
     .landing-pad-input-hint kbd {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 10px;
         color: var(--stone-text-secondary);
         background: var(--stone-elevated);
@@ -1573,13 +1735,17 @@
     }
 
     .landing-hero::before {
-        content: '';
+        content: "";
         position: absolute;
         left: 64px;
         top: 56px;
         bottom: 0;
         width: 2px;
-        background: linear-gradient(to bottom, var(--stone-accent), transparent 80%);
+        background: linear-gradient(
+            to bottom,
+            var(--stone-accent),
+            transparent 80%
+        );
         opacity: 0.3;
     }
 
@@ -1589,7 +1755,7 @@
     }
 
     .landing-hero-super {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 11px;
         color: var(--stone-accent);
         letter-spacing: 0.2em;
@@ -1600,7 +1766,7 @@
     }
 
     .landing-hero-h1 {
-        font-family: 'Fraunces', serif;
+        font-family: "Fraunces", serif;
         font-size: 72px;
         font-weight: 700;
         color: var(--stone-text);
@@ -1665,7 +1831,7 @@
     }
 
     .landing-stat-value {
-        font-family: 'Fraunces', serif;
+        font-family: "Fraunces", serif;
         font-size: 32px;
         font-weight: 600;
         color: var(--stone-accent);
@@ -1674,7 +1840,7 @@
     }
 
     .landing-stat-label {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 10px;
         color: var(--stone-text-dim);
         text-transform: uppercase;
@@ -1696,7 +1862,7 @@
     }
 
     .landing-features-title {
-        font-family: 'Fraunces', serif;
+        font-family: "Fraunces", serif;
         font-size: 36px;
         font-weight: 600;
         color: var(--stone-text);
@@ -1704,7 +1870,7 @@
     }
 
     .landing-features-sub {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 11px;
         color: var(--stone-text-dim);
         letter-spacing: 0.15em;
@@ -1744,7 +1910,7 @@
         border-right: none;
     }
 
-    .landing-feature-cell:nth-child(n+5) {
+    .landing-feature-cell:nth-child(n + 5) {
         border-bottom: none;
     }
 
@@ -1753,7 +1919,7 @@
     }
 
     .landing-feature-idx {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 11px;
         color: var(--stone-accent);
         letter-spacing: 0.1em;
@@ -1761,7 +1927,7 @@
     }
 
     .landing-feature-name {
-        font-family: 'Fraunces', serif;
+        font-family: "Fraunces", serif;
         font-size: 19px;
         font-weight: 600;
         color: var(--stone-text);
@@ -1790,7 +1956,7 @@
     }
 
     .landing-how-label {
-        font-family: 'Fraunces', serif;
+        font-family: "Fraunces", serif;
         font-size: 28px;
         font-weight: 600;
         color: var(--stone-text);
@@ -1824,7 +1990,7 @@
     }
 
     .landing-how-num {
-        font-family: 'Fraunces', serif;
+        font-family: "Fraunces", serif;
         font-size: 24px;
         font-weight: 700;
         color: var(--stone-accent);
@@ -1851,7 +2017,7 @@
 
     .landing-cta::before,
     .landing-cta::after {
-        content: '';
+        content: "";
         position: absolute;
         border: 1px solid var(--stone-border);
         pointer-events: none;
@@ -1876,7 +2042,7 @@
     }
 
     .landing-cta-h2 {
-        font-family: 'Fraunces', serif;
+        font-family: "Fraunces", serif;
         font-size: 56px;
         font-weight: 700;
         color: var(--stone-text);
@@ -1912,7 +2078,7 @@
     }
 
     .landing-footer-left {
-        font-family: 'Nunito Sans', sans-serif;
+        font-family: "Nunito Sans", sans-serif;
         font-size: 14px;
         font-weight: 700;
         color: var(--stone-text);
@@ -1920,7 +2086,7 @@
     }
 
     .landing-footer-center {
-        font-family: 'Fira Code', monospace;
+        font-family: "Fira Code", monospace;
         font-size: 10px;
         color: var(--stone-text-dim);
         letter-spacing: 0.1em;

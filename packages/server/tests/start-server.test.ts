@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
-import type { createServer } from '../src/bootstrap/create-server'
-import { prepareServer, startServer } from '../src/bootstrap/start-server'
+import type { createServer } from '#/bootstrap/create-server'
+import type { createServerRuntime } from '#/bootstrap/runtime'
+import { prepareServer, startServerWithDeps } from '#/bootstrap/start-server'
 
 describe('start server', () => {
     test('skips schema migrations when disabled', async () => {
@@ -53,12 +54,24 @@ describe('start server', () => {
             port: 4100,
             runSchemaMigrationsOnBoot: false,
         }
-        const server = { port: 4100 } as unknown as ReturnType<typeof createServer>
+        const server = { port: 4100 } as unknown as ReturnType<
+            typeof createServer
+        >
+        const runtime = { name: 'runtime' } as unknown as ReturnType<
+            typeof createServerRuntime
+        >
 
-        const created = await startServer({
+        const created = await startServerWithDeps({
             createServer(input) {
-                expect(input).toEqual(config)
+                expect(input).toEqual({
+                    appOrigin: config.appOrigin,
+                    port: config.port,
+                    runtime,
+                })
                 return server
+            },
+            createServerRuntime() {
+                return runtime
             },
             async ensureDatabaseReady() {},
             readServerConfig() {
@@ -69,6 +82,6 @@ describe('start server', () => {
             },
         })
 
-        expect(created).toBe(server)
+        expect(created).toEqual({ runtime, server })
     })
 })

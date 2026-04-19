@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test'
-import { MAX_FILE_BYTES, MAX_PEER_FILE_BYTES, MAX_PEER_FILE_COUNT } from '@mpad/core/pad-limits'
+import {
+    MAX_FILE_BYTES,
+    MAX_PEER_FILE_BYTES,
+    MAX_PEER_FILE_COUNT,
+} from '@mpad/core/pad-limits'
 import { assertLiveFileAllowed } from '@mpad/protocol/live-files'
 
 describe('live file policy', () => {

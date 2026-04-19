@@ -1,32 +1,38 @@
+import type { PadRoomSession } from '@/collab/domain/pad-room-session'
+import { roomWebSocketUrl } from '@/pad-workspace/infrastructure/browser-pad-api'
+import type { PadPath } from '@mpad/core/pad-path'
+import { type PadRoomKind, padRoomName } from '@mpad/core/pad-room'
 import {
+    type ServerRoomMessage,
     applyAwarenessMessage,
     createAwarenessMessage,
     createDocUpdateMessage,
     encodeClientRoomMessage,
     readServerRoomMessage,
     replyToSyncMessage,
-    type ServerRoomMessage,
 } from '@mpad/protocol/room-message-codec'
-import { padRoomName, type PadRoomKind } from '@mpad/core/pad-room'
-import type { PadPath } from '@mpad/core/pad-path'
 import { useEffect, useRef, useState } from 'react'
 import { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import { Doc } from 'yjs'
-import { roomWebSocketUrl } from '@/pad-workspace/infrastructure/browser-pad-api'
-import type { PadRoomSession } from '@/collab/domain/pad-room-session'
 
-type UseBrowserRoomSessionInput<TKind extends PadRoomKind, TLocalState extends object> = {
+type UseBrowserRoomSessionInput<
+    TKind extends PadRoomKind,
+    TLocalState extends object,
+> = {
     path: PadPath
     kind: TKind
     localState: TLocalState
     open: boolean
 }
 
-export function useBrowserRoomSession<TKind extends PadRoomKind, TLocalState extends object>(
-    input: UseBrowserRoomSessionInput<TKind, TLocalState>,
-) {
-    const [room, setRoom] = useState<PadRoomSession<TKind, TLocalState> | null>(null)
+export function useBrowserRoomSession<
+    TKind extends PadRoomKind,
+    TLocalState extends object,
+>(input: UseBrowserRoomSessionInput<TKind, TLocalState>) {
+    const [room, setRoom] = useState<PadRoomSession<TKind, TLocalState> | null>(
+        null,
+    )
     const listenersRef = useRef(new Set<(message: ServerRoomMessage) => void>())
 
     useEffect(() => {
@@ -39,7 +45,9 @@ export function useBrowserRoomSession<TKind extends PadRoomKind, TLocalState ext
         const doc = new Doc()
         const awareness = new Awareness(doc)
         const roomName = padRoomName(input.path, input.kind)
-        const socket = new WebSocket(roomWebSocketUrl(roomName, awareness.clientID))
+        const socket = new WebSocket(
+            roomWebSocketUrl(roomName, awareness.clientID),
+        )
         const sendBytes = (bytes: Uint8Array) => {
             if (socket.readyState !== WebSocket.OPEN) return
             socket.send(bytes)
@@ -77,7 +85,13 @@ export function useBrowserRoomSession<TKind extends PadRoomKind, TLocalState ext
             origin: unknown,
         ) => {
             if (origin === 'remote') return
-            session.send(createAwarenessMessage(awareness, [...change.added, ...change.updated, ...change.removed]))
+            session.send(
+                createAwarenessMessage(awareness, [
+                    ...change.added,
+                    ...change.updated,
+                    ...change.removed,
+                ]),
+            )
         }
 
         socket.binaryType = 'arraybuffer'
@@ -85,7 +99,9 @@ export function useBrowserRoomSession<TKind extends PadRoomKind, TLocalState ext
             if (!active) return
             session.status = 'connected'
             setRoom({ ...session })
-            session.send(createAwarenessMessage(awareness, [awareness.clientID]))
+            session.send(
+                createAwarenessMessage(awareness, [awareness.clientID]),
+            )
         }
 
         socket.onmessage = (event) => {
@@ -110,8 +126,14 @@ export function useBrowserRoomSession<TKind extends PadRoomKind, TLocalState ext
             if (!active) return
             session.status = 'disconnected'
             setRoom({ ...session })
-            const remoteIds = Array.from(awareness.getStates().keys()).filter((id) => id !== awareness.clientID)
-            awarenessProtocol.removeAwarenessStates(awareness, remoteIds, 'disconnect')
+            const remoteIds = Array.from(awareness.getStates().keys()).filter(
+                (id) => id !== awareness.clientID,
+            )
+            awarenessProtocol.removeAwarenessStates(
+                awareness,
+                remoteIds,
+                'disconnect',
+            )
         }
 
         doc.on('update', onDocUpdate)
@@ -120,7 +142,11 @@ export function useBrowserRoomSession<TKind extends PadRoomKind, TLocalState ext
         return () => {
             active = false
             session.setLocalState(null)
-            sendBytes(encodeClientRoomMessage(createAwarenessMessage(awareness, [awareness.clientID])))
+            sendBytes(
+                encodeClientRoomMessage(
+                    createAwarenessMessage(awareness, [awareness.clientID]),
+                ),
+            )
             socket.close()
             doc.off('update', onDocUpdate)
             awareness.off('update', onAwarenessUpdate)

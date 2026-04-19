@@ -1,5 +1,5 @@
-import type { FileRoomRegistry } from '../domain/file-room-registry'
-import type { LiveFilesRoom } from '../application/room'
+import type { LiveFilesRoom } from '#/live-files/application/room'
+import type { FileRoomRegistry } from '#/live-files/domain/file-room-registry'
 
 export function createInMemoryFileRoomRegistry(): FileRoomRegistry {
     const rooms = new Map<string, LiveFilesRoom>()

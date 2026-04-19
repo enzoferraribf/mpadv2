@@ -2,12 +2,12 @@
 
 interface ImportMetaEnv {
     readonly VITE_E2E?: string
-    readonly VITE_HTTP_SERVER_ORIGIN?: string
+    readonly VITE_SERVER_ORIGIN?: string
     readonly VITE_WS_SERVER_ORIGIN?: string
 }
 
 type MpadClientRuntimeConfig = {
-    httpServerOrigin?: string
+    serverOrigin?: string
     wsServerOrigin?: string
 }
 
