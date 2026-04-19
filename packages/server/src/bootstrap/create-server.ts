@@ -1,17 +1,31 @@
 import { WS_IDLE_TIMEOUT_S, WS_MAX_PAYLOAD } from '@mpad/core/pad-limits'
 import type { ServerWebSocket } from 'bun'
 import { handleRequest } from '../transport/http-router'
+import { isAllowedWebSocketOrigin } from '../infrastructure/origin'
 import { closeSocket, flushPadRooms, handleSocketMessage, openSocket } from '../transport/ws-router'
 import type { WsData } from '../transport/ws-data'
 
-export function createServer(port: number) {
+type CreateServerInput = {
+    port: number
+    appOrigin: string | null
+}
+
+export function createServer(input: number | CreateServerInput) {
+    const config = typeof input === 'number'
+        ? { port: input, appOrigin: null }
+        : input
+
     return Bun.serve<WsData>({
-        port,
+        port: config.port,
         hostname: '0.0.0.0',
 
         async fetch(req, server) {
-            const route = await handleRequest(req)
+            const route = await handleRequest(req, config.appOrigin)
             if (!(route instanceof Response)) {
+                if (!isAllowedWebSocketOrigin(config.appOrigin, req.headers.get('origin'))) {
+                    return new Response('Forbidden', { status: 403 })
+                }
+
                 const upgraded = server.upgrade(req, {
                     data: {
                         roomName: route.roomName,

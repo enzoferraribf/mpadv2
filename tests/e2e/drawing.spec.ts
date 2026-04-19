@@ -1,27 +1,10 @@
 import {
     expect,
-    test,
-    createPeerContext,
-    hideEditorCaret,
-    hideSidebarEntries,
     moveDrawingPointer,
-    narutoPeer,
-    openDiffsTab,
     openDrawingRoom,
-    openLanding,
     openPad,
-    persistTextRevision,
-    readCurrentRightButton,
-    readSnapshotRevertButton,
-    readSnapshotSideButton,
-    replaceFirstEditorLine,
-    sailorMoonPeer,
-    seedDocument,
-    setLayout,
-    waitForCommentThreadCount,
-    waitForHistoryItems,
+    test,
     waitForPad,
-    waitForText,
 } from './mpad-test'
 
 test('syncs the drawing surface between two pads', async ({ browser }) => {
@@ -124,4 +107,3 @@ test('keeps drawings split by exact pad path', async ({ browser }) => {
     await contextA.close()
     await contextB.close()
 })
-

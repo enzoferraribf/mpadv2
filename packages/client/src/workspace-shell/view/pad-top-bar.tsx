@@ -1,8 +1,8 @@
 import { Settings2 } from 'lucide-react'
-import type { PadWorkspaceModel } from '@/pad-workspace/application/use-pad-workspace-model'
+import type { PadWorkspaceShellModel } from '@/pad-workspace/application/use-pad-workspace-model'
 
-export function PadTopBar(input: { model: PadWorkspaceModel }) {
-    const { commands, state } = input.model
+export function PadTopBar(input: { shell: PadWorkspaceShellModel }) {
+    const { commands, view } = input.shell
 
     return (
         <div className="app-topbar">
@@ -14,22 +14,22 @@ export function PadTopBar(input: { model: PadWorkspaceModel }) {
             </div>
             <div className="app-topbar-right">
                 <div className="pad-tabs">
-                    <button className={`pad-tab${state.view.activeTab === 'text' ? ' active' : ''}`} onClick={() => commands.openTab('text')}>{state.view.padName}</button>
-                    <button className={`pad-tab${state.view.activeTab === 'diffs' ? ' active' : ''}`} onClick={() => commands.openTab('diffs')}>Diffs</button>
-                    <button className={`pad-tab${state.view.activeTab === 'drawing' ? ' active' : ''}`} onClick={() => commands.openTab('drawing')}>Drawing</button>
-                    <button className={`pad-tab${state.view.activeTab === 'files' ? ' active' : ''}`} onClick={() => commands.openTab('files')}>Files</button>
+                    <button className={`pad-tab${view.activeTab === 'text' ? ' active' : ''}`} onClick={() => commands.openTab('text')}>{view.padName}</button>
+                    <button className={`pad-tab${view.activeTab === 'diffs' ? ' active' : ''}`} onClick={() => commands.openTab('diffs')}>Diffs</button>
+                    <button className={`pad-tab${view.activeTab === 'drawing' ? ' active' : ''}`} onClick={() => commands.openTab('drawing')}>Drawing</button>
+                    <button className={`pad-tab${view.activeTab === 'files' ? ' active' : ''}`} onClick={() => commands.openTab('files')}>Files</button>
                 </div>
-                {state.view.activeTab === 'text' ? (
+                {view.activeTab === 'text' ? (
                     <div className="pad-tab-actions">
-                        <button className={`pad-tab-action${state.view.layout === 'split' ? ' active' : ''}`} onClick={() => commands.setLayout('split')} title="Split view">&#x2637;</button>
-                        <button className={`pad-tab-action${state.view.layout === 'editor' ? ' active' : ''}`} onClick={() => commands.setLayout('editor')} title="Editor only">&#x270E;</button>
-                        <button className={`pad-tab-action${state.view.layout === 'preview' ? ' active' : ''}`} onClick={() => commands.setLayout('preview')} title="Preview only">&#x25C9;</button>
+                        <button className={`pad-tab-action${view.layout === 'split' ? ' active' : ''}`} onClick={() => commands.setLayout('split')} title="Split view">&#x2637;</button>
+                        <button className={`pad-tab-action${view.layout === 'editor' ? ' active' : ''}`} onClick={() => commands.setLayout('editor')} title="Editor only">&#x270E;</button>
+                        <button className={`pad-tab-action${view.layout === 'preview' ? ' active' : ''}`} onClick={() => commands.setLayout('preview')} title="Preview only">&#x25C9;</button>
                     </div>
                 ) : null}
-                {state.view.activeTab === 'drawing' ? (
+                {view.activeTab === 'drawing' ? (
                     <div className="pad-tab-actions">
                         <button
-                            className={`pad-tab-action${state.view.dialog === 'drawing-settings' ? ' active' : ''}`}
+                            className={`pad-tab-action${view.dialog === 'drawing-settings' ? ' active' : ''}`}
                             onClick={() => commands.toggleDialog('drawing-settings')}
                             title="Drawing settings"
                             aria-label="Drawing settings"

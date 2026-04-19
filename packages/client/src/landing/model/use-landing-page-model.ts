@@ -15,7 +15,7 @@ export function useLandingPageModel(): LandingPageModel {
     }, [])
 
     return {
-        host: window.location.host,
+        host: readLandingHost(),
         openPad(name) {
             const path = readLandingPadPath(name)
             if (!path) return
@@ -23,6 +23,14 @@ export function useLandingPageModel(): LandingPageModel {
             navigate({ to: '/$', params: { _splat: path.slice(1) } })
         },
     }
+}
+
+function readLandingHost() {
+    if (import.meta.env.VITE_E2E === '1' && typeof window.__MPAD_TEST_HOST__ === 'string') {
+        return window.__MPAD_TEST_HOST__
+    }
+
+    return window.location.host
 }
 
 function readLandingPadPath(value: string): PadPath | null {

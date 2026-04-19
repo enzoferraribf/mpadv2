@@ -1,27 +1,7 @@
 import {
     expect,
-    test,
-    createPeerContext,
-    hideEditorCaret,
-    hideSidebarEntries,
-    moveDrawingPointer,
-    narutoPeer,
-    openDiffsTab,
-    openDrawingRoom,
-    openLanding,
     openPad,
-    persistTextRevision,
-    readCurrentRightButton,
-    readSnapshotRevertButton,
-    readSnapshotSideButton,
-    replaceFirstEditorLine,
-    sailorMoonPeer,
-    seedDocument,
-    setLayout,
-    waitForCommentThreadCount,
-    waitForHistoryItems,
-    waitForPad,
-    waitForText,
+    test,
 } from './mpad-test'
 
 test('shows live room files to other peers', async ({ browser }) => {

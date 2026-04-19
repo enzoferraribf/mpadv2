@@ -1,0 +1,12 @@
+.git
+.DS_Store
+.turbo
+.tmp
+.turso
+node_modules
+dist
+test-results
+playwright-report
+screenshots
+.env
+*.tsbuildinfo

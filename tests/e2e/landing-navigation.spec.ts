@@ -1,27 +1,9 @@
 import {
     expect,
-    test,
-    createPeerContext,
-    hideEditorCaret,
-    hideSidebarEntries,
-    moveDrawingPointer,
-    narutoPeer,
-    openDiffsTab,
-    openDrawingRoom,
     openLanding,
     openPad,
-    persistTextRevision,
-    readCurrentRightButton,
-    readSnapshotRevertButton,
-    readSnapshotSideButton,
-    replaceFirstEditorLine,
-    sailorMoonPeer,
-    seedDocument,
-    setLayout,
-    waitForCommentThreadCount,
-    waitForHistoryItems,
+    test,
     waitForPad,
-    waitForText,
 } from './mpad-test'
 
 test('renders the landing shell', async ({ page }) => {
@@ -49,10 +31,11 @@ test('shows related pads from the real tree', async ({ browser }) => {
     await openPad(page, `${root}/two`)
     await openPad(page, `${root}/one/child`)
     await openPad(page, `${root}/branch/start`)
+    await page.getByTitle('Toggle sidebar (Ctrl+B)').click()
 
-    await expect(page.getByText(`/${root}`, { exact: true })).toBeVisible()
-    await expect(page.getByText(`/${root}/two`, { exact: true })).toBeVisible()
-    await expect(page.getByText(`/${root}/one/child`, { exact: true })).toBeVisible()
+    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${root}`)
+    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${root}/two`)
+    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${root}/one/child`)
 
     await context.close()
 })
@@ -67,9 +50,9 @@ test('shows pads in ascending path order in the sidebar', async ({ browser }) =>
     await openPad(page, `${root}/foo`)
     await openPad(page, `${root}/foo/bar`)
     await openPad(page, `${root}`)
+    await page.getByTitle('Toggle sidebar (Ctrl+B)').click()
 
-    const labels = await page.locator('.pad-explorer .pad-explorer-item').allTextContents()
-    expect(labels).toEqual([
+    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toEqual([
         `/${root}`,
         `/${root}/foo`,
         `/${root}/foo/bar`,
@@ -77,4 +60,3 @@ test('shows pads in ascending path order in the sidebar', async ({ browser }) =>
 
     await context.close()
 })
-

@@ -1,13 +1,13 @@
 import 'github-markdown-css/github-markdown.css'
-import type { TextPadComments } from '@/pad-text/application/use-text-pad'
 import type { TextCommentResult } from '@/pad-text/infrastructure/text-comment-store'
 import type { CursorPosition, TextEditorHandle } from '@/pad-text/infrastructure/text-editor'
+import type { TextWorkspaceComments } from '@/pad-workspace/application/use-text-workspace'
 import { MarkdownEditorPane } from '@/pad-text/markdown-editor-pane'
 import { MarkdownPreviewPane } from '@/pad-text/markdown-preview-pane'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 
 export function TextWorkspace(input: {
-    comments: TextPadComments
+    comments: TextWorkspaceComments
     content: string
     direction: 'horizontal' | 'vertical'
     editor: TextEditorHandle
@@ -53,9 +53,9 @@ export function TextWorkspace(input: {
         : input.layout === 'preview'
             ? previewPane
             : (
-                <ResizablePanelGroup direction={input.direction} className="h-full min-h-0">
+                <ResizablePanelGroup autoSaveId="pad-text-split" direction={input.direction} className="h-full min-h-0">
                     <ResizablePanel defaultSize={50} minSize={30}>{editorPane}</ResizablePanel>
-                    <ResizableHandle className="mx-0 bg-[--stone-border]" />
+                    <ResizableHandle className="mx-0 bg-[--stone-border]" withHandle />
                     <ResizablePanel defaultSize={50} minSize={30}>{previewPane}</ResizablePanel>
                 </ResizablePanelGroup>
             )

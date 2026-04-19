@@ -1,17 +1,17 @@
 import { MessageSquare } from 'lucide-react'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
-import type { TextPadComments } from '@/pad-text/application/use-text-pad'
 import type { TextCommentResult } from '@/pad-text/infrastructure/text-comment-store'
 import {
     buildCommentMarkers,
     readOverlayThreadId,
     type TextCommentRangeRect,
 } from '@/pad-text/domain/comment-overlay'
+import type { TextWorkspaceComments } from '@/pad-workspace/application/use-text-workspace'
 import { TextCommentsPane } from './text-comments-pane'
 import type { CursorPosition, TextEditorHandle, TextEditorSelection } from '@/pad-text/infrastructure/text-editor'
 
 export function MarkdownEditorPane(input: {
-    comments: TextPadComments
+    comments: TextWorkspaceComments
     editor: TextEditorHandle
     onCloseCommentOverlay: () => void
     onCommentCreateThread: (body: string) => TextCommentResult<{ threadId: string }>

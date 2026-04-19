@@ -1,26 +1,16 @@
 import {
-    expect,
-    test,
     createPeerContext,
-    hideEditorCaret,
-    hideSidebarEntries,
+    expect,
     moveDrawingPointer,
     narutoPeer,
-    openDiffsTab,
     openDrawingRoom,
-    openLanding,
     openPad,
-    persistTextRevision,
-    readCurrentRightButton,
-    readSnapshotRevertButton,
-    readSnapshotSideButton,
     replaceFirstEditorLine,
     sailorMoonPeer,
-    seedDocument,
     setLayout,
-    waitForCommentThreadCount,
-    waitForHistoryItems,
+    test,
     waitForPad,
+    waitForTextHistoryCount,
     waitForText,
 } from './mpad-test'
 
@@ -212,7 +202,7 @@ test('keeps text after a reload', async ({ browser }) => {
     await page.evaluate(() => (window as any).__mpad__.appendText('# persisted'))
     await waitForText(page, '# persisted')
 
-    await page.waitForTimeout(3_500)
+    await waitForTextHistoryCount(page, 1)
     await page.reload()
     await waitForPad(page)
     await waitForText(page, '# persisted')

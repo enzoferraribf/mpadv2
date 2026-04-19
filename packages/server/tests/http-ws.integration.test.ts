@@ -3,7 +3,7 @@ import { Doc, encodeStateAsUpdate } from 'yjs'
 import { padPath } from '@mpad/core/pad-path'
 import { padRoomName } from '@mpad/core/pad-room'
 import { createDocUpdateMessage } from '@mpad/protocol/room-message-codec'
-import { createServer, shutdownServer } from '../src/bootstrap/create-server'
+import { createServer } from '../src/bootstrap/create-server'
 import { sql } from '../src/infrastructure/db'
 import { migrate } from '../src/infrastructure/migration-runner'
 import { flushPadRooms } from '../src/transport/ws-router'
@@ -26,7 +26,7 @@ afterEach(async () => {
 describe('http and websocket integration', () => {
     test('persists websocket text updates and serves them over http', async () => {
         const path = padPath(`integration/${Date.now()}-${crypto.randomUUID().slice(0, 8)}`)
-        server = createServer(0)
+        server = createServer({ port: 0, appOrigin: null })
         port = server.port ?? 0
         expect(port).toBeGreaterThan(0)
 
@@ -57,6 +57,20 @@ describe('http and websocket integration', () => {
         socket.close()
         doc.destroy()
         await cleanupRoot(path)
+    })
+
+    test('returns the configured cors origin', async () => {
+        server = createServer({ port: 0, appOrigin: 'https://app.example.com' })
+        port = server.port ?? 0
+
+        const response = await fetch(`http://127.0.0.1:${port}/health`, {
+            headers: {
+                Origin: 'https://app.example.com',
+            },
+        })
+
+        expect(response.status).toBe(200)
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com')
     })
 })
 

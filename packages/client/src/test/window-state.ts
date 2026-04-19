@@ -37,50 +37,50 @@ declare global {
 }
 
 export function publishWindowState(workspace: PadWorkspaceModel) {
-    if (workspace.state.kind !== 'ready') {
+    if (workspace.text.kind !== 'ready') {
         delete window.__mpad__
         return
     }
 
-    const { commands, state } = workspace
+    const { drawing, files, shell, text } = workspace
 
     window.__mpad__ = {
         appendText: (content: string) => {
-            state.text.editor.appendText(content)
+            text.editor.appendText(content)
         },
         createCommentThread: (body: string) => {
-            commands.createCommentThread(body)
+            text.commentActions.createThread(body)
         },
         deleteCommentMessage: (threadId: string, messageId: string) => {
-            commands.deleteCommentMessage({ threadId, messageId })
+            text.commentActions.deleteMessage({ threadId, messageId })
         },
         deleteCommentThread: (threadId: string) => {
-            commands.deleteCommentThread(threadId)
+            text.commentActions.deleteThread(threadId)
         },
         editCommentMessage: (threadId: string, messageId: string, body: string) => {
-            commands.editCommentMessage({ threadId, messageId, body })
+            text.commentActions.editMessage({ threadId, messageId, body })
         },
-        getCommentThreads: () => state.text.comments.threads.map((thread) => ({
+        getCommentThreads: () => text.comments.threads.map((thread) => ({
             id: thread.id,
             quote: thread.quote,
             selected:
-                state.text.comments.overlay.kind === 'thread'
-                && thread.id === state.text.comments.overlay.threadId,
+                text.comments.overlay.kind === 'thread'
+                && thread.id === text.comments.overlay.threadId,
             detached: thread.anchor.detached,
             messages: thread.messages.map((message) => ({ id: message.id, body: message.body })),
         })),
-        getText: () => state.text.editor.readContent(),
-        getFileCount: () => state.status.files.length,
-        getDrawingConnection: () => state.drawing.kind === 'ready' ? state.drawing.connection : 'closed',
+        getText: () => text.editor.readContent(),
+        getFileCount: () => files.files.length,
+        getDrawingConnection: () => drawing.kind === 'ready' ? drawing.connection : 'closed',
         getDrawingElementCount: () =>
-            state.drawing.kind === 'ready'
-                ? state.drawing.drawing.getElements().length
+            drawing.kind === 'ready'
+                ? drawing.drawing.getElements().length
                 : 0,
-        getConnection: () => state.status.connection,
-        hasLocalFile: (name: string) => state.status.files.some((file) => file.meta.name === name && file.isLocal),
-        openDrawing: () => commands.openTab('drawing'),
+        getConnection: () => shell.status.connection,
+        hasLocalFile: (name: string) => files.files.some((file) => file.meta.name === name && file.isLocal),
+        openDrawing: () => shell.commands.openTab('drawing'),
         openCommentDraftFromSelection: () => {
-            commands.openCommentDraftFromSelection()
+            text.commentActions.openDraftFromSelection()
         },
         insertTestArrow: async () => {
             if (!window.__mpadDrawingApi__) throw new Error('Drawing API is unavailable')
@@ -90,32 +90,32 @@ export function publishWindowState(workspace: PadWorkspaceModel) {
             })
         },
         insertTestRectangle: async () => {
-            if (state.drawing.kind !== 'ready') throw new Error('Drawing is closed')
+            if (drawing.kind !== 'ready') throw new Error('Drawing is closed')
             const { convertToExcalidrawElements } = await import('@excalidraw/excalidraw')
-            state.drawing.drawing.writeScene(convertToExcalidrawElements([{ type: 'rectangle', x: 80, y: 80, width: 160, height: 120 }]))
+            drawing.drawing.writeScene(convertToExcalidrawElements([{ type: 'rectangle', x: 80, y: 80, width: 160, height: 120 }]))
         },
         replyToCommentThread: (threadId: string, body: string) => {
-            commands.replyToCommentThread({ threadId, body })
+            text.commentActions.replyToThread({ threadId, body })
         },
         selectCommentRange: (from: number, to: number) => {
-            state.text.editor.selectRange(from, to)
+            text.editor.selectRange(from, to)
         },
         selectCommentThread: (threadId: string) => {
-            commands.openCommentThread(threadId)
+            text.commentActions.openThread(threadId)
         },
         setText: (content: string) => {
-            state.text.editor.setText(content)
+            text.editor.setText(content)
         },
         uploadTestFile: async () => {
-            commands.uploadFile(new File(['hello file'], 'readme.txt', { type: 'text/plain' }))
+            files.uploadFile(new File(['hello file'], 'readme.txt', { type: 'text/plain' }))
         },
         requestFile: (name: string) => {
-            const file = state.status.files.find((value) => value.meta.name === name)
-            if (file) commands.downloadFile(file)
+            const file = files.files.find((value) => value.meta.name === name)
+            if (file) files.downloadFile(file)
         },
         deleteLocalFile: (name: string) => {
-            const file = state.status.files.find((value) => value.meta.name === name && value.isLocal)
-            if (file) commands.deleteFile(file.meta.id)
+            const file = files.files.find((value) => value.meta.name === name && value.isLocal)
+            if (file) files.deleteFile(file.meta.id)
         },
     }
 }

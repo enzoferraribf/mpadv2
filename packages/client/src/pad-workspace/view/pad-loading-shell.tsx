@@ -1,6 +1,7 @@
 import { padPathName, type PadPath } from '@mpad/core/pad-path'
 import { getRandomPhrase } from '@/components/feedback/loading-phrases'
 import type { PadWorkspaceLayout, PadWorkspaceTab } from '@/pad-workspace/domain/workspace-view'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { PadSidebar } from '@/workspace-shell/view/pad-sidebar'
 import { PadStatusBar } from '@/workspace-shell/view/pad-status-bar'
 
@@ -25,6 +26,23 @@ const noopNavigate = (_path: PadPath) => {}
 
 export function PadLoadingShell(input: PadLoadingShellProps) {
     const padName = padPathName(input.path)
+    const main = (
+        <div className="app-main">
+            <section className="loading-shell workspace-shell">
+                <div className="loading-card">
+                    <span className="mpad-logo mpad-logo-lg"><span className="mpad-logo-m">M</span>PAD</span>
+                    <p className="text-sm text-[--stone-text-secondary]">{input.phrase ?? getRandomPhrase()}</p>
+                </div>
+            </section>
+            <PadStatusBar
+                path={input.path}
+                connection={input.connection ?? 'connecting'}
+                peerCount={input.peerCount ?? 0}
+                clockLabel={input.clockLabel ?? readClockLabel()}
+                cursorLabel={input.cursorLabel ?? 'Ln 1, Col 1'}
+            />
+        </div>
+    )
 
     return (
         <>
@@ -103,30 +121,25 @@ export function PadLoadingShell(input: PadLoadingShellProps) {
                     ) : null}
                 </div>
             </div>
-            <div className="app-content">
-                {readSidebarOpen(input.sidebarOpen) ? (
-                    <PadSidebar
-                        path={input.path}
-                        tree={[]}
-                        onNavigate={input.onNavigate ?? noopNavigate}
-                    />
-                ) : null}
-                <div className="app-main">
-                    <section className="loading-shell workspace-shell">
-                        <div className="loading-card">
-                            <span className="mpad-logo mpad-logo-lg"><span className="mpad-logo-m">M</span>PAD</span>
-                            <p className="text-sm text-[--stone-text-secondary]">{input.phrase ?? getRandomPhrase()}</p>
-                        </div>
-                    </section>
-                    <PadStatusBar
-                        path={input.path}
-                        connection={input.connection ?? 'connecting'}
-                        peerCount={input.peerCount ?? 0}
-                        clockLabel={input.clockLabel ?? readClockLabel()}
-                        cursorLabel={input.cursorLabel ?? 'Ln 1, Col 1'}
-                    />
+            {readSidebarOpen(input.sidebarOpen) ? (
+                <ResizablePanelGroup autoSaveId="pad-shell-sidebar" className="app-content" direction="horizontal">
+                    <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
+                        <PadSidebar
+                            path={input.path}
+                            tree={[]}
+                            onNavigate={input.onNavigate ?? noopNavigate}
+                        />
+                    </ResizablePanel>
+                    <ResizableHandle className="bg-[--stone-border]" withHandle />
+                    <ResizablePanel minSize={72}>
+                        {main}
+                    </ResizablePanel>
+                </ResizablePanelGroup>
+            ) : (
+                <div className="app-content">
+                    {main}
                 </div>
-            </div>
+            )}
         </>
     )
 }

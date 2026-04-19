@@ -1,15 +1,22 @@
 import type { PadPath } from '@mpad/core/pad-path'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
-const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000'
+type PadServerConfig = {
+    httpServerOrigin: string
+    wsServerOrigin: string
+}
+
+const DEFAULT_HTTP_SERVER_ORIGIN = 'http://localhost:4000'
+const DEFAULT_WS_SERVER_ORIGIN = 'ws://localhost:4000'
 
 export function roomWebSocketUrl(roomName: string, clientId: number) {
-    const base = WS_URL.replace(/\/$/, '')
+    const { wsServerOrigin } = readPadServerConfig()
+    const base = wsServerOrigin.replace(/\/$/, '')
     return `${base}/${encodeURIComponent(roomName)}?client=${clientId}`
 }
 
 export function padApiUrl(path: PadPath, suffix: string) {
-    return `${API_URL}/api/pads${encodePadPath(path)}${suffix}`
+    const { httpServerOrigin } = readPadServerConfig()
+    return `${httpServerOrigin}/api/pads${encodePadPath(path)}${suffix}`
 }
 
 export async function fetchApiJson<T>(url: string, signal: AbortSignal) {
@@ -35,4 +42,19 @@ function encodePadPath(path: PadPath) {
 async function readJson<T>(response: Response) {
     if (!response.ok) throw new Error(await response.text())
     return response.json() as Promise<T>
+}
+
+export function readPadServerConfig(): PadServerConfig {
+    const runtimeConfig = typeof window === 'object'
+        ? window.__MPAD_CONFIG__
+        : undefined
+
+    return {
+        httpServerOrigin: stripTrailingSlash(runtimeConfig?.httpServerOrigin ?? import.meta.env.VITE_HTTP_SERVER_ORIGIN ?? DEFAULT_HTTP_SERVER_ORIGIN),
+        wsServerOrigin: stripTrailingSlash(runtimeConfig?.wsServerOrigin ?? import.meta.env.VITE_WS_SERVER_ORIGIN ?? DEFAULT_WS_SERVER_ORIGIN),
+    }
+}
+
+function stripTrailingSlash(value: string) {
+    return value.replace(/\/$/, '')
 }

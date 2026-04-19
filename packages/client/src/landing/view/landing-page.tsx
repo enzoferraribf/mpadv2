@@ -1,6 +1,4 @@
 import { useRef, useState, type FormEvent } from 'react'
-import heroImg from '@/assets/landing-hero.png'
-import featuresImg from '@/assets/landing-features.png'
 import { useLandingPageModel } from '@/landing/model/use-landing-page-model'
 import { useLandingEffects } from './use-landing-effects'
 
@@ -101,11 +99,6 @@ function LandingHero(input: { host: string; onGo: (name: string) => void }) {
                 </div>
                 <a href="#features" className="landing-hero-secondary">See features</a>
             </div>
-            <div className="landing-hero-image">
-                <div className="landing-hero-frame" data-parallax="0.12" data-rotatey="-6">
-                    <img src={heroImg} alt="MPAD editor" />
-                </div>
-            </div>
         </section>
     )
 }
@@ -149,12 +142,6 @@ function LandingFeatures() {
                             <div className="landing-feature-desc">{feature.desc}</div>
                         </div>
                     ))}
-                </div>
-                <div className="landing-features-shot">
-                    <div className="landing-features-shot-frame" data-parallax="0.08" data-rotatey="-5">
-                        <img src={featuresImg} alt="MPAD files view" />
-                    </div>
-                    <div className="landing-features-shot-caption">File sharing view</div>
                 </div>
             </div>
         </section>

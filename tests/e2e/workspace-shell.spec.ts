@@ -1,25 +1,12 @@
 import {
     expect,
-    test,
-    createPeerContext,
     hideEditorCaret,
     hideSidebarEntries,
-    moveDrawingPointer,
-    narutoPeer,
-    openDiffsTab,
     openDrawingRoom,
-    openLanding,
     openPad,
-    persistTextRevision,
-    readCurrentRightButton,
-    readSnapshotRevertButton,
-    readSnapshotSideButton,
-    replaceFirstEditorLine,
-    sailorMoonPeer,
     seedDocument,
     setLayout,
-    waitForCommentThreadCount,
-    waitForHistoryItems,
+    test,
     waitForPad,
     waitForText,
 } from './mpad-test'
@@ -135,6 +122,31 @@ test('keeps the shell height stable when switching tabs', async ({ browser }) =>
     expect(Math.round(drawing!.height)).toBe(Math.round(before!.height))
     expect(Math.round(files!.height)).toBe(Math.round(before!.height))
     expect(Math.round(text!.height)).toBe(Math.round(before!.height))
+
+    await context.close()
+})
+
+test('keeps the top bar mounted when navigating from the explorer', async ({ browser }) => {
+    const root = `notes/${Date.now()}-explorer-nav`
+    const firstPath = `${root}/one`
+    const secondPath = `${root}/two`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, firstPath)
+    await openPad(page, secondPath)
+    await openPad(page, firstPath)
+    await page.getByTitle('Toggle sidebar (Ctrl+B)').click()
+
+    await expect.poll(async () => page.locator('.pad-explorer .pad-explorer-item').allTextContents()).toContain(`/${secondPath}`)
+    await page.locator('.app-topbar').evaluate((node) => {
+        node.setAttribute('data-stable-token', 'topbar-stable')
+    })
+
+    await page.getByRole('button', { name: `/${secondPath}`, exact: true }).click()
+    await waitForPad(page)
+    await expect(page).toHaveURL(new RegExp(`/${root}/two$`))
+    await expect(page.locator('.app-topbar')).toHaveAttribute('data-stable-token', 'topbar-stable')
 
     await context.close()
 })

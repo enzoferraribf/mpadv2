@@ -443,15 +443,16 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        min-height: 0;
         min-width: 0;
     }
 
     /* ---- Sidebar ---- */
     .pad-sidebar {
-        width: 240px;
-        min-width: 240px;
         display: flex;
         flex-direction: column;
+        height: 100%;
+        min-width: 0;
         background: var(--stone-bg);
         border-right: 1px solid var(--stone-border);
         user-select: none;
@@ -1564,7 +1565,7 @@
     .landing-hero {
         min-height: 100vh;
         display: grid;
-        grid-template-columns: 1fr 1.1fr;
+        grid-template-columns: 1fr;
         align-items: center;
         padding: 56px 0 0 0;
         position: relative;
@@ -1583,7 +1584,8 @@
     }
 
     .landing-hero-text {
-        padding: 80px 24px 80px 260px;
+        max-width: 760px;
+        padding: 80px 64px 96px 260px;
     }
 
     .landing-hero-super {
@@ -1642,53 +1644,6 @@
     .landing-hero-secondary:hover {
         color: var(--stone-text-secondary);
         border-color: var(--stone-text-secondary);
-    }
-
-    /* Landing: Hero image */
-    .landing-hero-image {
-        padding: 60px 48px 60px 0;
-        perspective: 1200px;
-        position: relative;
-        left: -80px;
-        opacity: 0;
-        animation: landing-chiselIn 0.8s ease 0.5s forwards;
-    }
-
-    .landing-hero-frame {
-        position: relative;
-        border-radius: 8px;
-        overflow: hidden;
-        transform: rotateY(-6deg);
-        transform-style: preserve-3d;
-        will-change: transform;
-        box-shadow:
-            0 0 0 1px var(--stone-accent),
-            0 0 0 4px var(--stone-bg),
-            0 0 0 5px var(--stone-border-strong),
-            0 16px 48px rgba(0, 0, 0, 0.5),
-            0 0 80px rgba(201, 168, 124, 0.06);
-        transition: transform 400ms ease, box-shadow 400ms ease;
-    }
-
-    .landing-hero-frame::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 8px;
-        opacity: 0;
-        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(201, 168, 124, 0.12) 0%, transparent 60%);
-        transition: opacity 300ms ease;
-        pointer-events: none;
-        z-index: 2;
-    }
-
-    .landing-hero-frame:hover::after {
-        opacity: 1;
-    }
-
-    .landing-hero-frame img {
-        display: block;
-        width: 100%;
     }
 
     /* ---- Landing: Stats ---- */
@@ -1758,7 +1713,7 @@
 
     .landing-features-body {
         display: grid;
-        grid-template-columns: 1fr 420px;
+        grid-template-columns: 1fr;
         gap: 48px;
         align-items: start;
     }
@@ -1817,60 +1772,6 @@
         font-size: 13px;
         color: var(--stone-text-dim);
         line-height: 1.7;
-    }
-
-    /* Landing: Features screenshot */
-    .landing-features-shot {
-        position: sticky;
-        top: 120px;
-        perspective: 1200px;
-    }
-
-    .landing-features-shot-frame {
-        position: relative;
-        border-radius: 8px;
-        overflow: hidden;
-        transform: rotateY(-5deg);
-        transform-style: preserve-3d;
-        will-change: transform;
-        box-shadow:
-            0 0 0 1px var(--stone-accent),
-            0 0 0 4px var(--stone-bg),
-            0 0 0 5px var(--stone-border-strong),
-            0 12px 40px rgba(0, 0, 0, 0.45),
-            0 0 60px rgba(201, 168, 124, 0.05);
-        transition: transform 400ms ease, box-shadow 400ms ease;
-    }
-
-    .landing-features-shot-frame::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 8px;
-        opacity: 0;
-        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(201, 168, 124, 0.12) 0%, transparent 60%);
-        transition: opacity 300ms ease;
-        pointer-events: none;
-        z-index: 2;
-    }
-
-    .landing-features-shot-frame:hover::after {
-        opacity: 1;
-    }
-
-    .landing-features-shot-frame img {
-        display: block;
-        width: 100%;
-    }
-
-    .landing-features-shot-caption {
-        font-family: 'Fira Code', monospace;
-        font-size: 10px;
-        color: var(--stone-text-dim);
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        margin-top: 12px;
-        text-align: center;
     }
 
     /* ---- Landing: How it works ---- */

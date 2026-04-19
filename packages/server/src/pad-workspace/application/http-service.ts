@@ -1,6 +1,7 @@
 import { assert } from '@mpad/core/assert'
 import { padPath, type PadPath } from '@mpad/core/pad-path'
 import { parsePadRoomName, type PadRoomKind } from '@mpad/core/pad-room'
+import { allowedCorsOrigin } from '../../infrastructure/origin'
 import { listWorkspacePads } from './navigation-query-service'
 import {
     listPadTextRevisions,
@@ -19,32 +20,32 @@ type ApiRoute =
     | { kind: 'not-found' }
     | { kind: 'room'; roomName: string; roomKind: PadRoomKind; awarenessClientId: number }
 
-export async function handleWorkspaceRequest(req: Request) {
-    if (req.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }))
+export async function handleWorkspaceRequest(req: Request, appOrigin: string | null = null) {
+    if (req.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }), appOrigin)
 
     const route = parseWorkspaceRoute(req.url, req.method)
 
-    if (route.kind === 'health') return withCors(Response.json({ status: 'ok' }))
+    if (route.kind === 'health') return withCors(Response.json({ status: 'ok' }), appOrigin)
 
     if (route.kind === 'related') {
         const tree = await listWorkspacePads(route.path)
-        return withCors(Response.json(tree))
+        return withCors(Response.json(tree), appOrigin)
     }
 
     if (route.kind === 'text-history') {
         const revisions = await listPadTextRevisions(route.path)
-        return withCors(Response.json(revisions))
+        return withCors(Response.json(revisions), appOrigin)
     }
 
     if (route.kind === 'text-history-revision') {
         const revision = await readPadTextRevision(route.path, route.revisionId)
-        if (!revision) return withCors(new Response('Revision not found', { status: 404 }))
-        return withCors(Response.json(revision))
+        if (!revision) return withCors(new Response('Revision not found', { status: 404 }), appOrigin)
+        return withCors(Response.json(revision), appOrigin)
     }
 
     if (route.kind === 'text-history-update') {
         const revision = await readPadTextRevisionUpdate(route.path, route.revisionId)
-        if (!revision) return withCors(new Response('Revision not found', { status: 404 }))
+        if (!revision) return withCors(new Response('Revision not found', { status: 404 }), appOrigin)
         const bytes = new Uint8Array(revision.byteLength)
         bytes.set(revision)
         return withCors(new Response(new Blob([bytes.buffer], {
@@ -53,18 +54,18 @@ export async function handleWorkspaceRequest(req: Request) {
             headers: {
                 'Content-Type': 'application/octet-stream',
             },
-        }))
+        }), appOrigin)
     }
 
     if (route.kind === 'text-history-revert') {
         const result = await revertPadTextRevision(route.path, route.revisionId)
-        if (!result) return withCors(new Response('Revision not found', { status: 404 }))
-        if (!result.changed) return withCors(new Response('Snapshot already matches the live document', { status: 409 }))
-        return withCors(Response.json(result.revision))
+        if (!result) return withCors(new Response('Revision not found', { status: 404 }), appOrigin)
+        if (!result.changed) return withCors(new Response('Snapshot already matches the live document', { status: 409 }), appOrigin)
+        return withCors(Response.json(result.revision), appOrigin)
     }
 
     if (route.kind === 'not-found') {
-        return withCors(new Response('Not found', { status: 404 }))
+        return withCors(new Response('Not found', { status: 404 }), appOrigin)
     }
 
     return route
@@ -149,9 +150,10 @@ function decodePadPath(value: string) {
     return padPath(decodeURIComponent(value))
 }
 
-function withCors(response: Response) {
-    response.headers.set('Access-Control-Allow-Origin', '*')
+function withCors(response: Response, appOrigin: string | null) {
+    response.headers.set('Access-Control-Allow-Origin', allowedCorsOrigin(appOrigin))
     response.headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', '*')
+    response.headers.set('Vary', 'Origin')
     return response
 }

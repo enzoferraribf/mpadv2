@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test'
 import { readServerRoomMessage } from '@mpad/protocol/room-message-codec'
-import type { OutboundFileSignal } from '@mpad/protocol/live-files'
 import type { ServerWebSocket } from 'bun'
 import { routeLiveFileSignal } from '../src/live-files/application/live-file-room-service'
 import type { WsData } from '../src/transport/ws-data'

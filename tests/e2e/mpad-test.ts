@@ -1,8 +1,10 @@
 import type { Browser, Page } from '@playwright/test'
 import { createPeerSeed } from '@mpad/testkit/peer-seed'
 import { expect, test } from '@playwright/test'
+import { serverUrl } from '../../playwright.shared'
 
 export const demoText = '# alpha\n\nint a = 1;\nint b = 2;\n\n```cpp\nvector<int> v(2) = {3, 4};\n```'
+export const marketingHost = 'missopad.com'
 export const narutoPeer = createPeerSeed('Naruto Uzumaki', '#f97316', '#7c2d12', '#ea580c', '#fdba7433')
 export const sailorMoonPeer = createPeerSeed('Sailor Moon', '#0ea5e9', '#164e63', '#0284c7', '#7dd3fc33')
 
@@ -13,6 +15,9 @@ test.use({
 export { expect, test }
 export async function openLanding(page: Page) {
     await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.addInitScript((host) => {
+        window.__MPAD_TEST_HOST__ = host
+    }, marketingHost)
     await page.goto('/')
 }
 
@@ -90,8 +95,9 @@ export function readCurrentRightButton(page: Page) {
 }
 
 export async function persistTextRevision(page: Page, content: string) {
+    const nextCount = await readTextHistoryCount(page) + 1
     await page.evaluate((value) => (window as any).__mpad__.appendText(value), content)
-    await page.waitForTimeout(3_500)
+    await waitForTextHistoryCount(page, nextCount)
 }
 
 export async function setLayout(page: Page, name: 'Editor' | 'Preview' | 'Split') {
@@ -138,4 +144,16 @@ export async function createPeerContext(browser: Browser, peer: ReturnType<typeo
         window.localStorage.setItem('mpad.peer', JSON.stringify(value))
     }, peer)
     return context
+}
+
+export async function waitForTextHistoryCount(page: Page, count: number) {
+    await expect.poll(() => readTextHistoryCount(page), { timeout: 10_000 }).toBe(count)
+}
+
+async function readTextHistoryCount(page: Page) {
+    const path = new URL(page.url()).pathname
+    const response = await page.request.get(`${serverUrl}/api/pads${path}/text/history`)
+    if (!response.ok()) throw new Error(await response.text())
+    const revisions = await response.json() as Array<unknown>
+    return revisions.length
 }

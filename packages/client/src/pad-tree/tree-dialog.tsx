@@ -8,6 +8,7 @@ export function TreeDialog(input: {
     onOpenChange: (open: boolean) => void
     path: PadPath
     tree: PadTreeItem[]
+    errorMessage?: string | null
     onSelect: (path: PadPath) => void
 }) {
     const items = input.tree.filter((item) => item.path !== input.path)
@@ -18,7 +19,7 @@ export function TreeDialog(input: {
             <CommandInput placeholder={`Search pads in ${scopePath}`} />
             <CommandList>
                 {items.length === 0 ? (
-                    <CommandEmpty>No related pads.</CommandEmpty>
+                    <CommandEmpty>{input.errorMessage ?? 'No related pads.'}</CommandEmpty>
                 ) : (
                     <CommandGroup heading="Explorer">
                         {items.map((item) => (

@@ -1,14 +1,14 @@
-import { ensureDatabaseReady } from './infrastructure/migration-runner'
-import { createServer, shutdownServer } from './bootstrap/create-server'
+import { shutdownServer } from './bootstrap/create-server'
+import { startServer } from './bootstrap/start-server'
 
-const PORT = Number(process.env.PORT ?? 4000)
-
-await ensureDatabaseReady()
-
-createServer(PORT)
+const server = await startServer()
+let shuttingDown = false
 
 async function shutdown() {
+    if (shuttingDown) return
+    shuttingDown = true
     await shutdownServer()
+    server.stop(true)
     process.exit(0)
 }
 

@@ -5,8 +5,9 @@
     "type": "module",
     "scripts": {
         "dev": "bun --env-file=../../.env run --watch src/index.ts",
-        "migrate": "bun --env-file=../../.env run src/infrastructure/migrate.ts",
+        "schema-migrate": "bun --env-file=../../.env run src/schema-migrate.ts",
         "start": "bun --env-file=../../.env run src/index.ts",
+        "test": "bun test tests",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

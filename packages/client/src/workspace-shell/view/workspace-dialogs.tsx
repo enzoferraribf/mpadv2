@@ -1,38 +1,49 @@
-import type { PadWorkspaceModel } from '@/pad-workspace/application/use-pad-workspace-model'
+import type {
+    PadWorkspaceFilesModel,
+    PadWorkspaceShellModel,
+} from '@/pad-workspace/application/use-pad-workspace-model'
+import type { WorkspaceNavigationModel } from '@/pad-workspace/application/use-workspace-navigation'
 import { CommandMenu } from '@/workspace/command-menu'
 import { DrawingSettingsDialog } from '@/pad-drawing/drawing-settings-dialog'
 import { TreeDialog } from '@/pad-tree/tree-dialog'
 import { FilesDialog } from '@/live-files/view/files-dialog'
 
-export function WorkspaceDialogs(input: { model: PadWorkspaceModel }) {
-    const { commands, state } = input.model
+export function WorkspaceDialogs(input: {
+    shell: PadWorkspaceShellModel
+    navigation: WorkspaceNavigationModel
+    files: PadWorkspaceFilesModel
+}) {
+    const { commands, view } = input.shell
+    const tree = input.navigation.kind === 'ready' ? input.navigation.items : []
+    const treeError = input.navigation.kind === 'error' ? input.navigation.message : null
 
     return (
         <>
             <CommandMenu
-                open={state.view.dialog === 'command'}
+                open={view.dialog === 'command'}
                 onOpenChange={(open) => open ? commands.openDialog('command') : commands.closeDialog()}
                 commands={commands}
             />
             <TreeDialog
-                open={state.view.dialog === 'tree'}
+                open={view.dialog === 'tree'}
                 onOpenChange={(open) => open ? commands.openDialog('tree') : commands.closeDialog()}
-                path={state.view.path}
-                tree={state.status.tree}
+                errorMessage={treeError}
+                path={view.path}
+                tree={tree}
                 onSelect={commands.navigateToPad}
             />
             <FilesDialog
-                open={state.view.dialog === 'files'}
+                open={view.dialog === 'files'}
                 onOpenChange={(open) => open ? commands.openDialog('files') : commands.closeDialog()}
-                path={state.view.path}
-                files={state.status.files}
-                onDelete={commands.deleteFile}
-                onDownload={commands.downloadFile}
+                path={view.path}
+                files={input.files.files}
+                onDelete={input.files.deleteFile}
+                onDownload={input.files.downloadFile}
             />
             <DrawingSettingsDialog
-                open={state.view.dialog === 'drawing-settings'}
+                open={view.dialog === 'drawing-settings'}
                 onOpenChange={(open) => open ? commands.openDialog('drawing-settings') : commands.closeDialog()}
-                preference={state.view.drawingThemePreference}
+                preference={view.drawingThemePreference}
                 onPreferenceChange={commands.setDrawingThemePreference}
             />
         </>

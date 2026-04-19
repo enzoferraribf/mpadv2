@@ -1,26 +1,15 @@
 import {
     expect,
-    test,
-    createPeerContext,
-    hideEditorCaret,
-    hideSidebarEntries,
-    moveDrawingPointer,
-    narutoPeer,
     openDiffsTab,
-    openDrawingRoom,
-    openLanding,
     openPad,
     persistTextRevision,
     readCurrentRightButton,
     readSnapshotRevertButton,
     readSnapshotSideButton,
-    replaceFirstEditorLine,
-    sailorMoonPeer,
-    seedDocument,
-    setLayout,
+    test,
     waitForCommentThreadCount,
     waitForHistoryItems,
-    waitForPad,
+    waitForTextHistoryCount,
     waitForText,
 } from './mpad-test'
 
@@ -161,13 +150,13 @@ test('reverts comment state with the saved snapshot', async ({ browser }) => {
     await openPad(page, path)
     await page.evaluate(() => (window as any).__mpad__.setText('alpha beta gamma'))
     await waitForText(page, 'alpha beta gamma')
-    await page.waitForTimeout(3_500)
+    await waitForTextHistoryCount(page, 1)
 
     await page.evaluate(() => (window as any).__mpad__.selectCommentRange(6, 10))
     await page.evaluate(() => (window as any).__mpad__.openCommentDraftFromSelection())
     await page.evaluate(() => (window as any).__mpad__.createCommentThread('Beta note'))
     await waitForCommentThreadCount(page, 1)
-    await page.waitForTimeout(3_500)
+    await waitForTextHistoryCount(page, 2)
 
     await openDiffsTab(page)
     await waitForHistoryItems(page, 2)
@@ -178,4 +167,3 @@ test('reverts comment state with the saved snapshot', async ({ browser }) => {
 
     await context.close()
 })
-

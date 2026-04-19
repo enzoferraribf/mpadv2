@@ -26,12 +26,12 @@ export async function migrate() {
 
 export async function ensureDatabaseReady() {
     const migrationTableReady = await hasTable(MIGRATIONS_TABLE)
-    if (!migrationTableReady) throw new Error('Database is not migrated. Run `cd packages/server && bun run migrate`.')
+    if (!migrationTableReady) throw new Error('Database is not migrated. Run `bun run server:schema-migrate`.')
 
     const applied = new Set(await loadAppliedMigrations())
     const pending = listMigrationVersions().filter((version) => !applied.has(version))
     if (pending.length > 0) {
-        throw new Error(`Database has pending migrations: ${pending.join(', ')}. Run \`cd packages/server && bun run migrate\`.`)
+        throw new Error(`Database has pending migrations: ${pending.join(', ')}. Run \`bun run server:schema-migrate\`.`)
     }
 }
 

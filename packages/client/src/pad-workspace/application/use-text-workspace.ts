@@ -1,7 +1,7 @@
 import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import type { PadPath } from '@mpad/core/pad-path'
 import type { LocalPeer } from '@mpad/protocol/peer'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { PadTextRoom, TextAwarenessState, TextAwarenessUser } from '@/collab/domain/pad-room-session'
 import { useBrowserRoomSession } from '@/collab/infrastructure/use-browser-room-session'
 import { createTextAwarenessState } from '@/pad-text/infrastructure/text-awareness'
@@ -77,6 +77,7 @@ export function useTextWorkspace(path: PadPath, localPeer: LocalPeer): TextWorks
         open: true,
     }) as PadTextRoom | null
     const [content, setContent] = useState('')
+    const [docVersion, setDocVersion] = useState(0)
     const [peerCount, setPeerCount] = useState(1)
     const [editorSelection, setEditorSelection] = useState<TextEditorSelection | null>(null)
     const [overlay, setOverlay] = useState<TextCommentOverlay>({ kind: 'closed' })
@@ -84,21 +85,25 @@ export function useTextWorkspace(path: PadPath, localPeer: LocalPeer): TextWorks
     useEffect(() => {
         if (!room) {
             setContent('')
+            setDocVersion(0)
             setPeerCount(1)
             return
         }
 
         const ytext = room.doc.getText(Y_TEXT_KEY)
-        const syncContent = () => setContent(ytext.toString())
+        const syncDocument = () => {
+            setContent(ytext.toString())
+            setDocVersion((value) => value + 1)
+        }
         const syncPeers = () => setPeerCount(room.awareness.getStates().size)
 
-        room.doc.on('update', syncContent)
+        room.doc.on('update', syncDocument)
         room.awareness.on('change', syncPeers)
-        syncContent()
+        syncDocument()
         syncPeers()
 
         return () => {
-            room.doc.off('update', syncContent)
+            room.doc.off('update', syncDocument)
             room.awareness.off('change', syncPeers)
         }
     }, [room])
@@ -118,31 +123,8 @@ export function useTextWorkspace(path: PadPath, localPeer: LocalPeer): TextWorks
         return createTextCommentController(room.doc, localPeer)
     }, [localPeer, room])
 
-    const commentStore = useMemo(() => {
-        if (!commentController) return null
-
-        let version = 0
-        return {
-            getSnapshot() {
-                return version
-            },
-            subscribe(listener: () => void) {
-                return commentController.subscribe(() => {
-                    version += 1
-                    listener()
-                })
-            },
-        }
-    }, [commentController])
-
-    const commentVersion = useSyncExternalStore(
-        commentStore?.subscribe ?? subscribeToNothing,
-        commentStore?.getSnapshot ?? readZero,
-        readZero,
-    )
-
-    const threads = useMemo(() => commentController?.listThreads() ?? [], [commentController, commentVersion])
-    const highlights = useMemo(() => commentController?.getHighlightSpans() ?? [], [commentController, commentVersion])
+    const threads = useMemo(() => commentController?.listThreads() ?? [], [commentController, docVersion])
+    const highlights = useMemo(() => commentController?.getHighlightSpans() ?? [], [commentController, docVersion])
     const currentSelection = useMemo<TextWorkspaceCommentSelection | null>(() => {
         if (!editorSelection || !commentController) return null
         const result = commentController.validateSelection({
@@ -156,7 +138,7 @@ export function useTextWorkspace(path: PadPath, localPeer: LocalPeer): TextWorks
             canCreate: result.ok,
             error: result.ok ? null : result.error,
         }
-    }, [commentController, commentVersion, editorSelection])
+    }, [commentController, docVersion, editorSelection])
     const overlayThread = useMemo(() => readOverlayThread(overlay, threads), [overlay, threads])
 
     useEffect(() => {
@@ -168,7 +150,7 @@ export function useTextWorkspace(path: PadPath, localPeer: LocalPeer): TextWorks
         const result = commentController.validateSelection(overlay.selection)
         if (result.ok) return
         setOverlay({ kind: 'closed' })
-    }, [commentController, commentVersion, overlay])
+    }, [commentController, docVersion, overlay])
 
     if (!room || !editor) return { kind: 'loading' }
 
@@ -248,12 +230,4 @@ export function useTextWorkspace(path: PadPath, localPeer: LocalPeer): TextWorks
             return browserPadTextHistoryCommand.revertRevision(path, input.revisionId)
         },
     }
-}
-
-function subscribeToNothing() {
-    return () => {}
-}
-
-function readZero() {
-    return 0
 }

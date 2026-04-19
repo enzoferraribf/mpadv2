@@ -5,6 +5,7 @@ import { browserWorkspaceNavigationQuery } from '@/pad-workspace/infrastructure/
 
 export type WorkspaceNavigationModel =
     | { kind: 'loading' }
+    | { kind: 'error'; message: string }
     | { kind: 'ready'; items: PadTreeItem[] }
 
 export function useWorkspaceNavigation(path: PadPath): WorkspaceNavigationModel {
@@ -18,7 +19,7 @@ export function useWorkspaceNavigation(path: PadPath): WorkspaceNavigationModel 
             .then((items) => setState({ kind: 'ready', items }))
             .catch((error: Error) => {
                 if (error.name === 'AbortError') return
-                throw error
+                setState({ kind: 'error', message: error.message })
             })
 
         return () => controller.abort()

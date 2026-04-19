@@ -1,12 +1,12 @@
 import { Blocks, Columns2, Eye, FileText, FolderTree, PanelRightOpen } from 'lucide-react'
 import { CommandDialog, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import type { PadWorkspaceCommands } from '@/pad-workspace/application/use-pad-workspace-model'
+import type { PadWorkspaceShellCommands } from '@/pad-workspace/application/use-pad-workspace-model'
 import type { PadWorkspaceLayout } from '@/pad-workspace/domain/workspace-view'
 
 export function CommandMenu(input: {
     open: boolean
     onOpenChange: (open: boolean) => void
-    commands: PadWorkspaceCommands
+    commands: PadWorkspaceShellCommands
 }) {
     return (
         <CommandDialog open={input.open} onOpenChange={input.onOpenChange}>
@@ -49,12 +49,12 @@ export function CommandMenu(input: {
     )
 }
 
-function setLayout(input: { commands: PadWorkspaceCommands; onOpenChange: (open: boolean) => void }, layout: PadWorkspaceLayout) {
+function setLayout(input: { commands: PadWorkspaceShellCommands; onOpenChange: (open: boolean) => void }, layout: PadWorkspaceLayout) {
     input.commands.closeDialog()
     input.commands.setLayout(layout)
 }
 
-function run(input: { commands: PadWorkspaceCommands; onOpenChange: (open: boolean) => void }, action: () => void) {
+function run(input: { commands: PadWorkspaceShellCommands; onOpenChange: (open: boolean) => void }, action: () => void) {
     input.commands.closeDialog()
     action()
 }

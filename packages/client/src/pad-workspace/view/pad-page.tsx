@@ -1,10 +1,16 @@
 import type { PadPath } from '@mpad/core/pad-path'
+import type { PadTreeItem } from '@mpad/protocol/pad-tree'
+import type { ReactNode } from 'react'
 import { Suspense, useEffect, useRef } from 'react'
-import { PadLoadingShell } from '@/pad-workspace/view/pad-loading-shell'
-import { usePadPageController, type PadPageController } from '@/pad-workspace/application/use-pad-page-controller'
-import { TextWorkspace } from '@/pad-text/view/text-workspace'
 import { lazyWithPreload } from '@/lib/lazy-with-preload'
 import { scheduleIdleTask } from '@/lib/schedule-idle'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
+import { TextWorkspace } from '@/pad-text/view/text-workspace'
+import {
+    usePadWorkspaceModel,
+    type PadWorkspaceModel,
+    type PadWorkspaceShellModel,
+} from '@/pad-workspace/application/use-pad-workspace-model'
 import { PadSidebar } from '@/workspace-shell/view/pad-sidebar'
 import { PadStatusBar } from '@/workspace-shell/view/pad-status-bar'
 import { PadTopBar } from '@/workspace-shell/view/pad-top-bar'
@@ -23,8 +29,13 @@ const LazyWorkspaceDialogs = lazyWithPreload(() =>
 )
 
 export function PadPage({ path }: { path: PadPath }) {
-    const model = usePadPageController(path)
+    const model = usePadWorkspaceModel(path)
     const prefetchedRef = useRef(false)
+    const lastReadyNavigationRef = useRef<PadTreeItem[] | null>(null)
+
+    if (model.navigation.kind === 'ready') {
+        lastReadyNavigationRef.current = model.navigation.items
+    }
 
     useEffect(() => {
         if (import.meta.env.VITE_E2E !== '1') return
@@ -39,7 +50,7 @@ export function PadPage({ path }: { path: PadPath }) {
     }, [model])
 
     useEffect(() => {
-        if (prefetchedRef.current || model.state.view.activeTab !== 'text') return
+        if (prefetchedRef.current || model.shell.view.activeTab !== 'text') return
 
         return scheduleIdleTask(() => {
             prefetchedRef.current = true
@@ -47,116 +58,144 @@ export function PadPage({ path }: { path: PadPath }) {
             void LazyFilesPane.preload()
             void LazyWorkspaceDialogs.preload()
         }, 600)
-    }, [model.state.view.activeTab])
+    }, [model.shell.view.activeTab])
 
-    const dialogs = model.state.view.dialog !== null ? (
+    const dialogs = model.shell.view.dialog !== null ? (
         <Suspense fallback={null}>
-            <LazyWorkspaceDialogs model={model} />
+            <LazyWorkspaceDialogs
+                shell={model.shell}
+                navigation={model.navigation}
+                files={model.files}
+            />
         </Suspense>
     ) : null
-
-    if (model.state.kind === 'loading') {
-        return (
-            <main className="app-shell" data-testid="pad-page">
-                <PadLoadingShell
-                    activeTab={model.state.view.activeTab}
-                    clockLabel={model.state.view.clockLabel}
-                    cursorLabel={model.state.view.cursorLabel}
-                    layout={model.state.view.layout}
-                    onNavigate={model.commands.navigateToPad}
-                    onOpenTab={model.commands.openTab}
-                    onSetLayout={model.commands.setLayout}
-                    onToggleSidebar={model.commands.toggleSidebar}
-                    path={path}
-                    phrase={model.state.view.phrase}
-                    sidebarOpen={model.state.view.sidebarOpen}
-                />
-                {dialogs}
-            </main>
-        )
-    }
-
-    const readyModel: PadPageController & {
-        state: Extract<PadPageController['state'], { kind: 'ready' }>
-    } = {
-        ...model,
-        state: model.state,
-    }
+    const navigationItems = model.navigation.kind === 'ready'
+        ? model.navigation.items
+        : lastReadyNavigationRef.current ?? []
 
     return (
         <main className="app-shell" data-testid="pad-page">
-            <PadTopBar model={model} />
-            <ReadyPadPage model={readyModel} />
+            <PadTopBar shell={model.shell} />
+            {model.text.kind === 'ready' ? (
+                <ReadyPadPage
+                    model={{
+                        ...model,
+                        text: model.text,
+                    }}
+                    navigationItems={navigationItems}
+                />
+            ) : (
+                <LoadingPadPage shell={model.shell} navigationItems={navigationItems} />
+            )}
             {dialogs}
         </main>
     )
 }
 
-function ReadyPadPage(input: {
-    model: PadPageController & { state: Extract<PadPageController['state'], { kind: 'ready' }> }
+function LoadingPadPage(input: {
+    shell: PadWorkspaceShellModel
+    navigationItems: PadTreeItem[]
 }) {
-    const { commands, state } = input.model
-    const drawing = state.drawing.kind === 'ready' ? state.drawing.drawing : null
+    return (
+        <PadPageFrame shell={input.shell} navigationItems={input.navigationItems}>
+            <section className="loading-shell workspace-shell" data-testid="workspace-shell">
+                <div className="loading-card">
+                    <span className="mpad-logo">Opening {input.shell.view.padName}</span>
+                </div>
+            </section>
+        </PadPageFrame>
+    )
+}
+
+function ReadyPadPage(input: {
+    model: PadWorkspaceModel & {
+        text: Extract<PadWorkspaceModel['text'], { kind: 'ready' }>
+    }
+    navigationItems: PadTreeItem[]
+}) {
+    const { model } = input
+    const drawing = model.drawing.kind === 'ready' ? model.drawing.drawing : null
 
     return (
-        <div className="app-content">
-            {state.view.sidebarOpen ? (
-                <PadSidebar
-                    path={state.view.path}
-                    tree={state.status.tree}
-                    onNavigate={commands.navigateToPad}
-                />
-            ) : null}
-            <div className="app-main">
-                {state.view.activeTab === 'files' ? (
-                    <Suspense fallback={<FilesPaneFallback />}>
-                        <LazyFilesPane
-                            files={state.status.files}
-                            onDeleteFile={commands.deleteFile}
-                            onDownloadFile={commands.downloadFile}
-                            onUploadFile={commands.uploadFile}
-                        />
-                    </Suspense>
-                ) : state.view.activeTab === 'diffs' ? (
-                    <Suspense fallback={<DiffWorkspaceFallback />}>
-                        <LazyTextDiffWorkspace
-                            currentContent={state.text.content}
-                            direction={state.view.splitDirection}
-                            onRevertToRevision={commands.revertTextToRevision}
-                            path={state.view.path}
-                        />
-                    </Suspense>
-                ) : state.view.activeTab === 'drawing' ? (
-                    <Suspense fallback={<DrawingWorkspaceFallback />}>
-                        <LazyDrawingWorkspacePane drawing={drawing} theme={state.view.drawingTheme} />
-                    </Suspense>
-                ) : (
-                    <TextWorkspace
-                        comments={state.text.comments}
-                        content={state.text.content}
-                        direction={state.view.splitDirection}
-                        editor={state.text.editor}
-                        layout={state.view.layout}
-                        onCloseCommentOverlay={commands.closeCommentOverlay}
-                        onCommentCreate={commands.createCommentThread}
-                        onCommentDeleteMessage={commands.deleteCommentMessage}
-                        onCommentDeleteThread={commands.deleteCommentThread}
-                        onCommentEditMessage={commands.editCommentMessage}
-                        onCommentOpenThread={commands.openCommentThread}
-                        onCommentReply={commands.replyToCommentThread}
-                        onCommentStartDraft={commands.openCommentDraftFromSelection}
-                        onCursorChange={commands.setCursor}
-                        onEditorSelectionChange={commands.setCommentSelection}
+        <PadPageFrame shell={model.shell} navigationItems={input.navigationItems}>
+            {model.shell.view.activeTab === 'files' ? (
+                <Suspense fallback={<FilesPaneFallback />}>
+                    <LazyFilesPane
+                        files={model.files.files}
+                        onDeleteFile={model.files.deleteFile}
+                        onDownloadFile={model.files.downloadFile}
+                        onUploadFile={model.files.uploadFile}
                     />
-                )}
-                <PadStatusBar
-                    path={state.view.path}
-                    connection={state.status.connection}
-                    peerCount={state.status.peerCount}
-                    clockLabel={state.view.clockLabel}
-                    cursorLabel={state.view.cursorLabel}
+                </Suspense>
+            ) : model.shell.view.activeTab === 'diffs' ? (
+                <Suspense fallback={<DiffWorkspaceFallback />}>
+                    <LazyTextDiffWorkspace
+                        direction={model.shell.view.splitDirection}
+                        model={model.history}
+                    />
+                </Suspense>
+            ) : model.shell.view.activeTab === 'drawing' ? (
+                <Suspense fallback={<DrawingWorkspaceFallback />}>
+                    <LazyDrawingWorkspacePane drawing={drawing} theme={model.shell.view.drawingTheme} />
+                </Suspense>
+            ) : (
+                <TextWorkspace
+                    comments={model.text.comments}
+                    content={model.text.content}
+                    direction={model.shell.view.splitDirection}
+                    editor={model.text.editor}
+                    layout={model.shell.view.layout}
+                    onCloseCommentOverlay={model.text.commentActions.closeOverlay}
+                    onCommentCreate={model.text.commentActions.createThread}
+                    onCommentDeleteMessage={model.text.commentActions.deleteMessage}
+                    onCommentDeleteThread={model.text.commentActions.deleteThread}
+                    onCommentEditMessage={model.text.commentActions.editMessage}
+                    onCommentOpenThread={model.text.commentActions.openThread}
+                    onCommentReply={model.text.commentActions.replyToThread}
+                    onCommentStartDraft={model.text.commentActions.openDraftFromSelection}
+                    onCursorChange={model.shell.commands.setCursor}
+                    onEditorSelectionChange={model.text.commentActions.setEditorSelection}
                 />
-            </div>
+            )}
+        </PadPageFrame>
+    )
+}
+
+function PadPageFrame(input: {
+    shell: PadWorkspaceShellModel
+    navigationItems: PadTreeItem[]
+    children: ReactNode
+}) {
+    const main = (
+        <div className="app-main">
+            {input.children}
+            <PadStatusBar
+                path={input.shell.view.path}
+                connection={input.shell.status.connection}
+                peerCount={input.shell.status.peerCount}
+                clockLabel={input.shell.view.clockLabel}
+                cursorLabel={input.shell.view.cursorLabel}
+            />
+        </div>
+    )
+
+    return input.shell.view.sidebarOpen ? (
+        <ResizablePanelGroup autoSaveId="pad-shell-sidebar" className="app-content" direction="horizontal">
+            <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
+                <PadSidebar
+                    path={input.shell.view.path}
+                    tree={input.navigationItems}
+                    onNavigate={input.shell.commands.navigateToPad}
+                />
+            </ResizablePanel>
+            <ResizableHandle className="bg-[--stone-border]" withHandle />
+            <ResizablePanel minSize={72}>
+                {main}
+            </ResizablePanel>
+        </ResizablePanelGroup>
+    ) : (
+        <div className="app-content">
+            {main}
         </div>
     )
 }
