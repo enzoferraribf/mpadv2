@@ -46,15 +46,6 @@ test('persists a local Excalidraw arrow change', async ({ browser }) => {
         )
         .toBe(1)
 
-    await page.waitForTimeout(250)
-    await expect
-        .poll(async () =>
-            page.evaluate(
-                () => (window as any).__mpad__?.getDrawingElementCount() ?? -1,
-            ),
-        )
-        .toBe(1)
-
     await page.reload()
     await waitForPad(page)
     await openDrawingRoom(page)

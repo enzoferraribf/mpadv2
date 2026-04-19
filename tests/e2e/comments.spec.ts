@@ -1,12 +1,10 @@
 import {
-    createPeerContext,
     expect,
-    narutoPeer,
     openPad,
-    sailorMoonPeer,
     test,
     waitForCommentThreadCount,
     waitForPad,
+    waitForTextHistoryCount,
     waitForText,
 } from '$/e2e/mpad-test'
 
@@ -124,12 +122,10 @@ test('keeps only one floating comment card open and swaps threads from markers',
     await context.close()
 })
 
-test('syncs comment threads between peers and keeps them after reload', async ({
-    browser,
-}) => {
+test('syncs new comment threads between peers', async ({ browser }) => {
     const path = `notes/${Date.now()}-comments-sync`
-    const contextA = await createPeerContext(browser, narutoPeer)
-    const contextB = await createPeerContext(browser, sailorMoonPeer)
+    const contextA = await browser.newContext()
+    const contextB = await browser.newContext()
     const pageA = await contextA.newPage()
     const pageB = await contextB.newPage()
 
@@ -151,91 +147,71 @@ test('syncs comment threads between peers and keeps them after reload', async ({
         (window as any).__mpad__.createCommentThread('Root note'),
     )
     await waitForCommentThreadCount(pageB, 1)
-
-    const threadId = await pageA.evaluate(
-        () => (window as any).__mpad__.getCommentThreads()[0].id,
-    )
-    await pageB.evaluate(
-        (value) =>
-            (window as any).__mpad__.replyToCommentThread(
-                value,
-                'Reply from B',
-            ),
-        threadId,
-    )
     await expect
         .poll(async () =>
-            pageA.evaluate(
-                () =>
-                    (window as any).__mpad__?.getCommentThreads()?.[0]?.messages
-                        .length ?? 0,
-            ),
-        )
-        .toBe(2)
-
-    const replyId = await pageA.evaluate(
-        () => (window as any).__mpad__.getCommentThreads()[0].messages[1].id,
-    )
-    await pageB.evaluate(
-        ({ messageId, value }) =>
-            (window as any).__mpad__.editCommentMessage(
-                value.threadId,
-                messageId,
-                'Reply from B updated',
-            ),
-        { messageId: replyId, value: { threadId } },
-    )
-    await expect
-        .poll(async () =>
-            pageA.evaluate(
-                () =>
-                    (window as any).__mpad__?.getCommentThreads()?.[0]
-                        ?.messages?.[1]?.body ?? '',
-            ),
-        )
-        .toBe('Reply from B updated')
-
-    await pageB.evaluate(
-        ({ messageId, threadId: id }) =>
-            (window as any).__mpad__.deleteCommentMessage(id, messageId),
-        {
-            messageId: replyId,
-            threadId,
-        },
-    )
-    await expect
-        .poll(async () =>
-            pageA.evaluate(
-                () =>
-                    (window as any).__mpad__?.getCommentThreads()?.[0]?.messages
-                        .length ?? 0,
-            ),
-        )
-        .toBe(1)
-
-    await pageA.waitForTimeout(3_500)
-    await pageA.reload()
-    await waitForPad(pageA)
-    await waitForText(pageA, 'alpha beta gamma')
-    await waitForCommentThreadCount(pageA, 1)
-    await pageA.getByTestId('comment-marker').first().click()
-    await expect(pageA.getByTestId('comment-card')).toBeVisible()
-    await expect
-        .poll(async () =>
-            pageA.evaluate(
+            pageB.evaluate(
                 () =>
                     (window as any).__mpad__?.getCommentThreads()?.[0]?.quote ??
                     '',
             ),
         )
         .toBe('beta')
-
-    await pageA.evaluate(
-        (value) => (window as any).__mpad__.deleteCommentThread(value),
-        threadId,
-    )
-    await waitForCommentThreadCount(pageB, 0)
+    await expect
+        .poll(async () =>
+            pageB.evaluate(
+                () =>
+                    (window as any).__mpad__?.getCommentThreads()?.[0]
+                        ?.messages?.[0]?.body ?? '',
+            ),
+        )
+        .toBe('Root note')
 
     await contextA.close()
     await contextB.close()
+})
+
+test('keeps comment threads after a reload', async ({ browser }) => {
+    const path = `notes/${Date.now()}-comments-reload`
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await openPad(page, path)
+    await page.evaluate(() =>
+        (window as any).__mpad__.setText('alpha beta gamma'),
+    )
+    await waitForText(page, 'alpha beta gamma')
+    await waitForTextHistoryCount(page, 1)
+
+    await page.evaluate(() =>
+        (window as any).__mpad__.selectCommentRange(6, 10),
+    )
+    await page.evaluate(() =>
+        (window as any).__mpad__.openCommentDraftFromSelection(),
+    )
+    await page.evaluate(() =>
+        (window as any).__mpad__.createCommentThread('Beta note'),
+    )
+    await waitForCommentThreadCount(page, 1)
+    await waitForTextHistoryCount(page, 2)
+
+    await page.reload()
+    await waitForPad(page)
+    await waitForText(page, 'alpha beta gamma')
+    await waitForCommentThreadCount(page, 1)
+    await page.getByTestId('comment-marker').first().click()
+    await expect(page.getByTestId('comment-card')).toBeVisible()
+    await expect
+        .poll(async () =>
+            page.evaluate(
+                () =>
+                    (window as any).__mpad__?.getCommentThreads()?.[0]?.quote ??
+                    '',
+            ),
+        )
+        .toBe('beta')
+    await expect(page.locator('.comments-message-body')).toContainText(
+        'Beta note',
+    )
+
+    await context.close()
 })

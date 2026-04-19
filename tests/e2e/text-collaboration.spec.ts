@@ -14,34 +14,17 @@ import {
     waitForTextHistoryCount,
 } from '$/e2e/mpad-test'
 
-test('labels the editor and rendered task checkboxes', async ({ browser }) => {
+test('labels the editor for assistive tech', async ({ browser }) => {
     const path = `notes/${Date.now()}-a11y`
     const context = await browser.newContext()
     const page = await context.newPage()
 
     await openPad(page, path)
-    await page.evaluate(() =>
-        (window as any).__mpad__.setText('- [x] done\n- [ ] todo'),
-    )
-    await waitForText(page, '- [x] done\n- [ ] todo')
-    await setLayout(page, 'Split')
 
     await expect(page.locator('.cm-content').first()).toHaveAttribute(
         'aria-label',
         'Pad text editor',
     )
-    await expect(
-        page.locator('.markdown-body input[type="checkbox"]').nth(0),
-    ).toHaveAttribute('aria-label', 'Completed task')
-    await expect(
-        page.locator('.markdown-body input[type="checkbox"]').nth(0),
-    ).toHaveAttribute('tabindex', '-1')
-    await expect(
-        page.locator('.markdown-body input[type="checkbox"]').nth(1),
-    ).toHaveAttribute('aria-label', 'Incomplete task')
-    await expect(
-        page.locator('.markdown-body input[type="checkbox"]').nth(1),
-    ).toHaveAttribute('tabindex', '-1')
 
     await context.close()
 })

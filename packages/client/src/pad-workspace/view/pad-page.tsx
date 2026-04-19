@@ -228,7 +228,12 @@ function PadPageFrame(input: {
             className='app-content'
             direction='horizontal'
         >
-            <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
+            <ResizablePanel
+                className='flex min-h-0 flex-col'
+                defaultSize={18}
+                minSize={12}
+                maxSize={28}
+            >
                 <PadSidebar
                     path={input.shell.view.path}
                     tree={input.navigationItems}
@@ -236,7 +241,9 @@ function PadPageFrame(input: {
                 />
             </ResizablePanel>
             <ResizableHandle className='bg-[--stone-border]' withHandle />
-            <ResizablePanel minSize={72}>{main}</ResizablePanel>
+            <ResizablePanel className='flex min-h-0 flex-col' minSize={72}>
+                {main}
+            </ResizablePanel>
         </ResizablePanelGroup>
     ) : (
         <div className='app-content'>{main}</div>

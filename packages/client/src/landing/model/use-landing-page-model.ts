@@ -1,6 +1,5 @@
 import { type PadPath, padPath } from '@mpad/core/pad-path'
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
 
 export type LandingPageModel = {
     host: string
@@ -9,10 +8,6 @@ export type LandingPageModel = {
 
 export function useLandingPageModel(): LandingPageModel {
     const navigate = useNavigate()
-
-    useEffect(() => {
-        document.title = 'MPAD'
-    }, [])
 
     return {
         host: readLandingHost(),

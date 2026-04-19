@@ -6,6 +6,8 @@ type PadServerConfig = {
 }
 
 const DEFAULT_SERVER_ORIGIN = 'http://localhost:4000'
+const LOCAL_DEV_CLIENT_PORT = '5173'
+const LOCAL_DEV_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
 
 export function roomWebSocketUrl(roomName: string, clientId: number) {
     const { wsServerOrigin } = readPadServerConfig()
@@ -49,7 +51,7 @@ export function readPadServerConfig(): PadServerConfig {
     const serverOrigin = normalizeServerOrigin(
         runtimeConfig?.serverOrigin ??
             import.meta.env.VITE_SERVER_ORIGIN ??
-            DEFAULT_SERVER_ORIGIN,
+            readFallbackServerOrigin(),
     )
     const wsServerOrigin = normalizeWebSocketOrigin(
         runtimeConfig?.wsServerOrigin ??
@@ -81,4 +83,18 @@ function deriveWebSocketOrigin(serverOrigin: string) {
 
 function stripTrailingSlash(value: string) {
     return value.replace(/\/$/, '')
+}
+
+function readFallbackServerOrigin() {
+    if (typeof window !== 'object') return DEFAULT_SERVER_ORIGIN
+    if (!window.location?.origin) return DEFAULT_SERVER_ORIGIN
+    if (isLikelyLocalViteClient(window.location)) return DEFAULT_SERVER_ORIGIN
+    return window.location.origin
+}
+
+function isLikelyLocalViteClient(location: Location) {
+    return (
+        LOCAL_DEV_HOSTS.has(location.hostname) &&
+        location.port === LOCAL_DEV_CLIENT_PORT
+    )
 }

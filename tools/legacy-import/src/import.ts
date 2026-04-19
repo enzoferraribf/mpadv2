@@ -1,4 +1,5 @@
 import { Database } from 'bun:sqlite'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createClient } from '@libsql/client'
@@ -69,6 +70,7 @@ const sqlitePath = resolvePath(
     process.env.LEGACY_SQLITE_PATH ??
         path.join(repoRoot, '.tmp/legacy-turso.db'),
 )
+const skipLegacySync = process.env.LEGACY_SKIP_SYNC === '1'
 const targetDatabaseUrl = process.env.TARGET_DATABASE_URL
 const turso = await readTursoConfig(path.join(repoRoot, '.turso'))
 
@@ -78,7 +80,15 @@ if (!targetDatabaseUrl) {
     )
 }
 
-await syncLegacySqlite()
+if (skipLegacySync) {
+    if (!existsSync(sqlitePath)) {
+        throw new Error(
+            `LEGACY_SKIP_SYNC=1 but no cached sqlite was found at ${sqlitePath}`,
+        )
+    }
+} else {
+    await syncLegacySqlite()
+}
 
 process.env.DATABASE_URL = targetDatabaseUrl
 

@@ -1,7 +1,7 @@
-export type AppVisualTone = 'dark'
+export type AppVisualTone = 'light' | 'dark'
 
 export function resolveAppVisualTone(
-    _theme: string | undefined,
+    theme: string | undefined,
 ): AppVisualTone {
-    return 'dark'
+    return theme === 'light' ? 'light' : 'dark'
 }

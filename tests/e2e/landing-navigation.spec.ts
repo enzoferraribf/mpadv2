@@ -1,18 +1,29 @@
 import { expect, openLanding, openPad, test, waitForPad } from '$/e2e/mpad-test'
 
-test('renders the landing shell', async ({ page }) => {
+test('renders the landing shell in dark media', async ({ page }) => {
     await openLanding(page, { colorScheme: 'dark' })
     await expect(page).toHaveScreenshot('landing-page.png')
+})
+
+test('renders the landing shell in light media', async ({ page }) => {
+    await openLanding(page, { colorScheme: 'light' })
+    await expect(page).toHaveScreenshot('landing-page-light.png')
 })
 
 test('opens a pad from the landing input', async ({ page }) => {
     const path = `landing-${Date.now()}`
 
     await openLanding(page)
-    await page.getByPlaceholder('your-pad-name').fill(path)
+    await page.getByLabel('Pad path').fill(path)
     await page.keyboard.press('Enter')
     await waitForPad(page)
     await expect(page).toHaveURL(new RegExp(`/${path}$`))
+})
+
+test('ignores an empty landing submit', async ({ page }) => {
+    await openLanding(page)
+    await page.getByLabel('Pad path').press('Enter')
+    await expect(page).toHaveURL(/\/$/)
 })
 
 test('shows related pads from the real tree', async ({ browser }) => {

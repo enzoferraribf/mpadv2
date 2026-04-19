@@ -5,8 +5,8 @@ import { Toaster as Sonner } from 'sonner'
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 export function Toaster(props: ToasterProps) {
-    const { theme = 'system' } = useTheme()
-    const visualTone = resolveAppVisualTone(theme)
+    const { resolvedTheme } = useTheme()
+    const visualTone = resolveAppVisualTone(resolvedTheme)
 
     return (
         <Sonner

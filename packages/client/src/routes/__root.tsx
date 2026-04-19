@@ -11,7 +11,7 @@ function RootLayout() {
         <ThemeProvider
             attribute='class'
             defaultTheme='system'
-            enableColorScheme={false}
+            enableColorScheme
             enableSystem
         >
             <Outlet />

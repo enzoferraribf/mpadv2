@@ -48,18 +48,11 @@ describe('http and websocket integration', () => {
                 message.byteOffset + message.byteLength,
             ),
         )
-        await Bun.sleep(100)
-        await flushWorkspaceRooms(runtime)
 
         const health = await fetch(`http://127.0.0.1:${port}/health`)
         expect(health.status).toBe(200)
 
-        const historyResponse = await fetch(
-            `http://127.0.0.1:${port}/api/pads${path}/text/history`,
-        )
-        expect(historyResponse.status).toBe(200)
-        const history = (await historyResponse.json()) as Array<{ id: number }>
-        expect(history).toHaveLength(1)
+        const history = await waitForTextHistory(port, path, runtime, 1)
 
         const revisionResponse = await fetch(
             `http://127.0.0.1:${port}/api/pads${path}/text/history/${history[0]!.id}`,
@@ -140,4 +133,29 @@ async function cleanupRoot(path: ReturnType<typeof padPath>) {
         DELETE FROM pads
         WHERE path = ${'/' + root} OR path LIKE ${'/' + root + '/%'}
     `
+}
+
+async function waitForTextHistory(
+    port: number,
+    path: ReturnType<typeof padPath>,
+    runtime: ReturnType<typeof createServerRuntime>,
+    count: number,
+) {
+    const deadline = Date.now() + 5_000
+
+    while (Date.now() < deadline) {
+        await flushWorkspaceRooms(runtime)
+
+        const response = await fetch(
+            `http://127.0.0.1:${port}/api/pads${path}/text/history`,
+        )
+        if (response.ok) {
+            const history = (await response.json()) as Array<{ id: number }>
+            if (history.length === count) return history
+        }
+
+        await Bun.sleep(25)
+    }
+
+    throw new Error(`Timed out waiting for ${count} text revisions`)
 }

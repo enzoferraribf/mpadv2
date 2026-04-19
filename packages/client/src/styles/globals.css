@@ -5,217 +5,213 @@
 @layer base {
     :root,
     :root.light {
-        --background: 40 8% 10%;
-        --foreground: 35 18% 88%;
-        --muted: 38 7% 14%;
-        --muted-foreground: 33 6% 50%;
-        --popover: 40 10% 13%;
-        --popover-foreground: 35 18% 88%;
-        --border: 37 6% 18%;
-        --input: 37 6% 18%;
-        --card: 40 10% 13%;
-        --card-foreground: 35 18% 88%;
-        --primary: 34 36% 63%;
-        --primary-foreground: 40 8% 10%;
-        --secondary: 38 7% 14%;
-        --secondary-foreground: 35 18% 88%;
-        --accent: 38 7% 14%;
-        --accent-foreground: 35 18% 88%;
+        --background: 36 30% 96%;
+        --foreground: 35 18% 18%;
+        --muted: 36 20% 91%;
+        --muted-foreground: 32 10% 42%;
+        --popover: 36 30% 98%;
+        --popover-foreground: 35 18% 18%;
+        --border: 33 20% 82%;
+        --input: 33 20% 82%;
+        --card: 36 30% 98%;
+        --card-foreground: 35 18% 18%;
+        --primary: 27 45% 45%;
+        --primary-foreground: 36 30% 98%;
+        --secondary: 36 18% 91%;
+        --secondary-foreground: 35 18% 18%;
+        --accent: 36 18% 91%;
+        --accent-foreground: 35 18% 18%;
         --destructive: 0 60% 44%;
-        --destructive-foreground: 35 18% 88%;
-        --ring: 34 36% 63%;
+        --destructive-foreground: 36 30% 98%;
+        --ring: 27 45% 45%;
         --radius: 0.375rem;
 
-        --stone-bg: #1c1b18;
-        --stone-surface: #24231f;
-        --stone-elevated: #2e2d28;
-        --stone-text: #e6e0d6;
-        --stone-text-strong: #e6e0d6;
-        --stone-text-secondary: #8a8279;
-        --stone-text-muted: #91887f;
-        --stone-text-dim: #524e47;
-        --stone-accent: #c9a87c;
-        --stone-accent-secondary: #8fb7c7;
-        --stone-success: #7c9c8a;
-        --stone-warning: #d8a06b;
-        --stone-danger: #b07070;
-        --stone-danger-link: #f87171;
-        --stone-danger-text: #f0d0d0;
-        --stone-success-text: #d9efe0;
-        --stone-border: #33322d;
-        --stone-editor-bg: #201f1b;
-        --stone-border-strong: #44423b;
-        --stone-syntax-markdown: #b5afa5;
-        --stone-heading-accent: #c9a87c;
-        --stone-syntax-comment: #6f685d;
-        --stone-syntax-keyword: #c9a87c;
-        --stone-syntax-string: #7c9c8a;
-        --stone-syntax-number: #d8a06b;
-        --stone-syntax-type: #8fb7c7;
-        --stone-syntax-meta: #9a8f80;
-        --stone-code-foreground: #e6e0d6;
-        --stone-selection: rgba(201, 168, 124, 0.25);
-        --stone-selection-remote: rgba(201, 168, 124, 0.18);
-        --stone-inline-code-bg: rgba(255, 255, 255, 0.03);
-        --stone-row-alt-bg: rgba(255, 255, 255, 0.02);
-        --stone-image-border: rgba(201, 168, 124, 0.16);
-        --stone-image-bg: rgba(17, 16, 14, 0.96);
-        --stone-image-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-        --stone-hover-bg: rgba(255, 255, 255, 0.03);
-        --stone-active-bg: rgba(201, 168, 124, 0.06);
-        --stone-active-line-bg: rgba(201, 168, 124, 0.04);
-        --stone-editor-selection: rgba(201, 168, 124, 0.15);
-        --stone-editor-cursor: #ffffff;
-        --stone-editor-caret-shadow: #201f1b;
-        --stone-overlay-shadow: 0 1px 0 rgba(12, 12, 12, 0.35);
-        --stone-blockquote-bg: rgba(201, 168, 124, 0.04);
-        --stone-comment-action-border: rgba(201, 168, 124, 0.4);
-        --stone-comment-action-bg: rgba(32, 31, 27, 0.94);
-        --stone-comment-action-bg-hover: rgba(48, 45, 40, 0.98);
-        --stone-comment-action-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
-        --stone-comment-highlight-bg: rgba(231, 194, 90, 0.18);
+        --stone-bg: #f4efe7;
+        --stone-surface: #fbf7f1;
+        --stone-elevated: #efe6da;
+        --stone-text: #241f18;
+        --stone-text-strong: #18130d;
+        --stone-text-secondary: #5f5649;
+        --stone-text-muted: #6f6658;
+        --stone-text-dim: #8c8378;
+        --stone-accent: #a66c3f;
+        --stone-accent-secondary: #3e8aa2;
+        --stone-success: #4f7a66;
+        --stone-warning: #b77932;
+        --stone-danger: #ad5757;
+        --stone-danger-link: #c24141;
+        --stone-danger-text: #7b2828;
+        --stone-success-text: #1d4938;
+        --stone-border: #d9cfbf;
+        --stone-editor-bg: #f7f1e8;
+        --stone-border-strong: #c7baa7;
+        --stone-syntax-markdown: #4f4538;
+        --stone-heading-accent: #8d5b32;
+        --stone-syntax-comment: #8b806f;
+        --stone-syntax-keyword: #9a5932;
+        --stone-syntax-string: #466b57;
+        --stone-syntax-number: #9f6a2b;
+        --stone-syntax-type: #3e8aa2;
+        --stone-syntax-meta: #72563e;
+        --stone-code-foreground: #241f18;
+        --stone-selection: rgba(166, 108, 63, 0.18);
+        --stone-selection-remote: rgba(62, 138, 162, 0.14);
+        --stone-inline-code-bg: rgba(36, 31, 24, 0.04);
+        --stone-row-alt-bg: rgba(36, 31, 24, 0.025);
+        --stone-image-border: rgba(166, 108, 63, 0.18);
+        --stone-image-bg: rgba(255, 252, 247, 0.96);
+        --stone-image-shadow: 0 12px 30px rgba(88, 64, 39, 0.14);
+        --stone-hover-bg: rgba(36, 31, 24, 0.03);
+        --stone-active-bg: rgba(166, 108, 63, 0.08);
+        --stone-active-line-bg: rgba(166, 108, 63, 0.05);
+        --stone-editor-selection: rgba(166, 108, 63, 0.12);
+        --stone-editor-cursor: #241f18;
+        --stone-editor-caret-shadow: #f7f1e8;
+        --stone-overlay-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+        --stone-blockquote-bg: rgba(62, 138, 162, 0.08);
+        --stone-comment-action-border: rgba(166, 108, 63, 0.26);
+        --stone-comment-action-bg: rgba(255, 252, 247, 0.94);
+        --stone-comment-action-bg-hover: rgba(245, 238, 229, 0.98);
+        --stone-comment-action-shadow: 0 14px 32px rgba(88, 64, 39, 0.14);
+        --stone-comment-highlight-bg: rgba(183, 121, 50, 0.14);
         --stone-comment-highlight-shadow: inset 0 -1px 0
-            rgba(231, 194, 90, 0.45);
-        --stone-comment-highlight-active-text: #f3dec0;
-        --stone-comment-highlight-active-bg: rgba(231, 194, 90, 0.26);
+            rgba(183, 121, 50, 0.28);
+        --stone-comment-highlight-active-text: #5e4320;
+        --stone-comment-highlight-active-bg: rgba(183, 121, 50, 0.2);
         --stone-comment-highlight-active-shadow: inset 0 -2px 0
-            rgba(231, 194, 90, 0.8);
-        --stone-comment-marker-border: rgba(201, 168, 124, 0.5);
-        --stone-comment-marker-bg: rgba(201, 168, 124, 0.16);
-        --stone-comment-marker-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
-        --stone-comment-marker-detached-bg: rgba(32, 31, 27, 0.96);
-        --stone-comment-marker-active-border: rgba(231, 194, 90, 0.95);
-        --stone-comment-marker-active-bg: rgba(231, 194, 90, 0.35);
-        --stone-comment-card-border: rgba(201, 168, 124, 0.18);
+            rgba(183, 121, 50, 0.42);
+        --stone-comment-marker-border: rgba(166, 108, 63, 0.38);
+        --stone-comment-marker-bg: rgba(166, 108, 63, 0.12);
+        --stone-comment-marker-shadow: 0 4px 10px rgba(88, 64, 39, 0.12);
+        --stone-comment-marker-detached-bg: rgba(255, 252, 247, 0.96);
+        --stone-comment-marker-active-border: rgba(183, 121, 50, 0.8);
+        --stone-comment-marker-active-bg: rgba(183, 121, 50, 0.18);
+        --stone-comment-card-border: rgba(166, 108, 63, 0.16);
         --stone-comment-card-bg: linear-gradient(
             180deg,
-            rgba(25, 24, 21, 0.98),
-            rgba(17, 16, 14, 0.98)
+            rgba(255, 252, 247, 0.98),
+            rgba(244, 239, 231, 0.98)
         );
-        --stone-comment-card-shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
-        --stone-control-bg: rgba(255, 255, 255, 0.04);
-        --stone-focus-ring: rgba(201, 168, 124, 0.55);
-        --stone-primary-soft: rgba(201, 168, 124, 0.08);
-        --stone-primary-soft-strong: rgba(201, 168, 124, 0.12);
-        --stone-primary-border-soft: rgba(201, 168, 124, 0.5);
-        --stone-primary-border-strong: rgba(201, 168, 124, 0.65);
-        --stone-danger-soft: rgba(176, 112, 112, 0.08);
-        --stone-danger-soft-strong: rgba(176, 112, 112, 0.12);
-        --stone-danger-border-soft: rgba(176, 112, 112, 0.28);
-        --stone-success-soft: rgba(124, 156, 138, 0.08);
-        --stone-success-soft-strong: rgba(124, 156, 138, 0.14);
-        --stone-success-border-soft: rgba(124, 156, 138, 0.28);
-        --stone-diff-spacer-bg: rgba(255, 255, 255, 0.02);
-        --stone-dialog-shadow: 0 32px 120px rgba(0, 0, 0, 0.55);
-        --stone-landing-tilt-shadow-color: rgba(0, 0, 0, 0.5);
-        --stone-landing-tilt-glow: rgba(201, 168, 124, 0.1);
+        --stone-comment-card-shadow: 0 18px 48px rgba(88, 64, 39, 0.14);
+        --stone-control-bg: rgba(36, 31, 24, 0.04);
+        --stone-focus-ring: rgba(166, 108, 63, 0.32);
+        --stone-primary-soft: rgba(166, 108, 63, 0.08);
+        --stone-primary-soft-strong: rgba(166, 108, 63, 0.14);
+        --stone-primary-border-soft: rgba(166, 108, 63, 0.28);
+        --stone-primary-border-strong: rgba(166, 108, 63, 0.42);
+        --stone-danger-soft: rgba(173, 87, 87, 0.08);
+        --stone-danger-soft-strong: rgba(173, 87, 87, 0.14);
+        --stone-danger-border-soft: rgba(173, 87, 87, 0.24);
+        --stone-success-soft: rgba(79, 122, 102, 0.08);
+        --stone-success-soft-strong: rgba(79, 122, 102, 0.14);
+        --stone-success-border-soft: rgba(79, 122, 102, 0.22);
+        --stone-diff-spacer-bg: rgba(36, 31, 24, 0.03);
+        --stone-dialog-shadow: 0 32px 120px rgba(88, 64, 39, 0.18);
     }
 
     :root.dark {
-        --background: 240 15% 10%;
-        --foreground: 229 35% 75%;
-        --muted: 231 24% 22%;
-        --muted-foreground: 233 14% 54%;
-        --popover: 229 26% 16%;
-        --popover-foreground: 229 35% 75%;
-        --border: 231 24% 22%;
-        --input: 240 15% 9%;
-        --card: 230 24% 19%;
-        --card-foreground: 229 73% 86%;
-        --primary: 221 89% 72%;
-        --primary-foreground: 235 19% 13%;
-        --secondary: 229 26% 16%;
-        --secondary-foreground: 229 35% 75%;
-        --accent: 231 24% 22%;
-        --accent-foreground: 229 73% 86%;
-        --destructive: 349 89% 72%;
-        --destructive-foreground: 229 73% 86%;
-        --ring: 223 45% 44%;
+        --background: 48 8% 11%;
+        --foreground: 50 32% 93%;
+        --muted: 48 7% 16%;
+        --muted-foreground: 44 10% 58%;
+        --popover: 48 8% 14%;
+        --popover-foreground: 50 32% 93%;
+        --border: 48 6% 21%;
+        --input: 48 7% 13%;
+        --card: 48 8% 14%;
+        --card-foreground: 50 32% 93%;
+        --primary: 20 96% 69%;
+        --primary-foreground: 40 15% 12%;
+        --secondary: 48 7% 16%;
+        --secondary-foreground: 50 32% 93%;
+        --accent: 48 7% 18%;
+        --accent-foreground: 50 32% 93%;
+        --destructive: 338 100% 69%;
+        --destructive-foreground: 50 32% 93%;
+        --ring: 46 100% 70%;
         --radius: 0.375rem;
 
-        --stone-bg: #16161e;
-        --stone-surface: #1f2335;
-        --stone-elevated: #24283b;
-        --stone-text: #c0caf5;
-        --stone-text-strong: #c0caf5;
-        --stone-text-secondary: #a9b1d6;
-        --stone-text-muted: #787c99;
-        --stone-text-dim: #565f89;
-        --stone-accent: #7aa2f7;
-        --stone-accent-secondary: #7dcfff;
-        --stone-success: #73daca;
-        --stone-warning: #e0af68;
-        --stone-danger: #f7768e;
-        --stone-danger-link: #f7768e;
-        --stone-danger-text: #f7768e;
-        --stone-success-text: #73daca;
-        --stone-border: #2a2e45;
-        --stone-editor-bg: #1a1b26;
-        --stone-border-strong: #3d59a1;
-        --stone-syntax-markdown: #a9b1d6;
-        --stone-heading-accent: #7dcfff;
-        --stone-syntax-comment: #565f89;
-        --stone-syntax-keyword: #bb9af7;
-        --stone-syntax-string: #73daca;
-        --stone-syntax-number: #e0af68;
-        --stone-syntax-type: #7aa2f7;
-        --stone-syntax-meta: #787c99;
-        --stone-code-foreground: #c0caf5;
-        --stone-selection: rgba(61, 89, 161, 0.38);
-        --stone-selection-remote: rgba(125, 207, 255, 0.18);
-        --stone-inline-code-bg: rgba(36, 40, 59, 0.72);
-        --stone-row-alt-bg: rgba(36, 40, 59, 0.4);
-        --stone-image-border: rgba(61, 89, 161, 0.36);
-        --stone-image-bg: rgba(26, 27, 38, 0.96);
+        --stone-bg: #191915;
+        --stone-surface: #22231f;
+        --stone-elevated: #2a2b27;
+        --stone-text: #f8f8f2;
+        --stone-text-strong: #fffdf6;
+        --stone-text-secondary: #d2ccbc;
+        --stone-text-muted: #9e9787;
+        --stone-text-dim: #6d685d;
+        --stone-accent: #fc9867;
+        --stone-accent-secondary: #78dce8;
+        --stone-success: #a9dc76;
+        --stone-warning: #ffd866;
+        --stone-danger: #ff6188;
+        --stone-danger-link: #ff7a9a;
+        --stone-danger-text: #ffd1dc;
+        --stone-success-text: #e9f8d5;
+        --stone-border: #393a34;
+        --stone-editor-bg: #161711;
+        --stone-border-strong: #58594f;
+        --stone-syntax-markdown: #cfc8b7;
+        --stone-heading-accent: #78dce8;
+        --stone-syntax-comment: #727267;
+        --stone-syntax-keyword: #ff6188;
+        --stone-syntax-string: #ffd866;
+        --stone-syntax-number: #ab9df2;
+        --stone-syntax-type: #78dce8;
+        --stone-syntax-meta: #fc9867;
+        --stone-code-foreground: #f8f8f2;
+        --stone-selection: rgba(255, 216, 102, 0.16);
+        --stone-selection-remote: rgba(120, 220, 232, 0.18);
+        --stone-inline-code-bg: rgba(255, 255, 255, 0.05);
+        --stone-row-alt-bg: rgba(255, 255, 255, 0.03);
+        --stone-image-border: rgba(252, 152, 103, 0.2);
+        --stone-image-bg: rgba(22, 23, 17, 0.96);
         --stone-image-shadow: 0 12px 30px rgba(0, 0, 0, 0.36);
-        --stone-hover-bg: rgba(36, 40, 59, 0.55);
-        --stone-active-bg: rgba(61, 89, 161, 0.18);
-        --stone-active-line-bg: rgba(61, 89, 161, 0.14);
-        --stone-editor-selection: rgba(61, 89, 161, 0.28);
-        --stone-editor-cursor: #e0af68;
-        --stone-editor-caret-shadow: #1a1b26;
+        --stone-hover-bg: rgba(255, 255, 255, 0.05);
+        --stone-active-bg: rgba(252, 152, 103, 0.14);
+        --stone-active-line-bg: rgba(255, 255, 255, 0.035);
+        --stone-editor-selection: rgba(255, 216, 102, 0.14);
+        --stone-editor-cursor: #ffd866;
+        --stone-editor-caret-shadow: #161711;
         --stone-overlay-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
-        --stone-blockquote-bg: rgba(61, 89, 161, 0.12);
-        --stone-comment-action-border: rgba(61, 89, 161, 0.55);
-        --stone-comment-action-bg: rgba(31, 35, 53, 0.94);
-        --stone-comment-action-bg-hover: rgba(36, 40, 59, 0.98);
+        --stone-blockquote-bg: rgba(120, 220, 232, 0.08);
+        --stone-comment-action-border: rgba(252, 152, 103, 0.38);
+        --stone-comment-action-bg: rgba(34, 35, 31, 0.94);
+        --stone-comment-action-bg-hover: rgba(42, 43, 39, 0.98);
         --stone-comment-action-shadow: 0 14px 32px rgba(0, 0, 0, 0.42);
-        --stone-comment-highlight-bg: rgba(224, 175, 104, 0.18);
+        --stone-comment-highlight-bg: rgba(255, 216, 102, 0.16);
         --stone-comment-highlight-shadow: inset 0 -1px 0
-            rgba(224, 175, 104, 0.42);
-        --stone-comment-highlight-active-text: #e0af68;
-        --stone-comment-highlight-active-bg: rgba(224, 175, 104, 0.28);
+            rgba(255, 216, 102, 0.36);
+        --stone-comment-highlight-active-text: #fff1bf;
+        --stone-comment-highlight-active-bg: rgba(255, 216, 102, 0.24);
         --stone-comment-highlight-active-shadow: inset 0 -2px 0
-            rgba(224, 175, 104, 0.72);
-        --stone-comment-marker-border: rgba(61, 89, 161, 0.72);
-        --stone-comment-marker-bg: rgba(61, 89, 161, 0.22);
+            rgba(255, 216, 102, 0.6);
+        --stone-comment-marker-border: rgba(252, 152, 103, 0.5);
+        --stone-comment-marker-bg: rgba(252, 152, 103, 0.18);
         --stone-comment-marker-shadow: 0 4px 10px rgba(0, 0, 0, 0.32);
-        --stone-comment-marker-detached-bg: rgba(31, 35, 53, 0.96);
-        --stone-comment-marker-active-border: rgba(224, 175, 104, 0.92);
-        --stone-comment-marker-active-bg: rgba(224, 175, 104, 0.28);
-        --stone-comment-card-border: rgba(61, 89, 161, 0.32);
+        --stone-comment-marker-detached-bg: rgba(34, 35, 31, 0.96);
+        --stone-comment-marker-active-border: rgba(255, 216, 102, 0.95);
+        --stone-comment-marker-active-bg: rgba(255, 216, 102, 0.24);
+        --stone-comment-card-border: rgba(252, 152, 103, 0.22);
         --stone-comment-card-bg: linear-gradient(
             180deg,
-            rgba(31, 35, 53, 0.98),
-            rgba(26, 27, 38, 0.98)
+            rgba(34, 35, 31, 0.98),
+            rgba(22, 23, 17, 0.98)
         );
         --stone-comment-card-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
-        --stone-control-bg: rgba(36, 40, 59, 0.7);
-        --stone-focus-ring: rgba(61, 89, 161, 0.78);
-        --stone-primary-soft: rgba(61, 89, 161, 0.12);
-        --stone-primary-soft-strong: rgba(61, 89, 161, 0.18);
-        --stone-primary-border-soft: rgba(61, 89, 161, 0.52);
-        --stone-primary-border-strong: rgba(61, 89, 161, 0.68);
-        --stone-danger-soft: rgba(247, 118, 142, 0.12);
-        --stone-danger-soft-strong: rgba(247, 118, 142, 0.18);
-        --stone-danger-border-soft: rgba(247, 118, 142, 0.32);
-        --stone-success-soft: rgba(115, 218, 202, 0.12);
-        --stone-success-soft-strong: rgba(115, 218, 202, 0.18);
-        --stone-success-border-soft: rgba(115, 218, 202, 0.32);
-        --stone-diff-spacer-bg: rgba(36, 40, 59, 0.28);
+        --stone-control-bg: rgba(42, 43, 39, 0.82);
+        --stone-focus-ring: rgba(255, 216, 102, 0.42);
+        --stone-primary-soft: rgba(252, 152, 103, 0.1);
+        --stone-primary-soft-strong: rgba(252, 152, 103, 0.16);
+        --stone-primary-border-soft: rgba(252, 152, 103, 0.38);
+        --stone-primary-border-strong: rgba(252, 152, 103, 0.56);
+        --stone-danger-soft: rgba(255, 97, 136, 0.12);
+        --stone-danger-soft-strong: rgba(255, 97, 136, 0.18);
+        --stone-danger-border-soft: rgba(255, 97, 136, 0.32);
+        --stone-success-soft: rgba(169, 220, 118, 0.12);
+        --stone-success-soft-strong: rgba(169, 220, 118, 0.18);
+        --stone-success-border-soft: rgba(169, 220, 118, 0.32);
+        --stone-diff-spacer-bg: rgba(255, 255, 255, 0.04);
         --stone-dialog-shadow: 0 32px 120px rgba(0, 0, 0, 0.62);
-        --stone-landing-tilt-shadow-color: rgba(0, 0, 0, 0.62);
-        --stone-landing-tilt-glow: rgba(122, 162, 247, 0.18);
     }
 
     * {
@@ -223,6 +219,10 @@
     }
 
     html {
+        color-scheme: light;
+    }
+
+    :root.dark {
         color-scheme: dark;
     }
 
@@ -469,6 +469,58 @@
 .markdown-body strong {
     color: var(--stone-text) !important;
     font-weight: 600;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    padding-left: 1.5rem !important;
+}
+
+.markdown-body ul {
+    list-style: disc !important;
+}
+
+.markdown-body ul ul {
+    list-style-type: circle !important;
+}
+
+.markdown-body ul ul ul {
+    list-style-type: square !important;
+}
+
+.markdown-body ol {
+    list-style: decimal !important;
+}
+
+.markdown-body ol ol {
+    list-style-type: lower-alpha !important;
+}
+
+.markdown-body ol ol ol {
+    list-style-type: lower-roman !important;
+}
+
+.markdown-body li {
+    display: list-item;
+}
+
+.markdown-body li + li {
+    margin-top: 0.25rem;
+}
+
+.markdown-body .contains-task-list,
+.markdown-body .contains-task-list ul,
+.markdown-body .contains-task-list ol {
+    list-style: none !important;
+    padding-left: 0 !important;
+}
+
+.markdown-body .task-list-item {
+    list-style: none !important;
+}
+
+.markdown-body .task-list-item input[type="checkbox"] {
+    margin: 0 0.5rem 0 0;
 }
 
 .markdown-body li::marker {
@@ -1518,153 +1570,92 @@
         }
     }
 
-    /* ---- Landing: Nav ---- */
-    .landing-nav {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
+    /* ---- Landing ---- */
+    .landing {
+        min-height: 100svh;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 0 64px;
-        height: 56px;
-        border-bottom: 1px solid var(--stone-border);
+        justify-content: center;
+        padding: 24px;
         background: var(--stone-bg);
     }
 
-    .landing-nav-left {
+    .landing-main {
+        width: min(560px, 100%);
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 24px;
+        gap: 28px;
+        text-align: center;
     }
 
-    .landing-nav-wordmark {
-        font-family: "Nunito Sans", sans-serif;
+    .landing-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .landing-title {
+        margin: 0;
+    }
+
+    .landing-wordmark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(4.75rem, 18vw, 7.5rem);
+        line-height: 0.9;
+        letter-spacing: 0.12em;
+        color: var(--stone-text-strong);
+    }
+
+    .landing-tagline {
+        margin: 0;
+        color: var(--stone-text-dim);
         font-size: 14px;
-        font-weight: 700;
-        color: var(--stone-text);
-        letter-spacing: 0.15em;
-        text-decoration: none;
+        line-height: 1.6;
     }
 
-    .landing-nav-logo-m {
-        color: var(--stone-accent);
-    }
-
-    .landing-nav-sep {
-        width: 1px;
-        height: 20px;
-        background: var(--stone-border);
-    }
-
-    .landing-nav-label {
-        font-family: "Fira Code", monospace;
-        font-size: 11px;
-        color: var(--stone-text-dim);
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-    }
-
-    .landing-nav-right {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .landing-nav-link {
-        font-size: 13px;
-        color: var(--stone-text-dim);
-        text-decoration: none;
-        transition: color 150ms;
-        margin-right: 18px;
-    }
-
-    .landing-nav-link:hover {
-        color: var(--stone-text-secondary);
-    }
-
-    /* Landing: Nav inline pad input */
-    .landing-nav-pad-input {
-        display: flex;
-        align-items: center;
-        height: 34px;
-        background: var(--stone-surface);
-        border: 1px solid var(--stone-border);
-        border-radius: 4px;
-        overflow: hidden;
-        transition: border-color 200ms, box-shadow 200ms;
-    }
-
-    .landing-nav-pad-input:focus-within {
-        border-color: var(--stone-accent);
-        box-shadow: 0 0 0 2px var(--stone-landing-tilt-glow);
-    }
-
-    .landing-nav-pad-input .landing-pip-prefix {
-        font-family: "Fira Code", monospace;
-        font-size: 11px;
-        color: var(--stone-text-dim);
-        padding: 0 1px 0 10px;
-        user-select: none;
-        flex-shrink: 0;
-    }
-
-    .landing-nav-pad-input input {
-        width: 120px;
-        height: 100%;
-        background: none;
-        border: none;
-        outline: none;
-        font-family: "Fira Code", monospace;
-        font-size: 11px;
-        color: var(--stone-text);
-        padding: 0 4px;
-    }
-
-    .landing-nav-pad-input input::placeholder {
-        color: var(--stone-text-dim);
-    }
-
-    /* Landing: Shared pad input (hero + CTA) */
     .landing-pad-input {
+        width: 100%;
         display: flex;
         align-items: center;
-        max-width: 420px;
-        height: 50px;
+        height: 56px;
         background: var(--stone-surface);
         border: 1px solid var(--stone-border);
-        border-radius: 5px;
+        border-radius: 8px;
         overflow: hidden;
-        transition: border-color 250ms, box-shadow 250ms;
+        transition: background 150ms ease, border-color 150ms ease, box-shadow
+            150ms ease;
     }
 
     .landing-pad-input:focus-within {
         border-color: var(--stone-accent);
-        box-shadow: 0 0 0 3px var(--stone-landing-tilt-glow);
+        box-shadow: 0 0 0 3px var(--stone-focus-ring);
     }
 
-    .landing-pad-input .landing-pip-prefix {
+    .landing-pip-prefix {
+        white-space: nowrap;
+        padding: 0 0 0 16px;
+        flex-shrink: 0;
         font-family: "Fira Code", monospace;
         font-size: 14px;
         color: var(--stone-text-dim);
-        padding: 0 2px 0 16px;
-        flex-shrink: 0;
         user-select: none;
     }
 
     .landing-pad-input input {
         flex: 1;
+        min-width: 0;
         height: 100%;
-        background: none;
         border: none;
         outline: none;
+        background: none;
+        padding: 0 8px 0 0;
         font-family: "Fira Code", monospace;
         font-size: 14px;
         color: var(--stone-text);
-        padding: 0 4px;
-        min-width: 0;
     }
 
     .landing-pad-input input::placeholder {
@@ -1672,24 +1663,24 @@
     }
 
     .landing-pip-go {
-        width: 50px;
+        width: 52px;
         height: 100%;
-        background: var(--stone-accent);
-        border: none;
-        cursor: pointer;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        transition: opacity 150ms;
-    }
-
-    .landing-nav-pad-input .landing-pip-go {
-        width: 34px;
+        border: none;
+        background: var(--stone-accent);
+        transition: opacity 150ms ease;
     }
 
     .landing-pip-go:hover {
-        opacity: 0.85;
+        opacity: 0.9;
+    }
+
+    .landing-pip-go:focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--stone-bg);
     }
 
     .landing-pip-go svg {
@@ -1702,422 +1693,42 @@
         stroke-linejoin: round;
     }
 
-    .landing-nav-pad-input .landing-pip-go svg {
-        width: 13px;
-        height: 13px;
-    }
-
-    .landing-pad-input-hint {
-        font-size: 12px;
-        color: var(--stone-text-dim);
-        margin-top: 12px;
-    }
-
-    .landing-pad-input-hint kbd {
-        font-family: "Fira Code", monospace;
-        font-size: 10px;
-        color: var(--stone-text-secondary);
-        background: var(--stone-elevated);
-        padding: 2px 6px;
-        border-radius: 3px;
-        border: 1px solid var(--stone-border);
-    }
-
-    /* ---- Landing: Hero ---- */
-    .landing-hero {
-        min-height: 100vh;
-        display: grid;
-        grid-template-columns: 1fr;
-        align-items: center;
-        padding: 56px 0 0 0;
-        position: relative;
-        gap: 0;
-    }
-
-    .landing-hero::before {
-        content: "";
-        position: absolute;
-        left: 64px;
-        top: 56px;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(
-            to bottom,
-            var(--stone-accent),
-            transparent 80%
-        );
-        opacity: 0.3;
-    }
-
-    .landing-hero-text {
-        max-width: 760px;
-        padding: 80px 64px 96px 260px;
-    }
-
-    .landing-hero-super {
-        font-family: "Fira Code", monospace;
-        font-size: 11px;
-        color: var(--stone-accent);
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        margin-bottom: 24px;
-        opacity: 0;
-        animation: landing-chiselIn 0.8s ease 0.2s forwards;
-    }
-
-    .landing-hero-h1 {
-        font-family: "Fraunces", serif;
-        font-size: 72px;
-        font-weight: 700;
-        color: var(--stone-text);
-        line-height: 1.05;
-        letter-spacing: -0.04em;
-        margin-bottom: 28px;
-        opacity: 0;
-        animation: landing-chiselIn 0.8s ease 0.4s forwards;
-    }
-
-    .landing-hero-h1 span {
-        color: var(--stone-accent);
-    }
-
-    .landing-hero-desc {
-        font-size: 16px;
-        color: var(--stone-text-secondary);
-        line-height: 1.7;
-        max-width: 400px;
-        margin-bottom: 36px;
-        opacity: 0;
-        animation: landing-chiselIn 0.8s ease 0.6s forwards;
-    }
-
-    .landing-hero-actions {
-        opacity: 0;
-        animation: landing-chiselIn 0.8s ease 0.8s forwards;
-    }
-
-    .landing-hero-secondary {
-        font-size: 13px;
-        color: var(--stone-text-dim);
-        text-decoration: none;
-        border-bottom: 1px solid var(--stone-border);
-        padding-bottom: 2px;
-        transition: color 200ms, border-color 200ms;
-        display: inline-block;
-        margin-top: 16px;
-    }
-
-    .landing-hero-secondary:hover {
-        color: var(--stone-text-secondary);
-        border-color: var(--stone-text-secondary);
-    }
-
-    /* ---- Landing: Stats ---- */
-    .landing-stats {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        border-top: 1px solid var(--stone-border);
-        border-bottom: 1px solid var(--stone-border);
-    }
-
-    .landing-stat {
-        padding: 32px 40px;
-        border-right: 1px solid var(--stone-border);
-        text-align: center;
-    }
-
-    .landing-stat:last-child {
-        border-right: none;
-    }
-
-    .landing-stat-value {
-        font-family: "Fraunces", serif;
-        font-size: 32px;
-        font-weight: 600;
-        color: var(--stone-accent);
-        line-height: 1;
-        margin-bottom: 6px;
-    }
-
-    .landing-stat-label {
-        font-family: "Fira Code", monospace;
-        font-size: 10px;
-        color: var(--stone-text-dim);
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-    }
-
-    /* ---- Landing: Features ---- */
-    .landing-features-section {
-        padding: 100px 64px 0;
-    }
-
-    .landing-features-header {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        margin-bottom: 48px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--stone-border);
-    }
-
-    .landing-features-title {
-        font-family: "Fraunces", serif;
-        font-size: 36px;
-        font-weight: 600;
-        color: var(--stone-text);
-        letter-spacing: -0.02em;
-    }
-
-    .landing-features-sub {
-        font-family: "Fira Code", monospace;
-        font-size: 11px;
-        color: var(--stone-text-dim);
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-    }
-
-    .landing-features-body {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 48px;
-        align-items: start;
-    }
-
-    .landing-features-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        border: 1px solid var(--stone-border);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .landing-feature-cell {
-        padding: 32px 28px;
-        border-right: 1px solid var(--stone-border);
-        border-bottom: 1px solid var(--stone-border);
-        opacity: 0;
-        transform: translateY(12px);
-        transition: opacity 0.5s ease, transform 0.5s ease, background 200ms;
-    }
-
-    .landing-feature-cell.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .landing-feature-cell:nth-child(2n) {
-        border-right: none;
-    }
-
-    .landing-feature-cell:nth-child(n + 5) {
-        border-bottom: none;
-    }
-
-    .landing-feature-cell:hover {
-        background: var(--stone-surface);
-    }
-
-    .landing-feature-idx {
-        font-family: "Fira Code", monospace;
-        font-size: 11px;
-        color: var(--stone-accent);
-        letter-spacing: 0.1em;
-        margin-bottom: 14px;
-    }
-
-    .landing-feature-name {
-        font-family: "Fraunces", serif;
-        font-size: 19px;
-        font-weight: 600;
-        color: var(--stone-text);
-        margin-bottom: 6px;
-    }
-
-    .landing-feature-desc {
-        font-size: 13px;
-        color: var(--stone-text-dim);
-        line-height: 1.7;
-    }
-
-    /* ---- Landing: How it works ---- */
-    .landing-how {
-        padding: 100px 64px;
-        border-top: 1px solid var(--stone-border);
-        margin-top: 100px;
-    }
-
-    .landing-how-inner {
-        max-width: 960px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 200px 1fr;
-        gap: 48px;
-    }
-
-    .landing-how-label {
-        font-family: "Fraunces", serif;
-        font-size: 28px;
-        font-weight: 600;
-        color: var(--stone-text);
-        letter-spacing: -0.02em;
-    }
-
-    .landing-how-steps {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .landing-how-step {
-        display: grid;
-        grid-template-columns: 48px 1fr;
-        gap: 16px;
-        padding: 24px 0;
-        border-bottom: 1px solid var(--stone-border);
-        align-items: baseline;
-        opacity: 0;
-        transform: translateY(12px);
-        transition: all 0.5s ease;
-    }
-
-    .landing-how-step.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .landing-how-step:last-child {
-        border-bottom: none;
-    }
-
-    .landing-how-num {
-        font-family: "Fraunces", serif;
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--stone-accent);
-    }
-
-    .landing-how-text {
-        font-size: 15px;
-        color: var(--stone-text-secondary);
-        line-height: 1.7;
-    }
-
-    .landing-how-text strong {
-        color: var(--stone-text);
-        font-weight: 600;
-    }
-
-    /* ---- Landing: Bottom CTA ---- */
-    .landing-cta {
-        padding: 100px 64px;
-        text-align: center;
-        border-top: 1px solid var(--stone-border);
-        position: relative;
-    }
-
-    .landing-cta::before,
-    .landing-cta::after {
-        content: "";
-        position: absolute;
-        border: 1px solid var(--stone-border);
-        pointer-events: none;
-    }
-
-    .landing-cta::before {
-        width: 120px;
-        height: 120px;
-        top: 40px;
-        left: 10%;
-        transform: rotate(15deg);
-        opacity: 0.3;
-    }
-
-    .landing-cta::after {
-        width: 80px;
-        height: 80px;
-        bottom: 60px;
-        right: 12%;
-        transform: rotate(-8deg);
-        opacity: 0.2;
-    }
-
-    .landing-cta-h2 {
-        font-family: "Fraunces", serif;
-        font-size: 56px;
-        font-weight: 700;
-        color: var(--stone-text);
-        letter-spacing: -0.04em;
-        margin-bottom: 12px;
-    }
-
-    .landing-cta-h2 span {
-        color: var(--stone-accent);
-    }
-
-    .landing-cta-p {
-        font-size: 15px;
-        color: var(--stone-text-dim);
-        margin-bottom: 32px;
-    }
-
-    .landing-cta .landing-pad-input {
-        margin: 0 auto;
-    }
-
-    .landing-cta .landing-pad-input-hint {
-        margin-top: 14px;
-    }
-
-    /* ---- Landing: Footer ---- */
-    .landing-footer {
-        padding: 24px 64px;
-        border-top: 1px solid var(--stone-border);
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: center;
-    }
-
-    .landing-footer-left {
-        font-family: "Nunito Sans", sans-serif;
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--stone-text);
-        letter-spacing: 0.15em;
-    }
-
-    .landing-footer-center {
-        font-family: "Fira Code", monospace;
-        font-size: 10px;
-        color: var(--stone-text-dim);
-        letter-spacing: 0.1em;
-    }
-
-    .landing-footer-right {
-        display: flex;
-        justify-content: flex-end;
-        gap: 20px;
-        font-size: 12px;
-    }
-
-    .landing-footer-right a {
-        color: var(--stone-text-dim);
-        text-decoration: none;
-        transition: color 150ms;
-    }
-
-    .landing-footer-right a:hover {
-        color: var(--stone-text-secondary);
-    }
-
-    /* ---- Landing: Animation ---- */
-    @keyframes landing-chiselIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
+    @media (max-width: 640px) {
+        .landing {
+            padding: 16px;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+
+        .landing-main {
+            width: 100%;
+            gap: 24px;
+        }
+
+        .landing-wordmark {
+            font-size: clamp(3.5rem, 24vw, 5.5rem);
+        }
+
+        .landing-tagline {
+            max-width: 22rem;
+            font-size: 13px;
+        }
+
+        .landing-pad-input {
+            width: 100%;
+            height: 52px;
+        }
+
+        .landing-pip-prefix {
+            padding-left: 14px;
+            font-size: 12px;
+        }
+
+        .landing-pad-input input {
+            padding-right: 6px;
+            font-size: 13px;
+        }
+
+        .landing-pip-go {
+            width: 48px;
         }
     }
 }
