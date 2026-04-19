@@ -86,6 +86,166 @@ describe('http and websocket integration', () => {
             'https://app.example.com',
         )
     })
+
+    test('does not emit cors headers for a different origin', async () => {
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
+        port = server.port ?? 0
+
+        const response = await fetch(`http://127.0.0.1:${port}/health`, {
+            headers: {
+                Origin: 'https://evil.example.com',
+            },
+        })
+
+        expect(response.status).toBe(200)
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
+    })
+
+    test('rejects preflight requests from a different origin', async () => {
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
+        port = server.port ?? 0
+
+        const response = await fetch(`http://127.0.0.1:${port}/health`, {
+            method: 'OPTIONS',
+            headers: {
+                Origin: 'https://evil.example.com',
+            },
+        })
+
+        expect(response.status).toBe(403)
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
+    })
+
+    test('returns static security headers for the app shell', async () => {
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
+        port = server.port ?? 0
+
+        const response = await fetch(`http://127.0.0.1:${port}/`)
+
+        expect(response.status).toBe(200)
+        expect(response.headers.get('Content-Security-Policy')).toContain(
+            "script-src 'self'",
+        )
+        expect(response.headers.get('Content-Security-Policy')).toContain(
+            'https://fonts.googleapis.com',
+        )
+        expect(response.headers.get('Content-Security-Policy')).toContain(
+            'wss://app.example.com',
+        )
+        expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
+        expect(response.headers.get('Referrer-Policy')).toBe(
+            'strict-origin-when-cross-origin',
+        )
+        expect(response.headers.get('Permissions-Policy')).toContain(
+            'camera=()',
+        )
+    })
+
+    test('returns api security headers without wildcard cors', async () => {
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
+        port = server.port ?? 0
+
+        const response = await fetch(`http://127.0.0.1:${port}/health`)
+
+        expect(response.status).toBe(200)
+        expect(response.headers.get('Content-Security-Policy')).toBeNull()
+        expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
+        expect(response.headers.get('Referrer-Policy')).toBe(
+            'strict-origin-when-cross-origin',
+        )
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
+    })
+
+    test('rejects malformed websocket requests without leaking bun errors', async () => {
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
+        port = server.port ?? 0
+
+        const response = await fetch(
+            `http://127.0.0.1:${port}/ws/%2Fpad%3Atext?client=abc`,
+            {
+                headers: {
+                    Origin: 'https://app.example.com',
+                },
+            },
+        )
+
+        expect(response.status).toBe(400)
+        const body = await response.text()
+        expect(body).toContain('Missing client id')
+        expect(body).not.toContain('__bunfallback')
+        expect(body).not.toContain('/packages/server/')
+    })
+
+    test('rejects invalid room names without leaking stack traces', async () => {
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
+        port = server.port ?? 0
+
+        const response = await fetch(
+            `http://127.0.0.1:${port}/ws/not-a-room?client=1`,
+            {
+                headers: {
+                    Origin: 'https://app.example.com',
+                },
+            },
+        )
+
+        expect(response.status).toBe(400)
+        const body = await response.text()
+        expect(body).toContain('Invalid room name')
+        expect(body).not.toContain('__bunfallback')
+        expect(body).not.toContain('/packages/server/')
+    })
+
+    test('does not expose dotfiles or encoded traversal paths', async () => {
+        runtime = createServerRuntime()
+        server = createServer({
+            port: 0,
+            appOrigin: 'https://app.example.com',
+            runtime,
+        })
+        port = server.port ?? 0
+
+        const dotfile = await fetch(`http://127.0.0.1:${port}/.env`)
+        expect(dotfile.status).toBe(404)
+
+        const encodedDotfile = await fetch(`http://127.0.0.1:${port}/%2eenv`)
+        expect(encodedDotfile.status).toBe(404)
+
+        const traversal = await fetch(
+            `http://127.0.0.1:${port}/%2e%2e/%2e%2e/.env`,
+        )
+        expect(traversal.status).toBe(404)
+    })
 })
 
 function readRoomUrl(port: number, path: ReturnType<typeof padPath>) {

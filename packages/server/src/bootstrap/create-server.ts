@@ -3,6 +3,7 @@ import type { ServerWebSocket } from 'bun'
 import type { ServerRuntime } from '#/bootstrap/runtime'
 import { serveClientApp } from '#/infrastructure/client-app'
 import { isAllowedWebSocketOrigin } from '#/infrastructure/origin'
+import { applyErrorResponseHeaders } from '#/infrastructure/security-headers'
 import { handleWorkspaceRequest } from '#/pad-workspace/application/http-service'
 import {
     closeWorkspaceSocket,
@@ -22,6 +23,7 @@ export function createServer(input: CreateServerInput) {
     return Bun.serve<WsData>({
         port: input.port,
         hostname: '0.0.0.0',
+        development: false,
 
         async fetch(req, server) {
             const { pathname } = new URL(req.url)
@@ -30,7 +32,7 @@ export function createServer(input: CreateServerInput) {
                 !pathname.startsWith('/api/') &&
                 !pathname.startsWith('/ws/')
             ) {
-                return serveClientApp(req)
+                return serveClientApp(req, input.appOrigin)
             }
 
             const route = await handleWorkspaceRequest(
@@ -61,6 +63,13 @@ export function createServer(input: CreateServerInput) {
             }
 
             return route
+        },
+
+        error(error) {
+            console.error(error)
+            return applyErrorResponseHeaders(
+                new Response('Internal Server Error', { status: 500 }),
+            )
         },
 
         websocket: {

@@ -8,5 +8,5 @@ dist
 test-results
 playwright-report
 screenshots
-.env
+.env*
 *.tsbuildinfo

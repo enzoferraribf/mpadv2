@@ -7,8 +7,13 @@ export type ServerConfig = {
 export function readServerConfig(
     env: NodeJS.ProcessEnv = process.env,
 ): ServerConfig {
+    const appOrigin = readOptionalOrigin(env.APP_ORIGIN ?? null)
+    if (isProductionEnv(env.NODE_ENV) && appOrigin === null) {
+        throw new Error('APP_ORIGIN is required when NODE_ENV=production.')
+    }
+
     return {
-        appOrigin: readOptionalOrigin(env.APP_ORIGIN ?? null),
+        appOrigin,
         port: readPort(env.PORT),
         runSchemaMigrationsOnBoot: readBoolean(
             env.RUN_SCHEMA_MIGRATIONS_ON_BOOT,
@@ -68,4 +73,8 @@ function readBoolean(value: string | undefined, fallback: boolean) {
         return false
 
     throw new Error(`Invalid boolean value: ${value}`)
+}
+
+function isProductionEnv(value: string | undefined) {
+    return value?.trim() === 'production'
 }

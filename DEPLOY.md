@@ -17,9 +17,11 @@ Create a Postgres database in Dokploy and copy its `DATABASE_URL`.
 - Domain: `<domain>`
 - Set env:
   - `DATABASE_URL=<dokploy postgres connection string>`
-  - `APP_ORIGIN=https://<domain>`
+  - `APP_ORIGIN=https://<domain>` required in production
   - `RUN_SCHEMA_MIGRATIONS_ON_BOOT=1`
   - `PORT=4000`
+
+The runtime image sets `NODE_ENV=production` itself. `APP_ORIGIN` must match the deployed browser origin exactly so CORS and WebSocket origin checks stay same-origin only.
 
 The Bun server serves all of these on the same origin:
 

@@ -41,4 +41,25 @@ describe('markdown preview', () => {
         expect(html).toContain('aria-label="Incomplete task"')
         expect(html).toContain('tabindex="-1"')
     })
+
+    test('drops unsafe image sources from the preview', () => {
+        const html = renderToStaticMarkup(
+            createElement(MarkdownPreviewPane, {
+                content: '![x](http://evil.example.com/file.png)',
+            }),
+        )
+
+        expect(html).not.toContain('<img')
+    })
+
+    test('keeps safe image sources in the preview', () => {
+        const html = renderToStaticMarkup(
+            createElement(MarkdownPreviewPane, {
+                content: '![x](https://cdn.example.com/file.png)',
+            }),
+        )
+
+        expect(html).toContain('<img')
+        expect(html).toContain('https://cdn.example.com/file.png')
+    })
 })

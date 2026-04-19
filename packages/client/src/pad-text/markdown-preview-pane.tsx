@@ -1,3 +1,4 @@
+import { sanitizeMarkdownMediaSource } from '@/pad-text/infrastructure/markdown-media'
 import type { ComponentProps } from 'react'
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -20,6 +21,20 @@ const markdownComponents: Components = {
                 readOnly
                 tabIndex={-1}
                 type='checkbox'
+            />
+        )
+    },
+    img({ node: _node, alt, src, ...props }) {
+        const safeSrc = sanitizeMarkdownMediaSource(src)
+        if (!safeSrc) return null
+
+        return (
+            <img
+                {...props}
+                alt={alt ?? ''}
+                decoding='async'
+                loading='lazy'
+                src={safeSrc}
             />
         )
     },

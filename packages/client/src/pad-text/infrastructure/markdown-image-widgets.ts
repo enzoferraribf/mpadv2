@@ -1,3 +1,4 @@
+import { sanitizeMarkdownMediaSource } from '@/pad-text/infrastructure/markdown-media'
 import { StateField } from '@codemirror/state'
 import {
     Decoration,
@@ -116,15 +117,12 @@ function readStandaloneImage(line: string): StandaloneImage | null {
     const alt = match[1] ?? ''
     const rawSrc = match[2]?.trim()
     if (!rawSrc) return null
+    const src = sanitizeMarkdownMediaSource(rawSrc)
+    if (!src) return null
 
     return {
         alt,
         markup: line,
-        src: normalizeImageSource(rawSrc),
+        src,
     }
-}
-
-function normalizeImageSource(value: string) {
-    if (value.startsWith('<') && value.endsWith('>')) return value.slice(1, -1)
-    return value
 }

@@ -14,6 +14,7 @@ describe('server env', () => {
         expect(
             readServerConfig({
                 APP_ORIGIN: 'https://app.example.com/path',
+                NODE_ENV: 'production',
                 PORT: '5000',
                 RUN_SCHEMA_MIGRATIONS_ON_BOOT: '1',
             }),
@@ -22,5 +23,13 @@ describe('server env', () => {
             port: 5000,
             runSchemaMigrationsOnBoot: true,
         })
+    })
+
+    test('requires app origin in production', () => {
+        expect(() =>
+            readServerConfig({
+                NODE_ENV: 'production',
+            }),
+        ).toThrow('APP_ORIGIN is required when NODE_ENV=production.')
     })
 })

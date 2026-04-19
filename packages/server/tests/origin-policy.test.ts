@@ -1,18 +1,30 @@
 import { describe, expect, test } from 'bun:test'
 import {
-    allowedCorsOrigin,
     isAllowedWebSocketOrigin,
+    readCorsOrigin,
 } from '#/infrastructure/origin'
 
 describe('origin policy', () => {
-    test('uses wildcard cors when app origin is unset', () => {
-        expect(allowedCorsOrigin(null)).toBe('*')
+    test('does not emit cors headers when app origin is unset', () => {
+        expect(readCorsOrigin(null, 'https://app.example.com')).toBeNull()
     })
 
-    test('uses configured cors origin in deploy mode', () => {
-        expect(allowedCorsOrigin('https://app.example.com')).toBe(
-            'https://app.example.com',
-        )
+    test('uses configured cors origin for the same origin only', () => {
+        expect(
+            readCorsOrigin(
+                'https://app.example.com',
+                'https://app.example.com',
+            ),
+        ).toBe('https://app.example.com')
+    })
+
+    test('does not emit cors headers for a different origin', () => {
+        expect(
+            readCorsOrigin(
+                'https://app.example.com',
+                'https://evil.example.com',
+            ),
+        ).toBeNull()
     })
 
     test('accepts websocket upgrades from the configured origin', () => {
@@ -31,5 +43,11 @@ describe('origin policy', () => {
                 'https://evil.example.com',
             ),
         ).toBe(false)
+    })
+
+    test('allows websocket upgrades when app origin is unset', () => {
+        expect(isAllowedWebSocketOrigin(null, 'https://app.example.com')).toBe(
+            true,
+        )
     })
 })

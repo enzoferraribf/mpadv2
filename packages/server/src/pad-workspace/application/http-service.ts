@@ -1,8 +1,7 @@
-import { assert } from '@mpad/core/assert'
 import { type PadPath, padPath } from '@mpad/core/pad-path'
 import { type PadRoomKind, parsePadRoomName } from '@mpad/core/pad-room'
 import type { ServerRuntime } from '#/bootstrap/runtime'
-import { allowedCorsOrigin } from '#/infrastructure/origin'
+import { applyApiResponseHeaders } from '#/infrastructure/security-headers'
 import {
     listPadTextRevisions,
     readPadTextRevision,
@@ -14,6 +13,7 @@ import { listRelatedPads } from '#/pad-tree/infrastructure/repository'
 type ApiRoute =
     | { kind: 'health' }
     | { kind: 'related'; path: PadPath }
+    | { kind: 'bad-request'; message: string }
     | { kind: 'text-history'; path: PadPath }
     | { kind: 'text-history-revision'; path: PadPath; revisionId: number }
     | { kind: 'text-history-update'; path: PadPath; revisionId: number }
@@ -31,22 +31,39 @@ export async function handleWorkspaceRequest(
     req: Request,
     appOrigin: string | null = null,
 ) {
+    const requestOrigin = req.headers.get('Origin')
     if (req.method === 'OPTIONS')
-        return withCors(new Response(null, { status: 204 }), appOrigin)
+        return respondToPreflight(requestOrigin, appOrigin)
 
     const route = parseWorkspaceRoute(req.url, req.method)
 
+    if (route.kind === 'bad-request') {
+        return withApiHeaders(
+            new Response(route.message, { status: 400 }),
+            appOrigin,
+            requestOrigin,
+        )
+    }
+
     if (route.kind === 'health')
-        return withCors(Response.json({ status: 'ok' }), appOrigin)
+        return withApiHeaders(
+            Response.json({ status: 'ok' }),
+            appOrigin,
+            requestOrigin,
+        )
 
     if (route.kind === 'related') {
         const tree = await listRelatedPads(route.path)
-        return withCors(Response.json(tree), appOrigin)
+        return withApiHeaders(Response.json(tree), appOrigin, requestOrigin)
     }
 
     if (route.kind === 'text-history') {
         const revisions = await listPadTextRevisions(runtime, route.path)
-        return withCors(Response.json(revisions), appOrigin)
+        return withApiHeaders(
+            Response.json(revisions),
+            appOrigin,
+            requestOrigin,
+        )
     }
 
     if (route.kind === 'text-history-revision') {
@@ -56,11 +73,12 @@ export async function handleWorkspaceRequest(
             route.revisionId,
         )
         if (!revision)
-            return withCors(
+            return withApiHeaders(
                 new Response('Revision not found', { status: 404 }),
                 appOrigin,
+                requestOrigin,
             )
-        return withCors(Response.json(revision), appOrigin)
+        return withApiHeaders(Response.json(revision), appOrigin, requestOrigin)
     }
 
     if (route.kind === 'text-history-update') {
@@ -70,13 +88,14 @@ export async function handleWorkspaceRequest(
             route.revisionId,
         )
         if (!revision)
-            return withCors(
+            return withApiHeaders(
                 new Response('Revision not found', { status: 404 }),
                 appOrigin,
+                requestOrigin,
             )
         const bytes = new Uint8Array(revision.byteLength)
         bytes.set(revision)
-        return withCors(
+        return withApiHeaders(
             new Response(
                 new Blob([bytes.buffer], {
                     type: 'application/octet-stream',
@@ -88,6 +107,7 @@ export async function handleWorkspaceRequest(
                 },
             ),
             appOrigin,
+            requestOrigin,
         )
     }
 
@@ -98,22 +118,32 @@ export async function handleWorkspaceRequest(
             route.revisionId,
         )
         if (!result)
-            return withCors(
+            return withApiHeaders(
                 new Response('Revision not found', { status: 404 }),
                 appOrigin,
+                requestOrigin,
             )
         if (!result.changed)
-            return withCors(
+            return withApiHeaders(
                 new Response('Snapshot already matches the live document', {
                     status: 409,
                 }),
                 appOrigin,
+                requestOrigin,
             )
-        return withCors(Response.json(result.revision), appOrigin)
+        return withApiHeaders(
+            Response.json(result.revision),
+            appOrigin,
+            requestOrigin,
+        )
     }
 
     if (route.kind === 'not-found') {
-        return withCors(new Response('Not found', { status: 404 }), appOrigin)
+        return withApiHeaders(
+            new Response('Not found', { status: 404 }),
+            appOrigin,
+            requestOrigin,
+        )
     }
 
     return route
@@ -133,11 +163,18 @@ function parseWorkspaceRoute(rawUrl: string, method = 'GET'): ApiRoute {
             )
             if (revertMatch) {
                 const [, rawPath, rawRevisionId] = revertMatch
-                assert(rawPath !== undefined, 'Missing history path')
-                assert(rawRevisionId !== undefined, 'Missing revision id')
+                if (rawPath === undefined || rawRevisionId === undefined) {
+                    return { kind: 'bad-request', message: 'Invalid route' }
+                }
+                const path = readPadPath(rawPath)
+                if (!path)
+                    return {
+                        kind: 'bad-request',
+                        message: 'Invalid pad path',
+                    }
                 return {
                     kind: 'text-history-revert',
-                    path: decodePadPath(rawPath),
+                    path,
                     revisionId: Number(rawRevisionId),
                 }
             }
@@ -148,11 +185,18 @@ function parseWorkspaceRoute(rawUrl: string, method = 'GET'): ApiRoute {
         )
         if (updateMatch) {
             const [, rawPath, rawRevisionId] = updateMatch
-            assert(rawPath !== undefined, 'Missing history path')
-            assert(rawRevisionId !== undefined, 'Missing revision id')
+            if (rawPath === undefined || rawRevisionId === undefined) {
+                return { kind: 'bad-request', message: 'Invalid route' }
+            }
+            const path = readPadPath(rawPath)
+            if (!path)
+                return {
+                    kind: 'bad-request',
+                    message: 'Invalid pad path',
+                }
             return {
                 kind: 'text-history-update',
-                path: decodePadPath(rawPath),
+                path,
                 revisionId: Number(rawRevisionId),
             }
         }
@@ -160,11 +204,18 @@ function parseWorkspaceRoute(rawUrl: string, method = 'GET'): ApiRoute {
         const detailMatch = suffix.match(/^(\/.*)\/text\/history\/(\d+)$/)
         if (detailMatch) {
             const [, rawPath, rawRevisionId] = detailMatch
-            assert(rawPath !== undefined, 'Missing history path')
-            assert(rawRevisionId !== undefined, 'Missing revision id')
+            if (rawPath === undefined || rawRevisionId === undefined) {
+                return { kind: 'bad-request', message: 'Invalid route' }
+            }
+            const path = readPadPath(rawPath)
+            if (!path)
+                return {
+                    kind: 'bad-request',
+                    message: 'Invalid pad path',
+                }
             return {
                 kind: 'text-history-revision',
-                path: decodePadPath(rawPath),
+                path,
                 revisionId: Number(rawRevisionId),
             }
         }
@@ -172,17 +223,31 @@ function parseWorkspaceRoute(rawUrl: string, method = 'GET'): ApiRoute {
         const historyMatch = suffix.match(/^(\/.*)\/text\/history$/)
         if (historyMatch) {
             const [, rawPath] = historyMatch
-            assert(rawPath !== undefined, 'Missing history path')
+            if (rawPath === undefined) {
+                return { kind: 'bad-request', message: 'Invalid route' }
+            }
+            const path = readPadPath(rawPath)
+            if (!path)
+                return {
+                    kind: 'bad-request',
+                    message: 'Invalid pad path',
+                }
             return {
                 kind: 'text-history',
-                path: decodePadPath(rawPath),
+                path,
             }
         }
 
         if (suffix.endsWith('/related')) {
+            const path = readPadPath(suffix.slice(0, -'/related'.length))
+            if (!path)
+                return {
+                    kind: 'bad-request',
+                    message: 'Invalid pad path',
+                }
             return {
                 kind: 'related',
-                path: decodePadPath(suffix.slice(0, -'/related'.length)),
+                path,
             }
         }
 
@@ -190,10 +255,20 @@ function parseWorkspaceRoute(rawUrl: string, method = 'GET'): ApiRoute {
     }
 
     if (url.pathname.startsWith('/ws/')) {
-        const awarenessClientId = Number(url.searchParams.get('client'))
-        assert(Number.isInteger(awarenessClientId), 'Missing client id')
-        const roomName = decodeURIComponent(url.pathname.slice('/ws/'.length))
-        const room = parsePadRoomName(roomName)
+        const awarenessClientId = readAwarenessClientId(url)
+        if (awarenessClientId === null) {
+            return { kind: 'bad-request', message: 'Missing client id' }
+        }
+
+        const roomName = readDecodedRoomName(url.pathname)
+        if (!roomName) {
+            return { kind: 'bad-request', message: 'Invalid room name' }
+        }
+
+        const room = readPadRoom(roomName)
+        if (!room) {
+            return { kind: 'bad-request', message: 'Invalid room name' }
+        }
         return {
             kind: 'room',
             roomName,
@@ -205,17 +280,62 @@ function parseWorkspaceRoute(rawUrl: string, method = 'GET'): ApiRoute {
     return { kind: 'not-found' }
 }
 
-function decodePadPath(value: string) {
-    return padPath(decodeURIComponent(value))
+function readPadPath(value: string) {
+    try {
+        return padPath(decodeURIComponent(value))
+    } catch {
+        return null
+    }
 }
 
-function withCors(response: Response, appOrigin: string | null) {
-    response.headers.set(
-        'Access-Control-Allow-Origin',
-        allowedCorsOrigin(appOrigin),
+function readAwarenessClientId(url: URL) {
+    const rawValue = url.searchParams.get('client')
+    if (!rawValue || !/^\d+$/.test(rawValue)) return null
+    return Number(rawValue)
+}
+
+function readDecodedRoomName(pathname: string) {
+    try {
+        return decodeURIComponent(pathname.slice('/ws/'.length))
+    } catch {
+        return null
+    }
+}
+
+function readPadRoom(roomName: string) {
+    try {
+        return parsePadRoomName(roomName)
+    } catch {
+        return null
+    }
+}
+
+function respondToPreflight(
+    requestOrigin: string | null,
+    appOrigin: string | null,
+) {
+    if (appOrigin !== null && requestOrigin !== appOrigin) {
+        return withApiHeaders(
+            new Response('Forbidden', { status: 403 }),
+            appOrigin,
+            requestOrigin,
+        )
+    }
+
+    return withApiHeaders(
+        new Response(null, { status: 204 }),
+        appOrigin,
+        requestOrigin,
     )
-    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', '*')
-    response.headers.set('Vary', 'Origin')
-    return response
+}
+
+function withApiHeaders(
+    response: Response,
+    appOrigin: string | null,
+    requestOrigin: string | null,
+) {
+    return applyApiResponseHeaders(response, {
+        appOrigin,
+        requestOrigin,
+    })
 }
