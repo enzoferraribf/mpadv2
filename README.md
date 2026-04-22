@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="./assets/logo.svg" alt="mpad logo">
+</p>
+
+<p align="center">
   <img src="./assets/pad.png" alt="mpad preview">
 </p>
 
@@ -19,16 +23,6 @@ Open any path and start working. There is no auth flow, no workspace setup, and 
 - Live peer-to-peer file transfer inside the room
 - Related pad discovery from the current path tree
 - Same-origin HTTP and WebSocket transport
-
-## Repo layout
-
-- `packages/client`: pad page shell, feature controllers, UI
-- `packages/server`: transport, pad-doc, pad-tree, live-file
-- `packages/core`: shared pad primitives and limits
-- `packages/protocol`: HTTP and WebSocket contracts
-- `packages/text-core`: text-only Yjs restore logic
-- `packages/testkit`: shared test fixtures
-- `tools/tursoimport`: one-time legacy Turso to Postgres import tool
 
 ## Development
 
@@ -94,5 +88,3 @@ PORT=4000
 ```
 
 `APP_ORIGIN` must match the browser origin exactly.
-
-For the full deploy and cutover notes, see [DEPLOY.md](./DEPLOY.md).
