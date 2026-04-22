@@ -1,4 +1,7 @@
 import { afterEach, beforeAll, describe, expect, test } from 'bun:test'
+import { existsSync } from 'node:fs'
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import { padPath } from '@mpad/core/pad-path'
 import { padRoomName } from '@mpad/core/pad-room'
 import { createDocUpdateMessage } from '@mpad/protocol/room-message-codec'
@@ -12,6 +15,8 @@ import { flushWorkspaceRooms } from '#/pad-workspace/application/socket-service'
 let port = 0
 let server: ReturnType<typeof createServer> | null = null
 let runtime = createServerRuntime()
+const clientDistDir = path.resolve(import.meta.dir, '../../client/dist')
+const clientIndexPath = path.join(clientDistDir, 'index.html')
 
 beforeAll(async () => {
     await migrate()
@@ -127,6 +132,7 @@ describe('http and websocket integration', () => {
     })
 
     test('returns static security headers for the app shell', async () => {
+        const cleanupClientShell = await ensureClientShellFixture()
         runtime = createServerRuntime()
         server = createServer({
             port: 0,
@@ -135,25 +141,31 @@ describe('http and websocket integration', () => {
         })
         port = server.port ?? 0
 
-        const response = await fetch(`http://127.0.0.1:${port}/`)
+        try {
+            const response = await fetch(`http://127.0.0.1:${port}/`)
 
-        expect(response.status).toBe(200)
-        expect(response.headers.get('Content-Security-Policy')).toContain(
-            "script-src 'self'",
-        )
-        expect(response.headers.get('Content-Security-Policy')).toContain(
-            'https://fonts.googleapis.com',
-        )
-        expect(response.headers.get('Content-Security-Policy')).toContain(
-            'wss://app.example.com',
-        )
-        expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
-        expect(response.headers.get('Referrer-Policy')).toBe(
-            'strict-origin-when-cross-origin',
-        )
-        expect(response.headers.get('Permissions-Policy')).toContain(
-            'camera=()',
-        )
+            expect(response.status).toBe(200)
+            expect(response.headers.get('Content-Security-Policy')).toContain(
+                "script-src 'self'",
+            )
+            expect(response.headers.get('Content-Security-Policy')).toContain(
+                'https://fonts.googleapis.com',
+            )
+            expect(response.headers.get('Content-Security-Policy')).toContain(
+                'wss://app.example.com',
+            )
+            expect(response.headers.get('X-Content-Type-Options')).toBe(
+                'nosniff',
+            )
+            expect(response.headers.get('Referrer-Policy')).toBe(
+                'strict-origin-when-cross-origin',
+            )
+            expect(response.headers.get('Permissions-Policy')).toContain(
+                'camera=()',
+            )
+        } finally {
+            await cleanupClientShell()
+        }
     })
 
     test('returns api security headers without wildcard cors', async () => {
@@ -267,6 +279,28 @@ function once(socket: WebSocket, event: 'open' | 'close') {
         socket.addEventListener(event, onDone, { once: true })
         socket.addEventListener('error', onError, { once: true })
     })
+}
+
+async function ensureClientShellFixture() {
+    if (existsSync(clientIndexPath)) {
+        return async () => {}
+    }
+
+    await mkdir(clientDistDir, { recursive: true })
+    await writeFile(
+        clientIndexPath,
+        [
+            '<!doctype html>',
+            '<html lang="en">',
+            '<head><meta charset="UTF-8" /><title>mpad test</title></head>',
+            '<body><div id="root"></div></body>',
+            '</html>',
+        ].join(''),
+    )
+
+    return async () => {
+        await rm(clientIndexPath, { force: true })
+    }
 }
 
 function onceMessage(socket: WebSocket) {
