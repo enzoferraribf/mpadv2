@@ -35,41 +35,42 @@ const PEER_PALETTE = [
     },
 ] as const
 
-export const ANIME_PEER_NAMES = [
-    'Goku',
-    'Naruto Uzumaki',
-    'Monkey D. Luffy',
-    'Satoru Gojo',
-    'Levi Ackerman',
-    'Eren Yeager',
-    'Mikasa Ackerman',
-    'Edward Elric',
-    'Spike Spiegel',
-    'Sailor Moon',
-    'Light Yagami',
-    'Lelouch Lamperouge',
-    'Tanjiro Kamado',
-    'Nezuko Kamado',
-    'Kakashi Hatake',
-    'Ichigo Kurosaki',
-    'Roronoa Zoro',
-    'Vegeta',
-    'Killua Zoldyck',
-    'Gon Freecss',
-    'Saitama',
-    'Genos',
-    'Yuji Itadori',
-    'Megumi Fushiguro',
-    'Nobara Kugisaki',
-    'Asuna Yuuki',
-    'Kirito',
-    'Anya Forger',
-    'Frieren',
-    'Violet Evergarden',
+const PEER_ADJECTIVES = [
+    'Amber',
+    'Brave',
+    'Bright',
+    'Calm',
+    'Clever',
+    'Daring',
+    'Gentle',
+    'Kind',
+    'Merry',
+    'Nimble',
+    'Quiet',
+    'Swift',
 ] as const
 
-const animePeerNames = new Set<string>(ANIME_PEER_NAMES)
-const e2ePeer = createPeer('peer-e2e', 'Goku', PEER_PALETTE[4])
+const PEER_ANIMALS = [
+    'Badger',
+    'Falcon',
+    'Fox',
+    'Lynx',
+    'Otter',
+    'Panda',
+    'Raven',
+    'Tiger',
+    'Turtle',
+    'Whale',
+    'Wolf',
+    'Wren',
+] as const
+
+export const PEER_NAMES = PEER_ADJECTIVES.flatMap((adjective) =>
+    PEER_ANIMALS.map((animal) => `${adjective} ${animal}`),
+)
+
+const peerNames = new Set<string>(PEER_NAMES)
+const e2ePeer = createPeer('peer-e2e', PEER_NAMES[0]!, PEER_PALETTE[4])
 
 export function loadLocalPeer(): LocalPeer {
     if (import.meta.env.VITE_E2E === '1') {
@@ -103,7 +104,7 @@ export function loadLocalPeer(): LocalPeer {
 export function createRandomLocalPeer(random = Math.random): LocalPeer {
     return createPeer(
         `peer-${crypto.randomUUID()}`,
-        pickRandom(ANIME_PEER_NAMES, random),
+        pickRandom(PEER_NAMES, random),
         pickRandom(PEER_PALETTE, random),
     )
 }
@@ -147,7 +148,7 @@ function readLocalPeer(value: unknown): LocalPeer | null {
             ? value.id
             : `peer-${crypto.randomUUID()}`
     if (typeof value.name !== 'string') return null
-    if (!animePeerNames.has(value.name)) return null
+    if (!peerNames.has(value.name)) return null
     if (!isRecord(value.color)) return null
     if (typeof value.color.background !== 'string') return null
     if (typeof value.color.stroke !== 'string') return null

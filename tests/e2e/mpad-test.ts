@@ -6,15 +6,15 @@ import { expect, test } from '@playwright/test'
 export const demoText =
     '# alpha\n\nint a = 1;\nint b = 2;\n\n```cpp\nvector<int> v(2) = {3, 4};\n```'
 export const marketingHost = 'missopad.com'
-export const narutoPeer = createPeerSeed(
-    'Naruto Uzumaki',
+export const brightFoxPeer = createPeerSeed(
+    'Bright Fox',
     '#f97316',
     '#7c2d12',
     '#ea580c',
     '#fdba7433',
 )
-export const sailorMoonPeer = createPeerSeed(
-    'Sailor Moon',
+export const calmOtterPeer = createPeerSeed(
+    'Calm Otter',
     '#0ea5e9',
     '#164e63',
     '#0284c7',

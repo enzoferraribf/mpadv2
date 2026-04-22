@@ -1,16 +1,16 @@
 import { describe, expect, test } from 'bun:test'
 import {
-    ANIME_PEER_NAMES,
+    PEER_NAMES,
     createRandomLocalPeer,
     readStoredLocalPeer,
 } from '@/pad-workspace/infrastructure/browser-local-peer-store'
 
 describe('local peer', () => {
-    test('picks an anime name and palette color for new peers', () => {
+    test('picks an adjective animal name and palette color for new peers', () => {
         const peer = createRandomLocalPeer(() => 0)
 
         expect(peer.id.startsWith('peer-')).toBe(true)
-        expect(peer.name).toBe(ANIME_PEER_NAMES[0])
+        expect(peer.name).toBe(PEER_NAMES[0])
         expect(peer.color.background).toBe('#f97316')
         expect(peer.color.stroke).toBe('#7c2d12')
         expect(peer.textColor).toBe('#ea580c')
@@ -32,9 +32,9 @@ describe('local peer', () => {
         expect(readStoredLocalPeer('{')).toBeNull()
     })
 
-    test('keeps stored anime peers', () => {
+    test('keeps stored adjective animal peers', () => {
         const stored = JSON.stringify({
-            name: 'Naruto Uzumaki',
+            name: 'Bright Fox',
             color: { background: '#0ea5e9', stroke: '#164e63' },
             textColor: '#0284c7',
             textColorLight: '#7dd3fc33',
@@ -44,7 +44,7 @@ describe('local peer', () => {
 
         expect(peer).toEqual({
             id: expect.stringMatching(/^peer-/),
-            name: 'Naruto Uzumaki',
+            name: 'Bright Fox',
             color: { background: '#0ea5e9', stroke: '#164e63' },
             textColor: '#0284c7',
             textColorLight: '#7dd3fc33',
