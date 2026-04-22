@@ -1,16 +1,8 @@
 {
-    "extends": "../../tsconfig.package.json",
+    "extends": "../../tsconfig.browser.json",
     "compilerOptions": {
         "outDir": "dist",
-        "rootDir": "src",
-        "jsx": "react-jsx",
-        "lib": ["DOM", "DOM.Iterable", "ESNext"],
-        "paths": {
-            "@/*": ["./src/*"],
-            "$/*": ["../../tests/*"]
-        },
-        "declaration": false,
-        "declarationMap": false
+        "rootDir": "src"
     },
     "include": ["src"]
 }

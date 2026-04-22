@@ -1,0 +1,11 @@
+{
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+        "paths": {
+            "@/*": ["./packages/client/src/*"],
+            "#/*": ["./packages/server/src/*"],
+            "$/*": ["./tests/*"],
+            "@mpad/testkit/*": ["./packages/testkit/src/*"]
+        }
+    }
+}

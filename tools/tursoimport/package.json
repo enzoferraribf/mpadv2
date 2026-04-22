@@ -1,10 +1,11 @@
 {
-    "name": "@mpad/legacy-import",
+    "name": "@mpad/tursoimport",
     "version": "0.1.0",
     "private": true,
     "type": "module",
     "scripts": {
         "import": "bun run src/import.ts",
+        "test": "bun test src",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

@@ -1,4 +1,4 @@
-import { clientUrl } from '$/playwright.shared'
+import { clientUrl } from '$/playwright-env'
 import { createPeerSeed } from '@mpad/testkit/peer-seed'
 import type { Browser, Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'

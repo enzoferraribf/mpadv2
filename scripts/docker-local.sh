@@ -117,7 +117,7 @@ docker_ui_smoke() {
 
     (
         cd "$ROOT"
-        bun x playwright test --config playwright.docker.config.ts
+        MPAD_PLAYWRIGHT_TARGET=docker bun x playwright test --config playwright.config.ts
     )
 }
 

@@ -9,16 +9,17 @@
         "packages/protocol",
         "packages/text-core",
         "packages/testkit",
-        "tools/legacy-import"
+        "tools/tursoimport"
     ],
     "scripts": {
         "dev": "turbo dev",
         "build": "turbo build",
-        "check": "biome check --formatter-enabled=true --organize-imports-enabled=true --linter-enabled=false . && biome lint . && turbo typecheck --filter=@mpad/client --filter=@mpad/server --filter=@mpad/core --filter=@mpad/protocol --filter=@mpad/testkit --filter=@mpad/text-core --filter=@mpad/legacy-import",
-        "test": "bun run --cwd packages/client test && ./scripts/docker-test-db.sh bun run --cwd packages/server test",
+        "check": "biome check --formatter-enabled=true --organize-imports-enabled=true --linter-enabled=false . && biome lint . && turbo typecheck --filter=@mpad/client --filter=@mpad/server --filter=@mpad/core --filter=@mpad/protocol --filter=@mpad/testkit --filter=@mpad/text-core --filter=@mpad/tursoimport",
+        "test": "bun run --cwd packages/client test && ./scripts/docker-test-db.sh bun run --cwd packages/server test && ./scripts/docker-test-db.sh bun run --cwd tools/tursoimport test",
         "smoke": "./scripts/run-playwright.sh --config playwright.config.ts",
+        "smoke:visual": "MPAD_PLAYWRIGHT_TARGET=visual ./scripts/run-playwright.sh --config playwright.config.ts",
         "docker:smoke": "./scripts/docker-local.sh smoke",
-        "legacy:import": "bun run --cwd tools/legacy-import import"
+        "tursoimport": "bun run --cwd tools/tursoimport import"
     },
     "devDependencies": {
         "@biomejs/biome": "^1.9.4",

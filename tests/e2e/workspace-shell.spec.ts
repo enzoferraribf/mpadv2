@@ -50,7 +50,7 @@ test('@visual renders the legacy pad shell under light media', async ({
         await page.evaluate(
             () => getComputedStyle(document.documentElement).colorScheme,
         ),
-    ).toBe('dark')
+    ).toBe('light')
 
     await expect(page).toHaveScreenshot('pad-shell-light-media.png', {
         maxDiffPixels: 200,
