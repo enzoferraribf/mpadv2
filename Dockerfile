@@ -1,4 +1,4 @@
-FROM oven/bun:1.3.11-alpine AS install
+FROM oven/bun:1.3.12-alpine AS install
 
 WORKDIR /app
 COPY package.json bun.lock tsconfig.base.json tsconfig.bun.json tsconfig.browser.json tsconfig.lib.json tsconfig.workspace.json ./
@@ -17,7 +17,7 @@ COPY packages ./packages
 COPY tools ./tools
 RUN bun run --cwd packages/client build
 
-FROM oven/bun:1.3.11-alpine AS production-deps
+FROM oven/bun:1.3.12-alpine AS production-deps
 
 WORKDIR /app
 COPY package.json bun.lock tsconfig.base.json tsconfig.bun.json tsconfig.browser.json tsconfig.lib.json tsconfig.workspace.json ./
@@ -30,7 +30,7 @@ COPY packages/testkit/package.json ./packages/testkit/package.json
 COPY tools/tursoimport/package.json ./tools/tursoimport/package.json
 RUN bun install --frozen-lockfile --production
 
-FROM oven/bun:1.3.11-alpine AS runtime
+FROM oven/bun:1.3.12-alpine AS runtime
 
 WORKDIR /app
 ENV NODE_ENV=production

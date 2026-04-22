@@ -178,18 +178,22 @@ dbDescribe('incremental target import', () => {
     })
 
     test('does zero writes on a no-change rerun', async () => {
-        const pads = [
+        await runImport([
             legacyPad({
                 path: '/same/doc',
                 text: 'hello',
                 updatedAtMs: 1_000,
             }),
-        ]
-
-        await runImport(pads)
+        ])
         const revisionCountBefore = await countDocRevisions('/same/doc', 'text')
 
-        const stats = await runImport(pads)
+        const stats = await runImport([
+            legacyPad({
+                path: '/same/doc',
+                text: 'hello',
+                updatedAtMs: 1_000,
+            }),
+        ])
 
         expect(stats).toMatchObject({
             drawingDocsCreated: 0,
