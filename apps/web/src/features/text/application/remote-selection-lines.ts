@@ -1,5 +1,10 @@
-import { StateEffect, type Range } from '@codemirror/state'
-import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { type Range, StateEffect } from '@codemirror/state'
+import {
+    Decoration,
+    type EditorView,
+    ViewPlugin,
+    type ViewUpdate,
+} from '@codemirror/view'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 

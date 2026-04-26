@@ -25,8 +25,9 @@ test('downloads a live file from another peer', async ({ browser }) => {
     )
     await pageB.evaluate(async () => {
         const root = await navigator.storage.getDirectory()
-        const files = (await root.getDirectoryHandle('mpad-live-files')) as
-            FileSystemDirectoryHandle & { keys(): AsyncIterable<string> }
+        const files = (await root.getDirectoryHandle(
+            'mpad-live-files',
+        )) as FileSystemDirectoryHandle & { keys(): AsyncIterable<string> }
         for await (const name of files.keys()) {
             await files.removeEntry(name)
         }
