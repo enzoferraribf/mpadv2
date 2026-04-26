@@ -7,21 +7,22 @@
         "./http": "./src/http.ts",
         "./live-files": "./src/live-files.ts",
         "./pad-connection": "./src/pad-connection.ts",
-        "./pad-text-history": "./src/pad-text-history.ts",
         "./pad-tree": "./src/pad-tree.ts",
         "./peer": "./src/peer.ts",
-        "./room-message-codec": "./src/room-message-codec.ts"
+        "./room-message-codec": "./src/room-message-codec.ts",
+        "./workspace": "./src/workspace.ts"
     },
     "dependencies": {
         "@mpad/core": "workspace:*",
         "lib0": "^0.2",
-        "y-protocols": "^1.0",
-        "yjs": "^13.6"
+        "y-protocols": "catalog:",
+        "yjs": "catalog:",
+        "zod": "catalog:"
     },
     "scripts": {
         "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
-        "typescript": "^5.9"
+        "typescript": "catalog:"
     }
 }

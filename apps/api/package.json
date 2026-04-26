@@ -1,0 +1,26 @@
+{
+    "name": "@mpad/api",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "bun run --watch src/index.ts",
+        "schema-migrate": "bun run src/schema-migrate.ts",
+        "start": "bun run src/index.ts",
+        "test": "bun test tests",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@mpad/core": "workspace:*",
+        "@mpad/protocol": "workspace:*",
+        "drizzle-orm": "^0.45.2",
+        "rate-limiter-flexible": "^11.0.1",
+        "y-protocols": "catalog:",
+        "yjs": "catalog:",
+        "zod": "catalog:"
+    },
+    "devDependencies": {
+        "@types/bun": "catalog:",
+        "typescript": "catalog:"
+    }
+}

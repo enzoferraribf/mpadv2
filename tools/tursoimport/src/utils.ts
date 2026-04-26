@@ -7,7 +7,7 @@ export const repoRootPath = path.resolve(moduleRootPath, '../..')
 export const defaultImportConfigPath = path.join(moduleRootPath, '.env.local')
 export const migrationsDirectoryPath = path.join(
     repoRootPath,
-    'packages/server/src/migrations',
+    'apps/api/src/db/migrations',
 )
 
 export async function parseEnvFile(filePath: string) {

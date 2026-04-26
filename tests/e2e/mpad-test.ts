@@ -1,4 +1,3 @@
-import { clientUrl } from '$/playwright-env'
 import { createPeerSeed } from '@mpad/testkit/peer-seed'
 import type { Browser, Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
@@ -51,23 +50,18 @@ export async function openPad(
 export async function waitForPad(page: Page) {
     await page.waitForFunction(
         () =>
-            Boolean((window as any).__mpad__) &&
-            (window as any).__mpad__.getConnection() === 'connected',
+            Boolean(window.__mpad__) &&
+            window.__mpad__.getConnection() === 'connected',
     )
 }
 
 export async function openDrawingRoom(page: Page) {
-    await page.evaluate(() => (window as any).__mpad__.openDrawing())
+    await page.evaluate(() => window.__mpad__.openDrawing())
     await page.waitForFunction(
-        () => (window as any).__mpad__?.getDrawingConnection() === 'connected',
+        () => window.__mpad__?.getDrawingConnection() === 'connected',
     )
     await expect(page.getByTestId('drawing-workspace')).toBeVisible()
     await page.waitForFunction(() => Boolean(window.__mpadDrawingApi__))
-}
-
-export async function openDiffsTab(page: Page) {
-    await page.getByRole('button', { name: 'Diffs', exact: true }).click()
-    await expect(page.getByTestId('text-diff-workspace')).toBeVisible()
 }
 
 export async function moveDrawingPointer(page: Page) {
@@ -94,44 +88,9 @@ export async function replaceFirstEditorLine(page: Page, value: string) {
 
 export async function waitForText(page: Page, text: string) {
     await page.waitForFunction(
-        (value) => (window as any).__mpad__?.getText() === value,
+        (value) => window.__mpad__?.getText() === value,
         text,
     )
-}
-
-export async function waitForHistoryItems(page: Page, count: number) {
-    await expect(page.locator('[data-testid="diff-history-item"]')).toHaveCount(
-        count,
-    )
-}
-
-export function readSnapshotSideButton(
-    page: Page,
-    revisionNumber: number,
-    side: 'left' | 'right',
-) {
-    return page.getByRole('button', {
-        name: `Select snapshot ${revisionNumber} as ${side}`,
-    })
-}
-
-export function readSnapshotRevertButton(page: Page, revisionNumber: number) {
-    return page.getByRole('button', {
-        name: `Revert to snapshot ${revisionNumber}`,
-    })
-}
-
-export function readCurrentRightButton(page: Page) {
-    return page.getByRole('button', { name: 'Select current text as right' })
-}
-
-export async function persistTextRevision(page: Page, content: string) {
-    const nextCount = (await readTextHistoryCount(page)) + 1
-    await page.evaluate(
-        (value) => (window as any).__mpad__.appendText(value),
-        content,
-    )
-    await waitForTextHistoryCount(page, nextCount)
 }
 
 export async function setLayout(
@@ -143,10 +102,7 @@ export async function setLayout(
 }
 
 export async function seedDocument(page: Page) {
-    await page.evaluate(
-        (value) => (window as any).__mpad__.setText(value),
-        demoText,
-    )
+    await page.evaluate((value) => window.__mpad__.setText(value), demoText)
     await waitForText(page, demoText)
 }
 
@@ -189,10 +145,8 @@ export async function createPeerContext(
     return context
 }
 
-export async function waitForTextHistoryCount(page: Page, count: number) {
-    await expect
-        .poll(() => readTextHistoryCount(page), { timeout: 10_000 })
-        .toBe(count)
+export async function waitForTextPersistence(page: Page) {
+    await page.waitForTimeout(3_500)
 }
 
 async function applyMedia(page: Page, options?: MediaOptions) {
@@ -201,14 +155,4 @@ async function applyMedia(page: Page, options?: MediaOptions) {
     }
     if (options?.colorScheme) media.colorScheme = options.colorScheme
     await page.emulateMedia(media)
-}
-
-async function readTextHistoryCount(page: Page) {
-    const path = new URL(page.url()).pathname
-    const response = await page.request.get(
-        `${clientUrl}/api/pads${path}/text/history`,
-    )
-    if (!response.ok()) throw new Error(await response.text())
-    const revisions = (await response.json()) as Array<unknown>
-    return revisions.length
 }

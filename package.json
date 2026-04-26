@@ -2,29 +2,50 @@
     "name": "mpad",
     "private": true,
     "packageManager": "bun@1.3.12",
-    "workspaces": [
-        "packages/client",
-        "packages/server",
-        "packages/core",
-        "packages/protocol",
-        "packages/text-core",
-        "packages/testkit",
-        "tools/tursoimport"
-    ],
+    "workspaces": ["apps/*", "packages/*", "tools/*"],
+    "catalog": {
+        "@playwright/test": "^1.54.2",
+        "@types/bun": "latest",
+        "@types/node": "^25.6.0",
+        "typescript": "^5.9",
+        "y-protocols": "^1.0",
+        "yjs": "^13.6",
+        "zod": "^4.3.6"
+    },
     "scripts": {
-        "dev": "turbo dev",
-        "build": "turbo build",
-        "check": "biome check --formatter-enabled=true --organize-imports-enabled=true --linter-enabled=false . && biome lint . && turbo typecheck --filter=@mpad/client --filter=@mpad/server --filter=@mpad/core --filter=@mpad/protocol --filter=@mpad/testkit --filter=@mpad/text-core --filter=@mpad/tursoimport",
-        "test": "bun run --cwd packages/client test && ./scripts/docker-test-db.sh bun run --cwd packages/server test && ./scripts/docker-test-db.sh bun run --cwd tools/tursoimport test",
-        "smoke": "./scripts/run-playwright.sh --config playwright.config.ts",
+        "dev": "bun run --filter @mpad/web --filter @mpad/api dev",
+        "build": "bun run --filter @mpad/web build",
+        "build:local": "VITE_MPAD_API_ORIGIN=http://127.0.0.1:4000 bun run build",
+        "check": "biome check --formatter-enabled=true --linter-enabled=false . && biome lint . && bun run --filter @mpad/web typecheck && bun run --filter @mpad/api typecheck && bun run --filter @mpad/core typecheck && bun run --filter @mpad/protocol typecheck && bun run --filter @mpad/testkit typecheck && bun run --filter @mpad/tursoimport typecheck && bun run check:repo-shape",
+        "check:repo-shape": "bun run scripts/check-repo-shape.ts",
+        "db:generate": "bunx drizzle-kit generate",
+        "db:migrate": "bunx drizzle-kit migrate",
+        "test": "bun run --cwd apps/web test && ./scripts/docker-test-db.sh bun run --cwd apps/api test && ./scripts/docker-test-db.sh bun run --cwd tools/tursoimport test",
+        "smoke": "bun run smoke:shell && bun run smoke:text && bun run smoke:drawing && bun run smoke:files",
+        "smoke:shell": "MPAD_PLAYWRIGHT_LANE=shell ./scripts/run-playwright.sh --config playwright.config.ts",
+        "smoke:text": "MPAD_PLAYWRIGHT_LANE=text ./scripts/run-playwright.sh --config playwright.config.ts",
+        "smoke:drawing": "MPAD_PLAYWRIGHT_LANE=drawing ./scripts/run-playwright.sh --config playwright.config.ts",
+        "smoke:files": "MPAD_PLAYWRIGHT_LANE=files ./scripts/run-playwright.sh --config playwright.config.ts",
         "smoke:visual": "MPAD_PLAYWRIGHT_TARGET=visual ./scripts/run-playwright.sh --config playwright.config.ts",
         "docker:smoke": "./scripts/docker-local.sh smoke",
+        "docker:smoke:shell": "MPAD_PLAYWRIGHT_LANE=shell ./scripts/docker-local.sh smoke",
+        "docker:smoke:text": "MPAD_PLAYWRIGHT_LANE=text ./scripts/docker-local.sh smoke",
+        "docker:smoke:drawing": "MPAD_PLAYWRIGHT_LANE=drawing ./scripts/docker-local.sh smoke",
+        "docker:smoke:files": "MPAD_PLAYWRIGHT_LANE=files ./scripts/docker-local.sh smoke",
         "tursoimport": "bun run --cwd tools/tursoimport import"
     },
     "devDependencies": {
         "@biomejs/biome": "^1.9.4",
-        "@playwright/test": "^1.54.2",
-        "turbo": "^2.9.4",
-        "typescript": "^5.9"
+        "@playwright/test": "catalog:",
+        "@types/node": "catalog:",
+        "drizzle-kit": "^0.31.10",
+        "typescript": "catalog:"
+    },
+    "overrides": {
+        "@excalidraw/mermaid-to-excalidraw": "file:./apps/web/vendor/noop-mermaid-to-excalidraw",
+        "esbuild": "^0.27.1",
+        "lodash-es": "4.17.23",
+        "nanoid": "^3.3.11",
+        "postcss": "^8.5.10"
     }
 }

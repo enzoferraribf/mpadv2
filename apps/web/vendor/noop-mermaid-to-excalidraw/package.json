@@ -1,0 +1,7 @@
+{
+    "name": "@excalidraw/mermaid-to-excalidraw",
+    "version": "2.2.2",
+    "type": "module",
+    "main": "index.js",
+    "types": "index.d.ts"
+}

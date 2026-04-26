@@ -22,9 +22,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      APP_ORIGIN: http://127.0.0.1:${MPAD_LOCAL_APP_PORT:-13000}
+      CLIENT_ORIGIN: http://127.0.0.1:${MPAD_LOCAL_CLIENT_PORT:-4174}
+      CLIENT_IP_SOURCE: direct
       DATABASE_URL: postgres://${MPAD_LOCAL_POSTGRES_USER:-mpad}:${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}@postgres:5432/${MPAD_LOCAL_POSTGRES_DB:-mpad_local}
       PORT: 4000
+      TRUST_PROXY_HEADERS: false
     ports:
       - "${MPAD_LOCAL_APP_PORT:-13000}:4000"
 

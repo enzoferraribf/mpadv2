@@ -2,12 +2,12 @@
     "extends": "../tsconfig.browser.json",
     "compilerOptions": {
         "noEmit": true,
-        "types": ["@playwright/test"]
+        "types": ["@playwright/test", "node"]
     },
     "include": [
         "**/*.ts",
         "**/*.d.ts",
-        "../packages/client/tests/**/*.ts",
-        "../packages/server/tests/**/*.ts"
+        "../apps/api/tests/**/*.ts",
+        "../packages/*/tests/**/*.ts"
     ]
 }

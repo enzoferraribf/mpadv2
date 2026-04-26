@@ -10,7 +10,11 @@ POSTGRES_USER="${MPAD_LOCAL_POSTGRES_USER:-mpad}"
 POSTGRES_PASSWORD="${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}"
 POSTGRES_PORT="${MPAD_LOCAL_POSTGRES_PORT:-15432}"
 APP_PORT="${MPAD_LOCAL_APP_PORT:-13000}"
-APP_ORIGIN="http://127.0.0.1:${APP_PORT}"
+CLIENT_PORT="${MPAD_LOCAL_CLIENT_PORT:-4174}"
+CLIENT_ORIGIN="http://127.0.0.1:${CLIENT_PORT}"
+API_ORIGIN="http://127.0.0.1:${APP_PORT}"
+WEB_PREVIEW_PID=""
+WEB_PREVIEW_LOG="$ROOT/.tmp/web-preview.log"
 
 require_command() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -60,6 +64,50 @@ wait_for_http() {
     exit 1
 }
 
+wait_for_web_preview() {
+    attempt=0
+    while [ "$attempt" -lt 60 ]; do
+        if curl -fsS "$CLIENT_ORIGIN" >/dev/null 2>&1; then
+            return 0
+        fi
+        if [ -n "$WEB_PREVIEW_PID" ] && ! kill -0 "$WEB_PREVIEW_PID" 2>/dev/null; then
+            cat "$WEB_PREVIEW_LOG" >&2 || true
+            echo "web preview exited before becoming ready" >&2
+            exit 1
+        fi
+
+        attempt=$((attempt + 1))
+        sleep 1
+    done
+
+    cat "$WEB_PREVIEW_LOG" >&2 || true
+    echo "web preview did not become ready: $CLIENT_ORIGIN" >&2
+    exit 1
+}
+
+start_web_preview() {
+    require_command bun
+    mkdir -p "$ROOT/.tmp"
+    rm -f "$WEB_PREVIEW_LOG"
+
+    (
+        cd "$ROOT/apps/web"
+        VITE_E2E=1 VITE_MPAD_API_ORIGIN="$API_ORIGIN" bun run build
+        exec env VITE_E2E=1 VITE_MPAD_API_ORIGIN="$API_ORIGIN" bun x vite preview --host 127.0.0.1 --port "$CLIENT_PORT"
+    ) >"$WEB_PREVIEW_LOG" 2>&1 &
+    WEB_PREVIEW_PID="$!"
+
+    wait_for_web_preview
+}
+
+stop_web_preview() {
+    if [ -n "$WEB_PREVIEW_PID" ]; then
+        kill "$WEB_PREVIEW_PID" >/dev/null 2>&1 || true
+        wait "$WEB_PREVIEW_PID" >/dev/null 2>&1 || true
+        WEB_PREVIEW_PID=""
+    fi
+}
+
 up() {
     require_command curl
     require_command docker
@@ -70,13 +118,14 @@ up() {
 
     compose up -d --build postgres app >/dev/null
     wait_for_postgres
-    wait_for_http "http://127.0.0.1:${APP_PORT}/health" app
+    wait_for_http "${API_ORIGIN}/health" app
 
     cat <<EOF
 Local Docker stack is up.
 
-App:      http://127.0.0.1:${APP_PORT}
-Postgres: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
+    API:      ${API_ORIGIN}
+    Client:   ${CLIENT_ORIGIN}
+    Postgres: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
 EOF
 }
 
@@ -94,13 +143,10 @@ down() {
 test_stack() {
     require_command curl
 
-    app_health="$(curl -fsS "http://127.0.0.1:${APP_PORT}/health")"
+    app_health="$(curl -fsS "${API_ORIGIN}/health")"
     [ "$app_health" = '{"status":"ok"}' ]
 
-    landing_html="$(curl -fsS "http://127.0.0.1:${APP_PORT}/docker-smoke")"
-    printf '%s' "$landing_html" | grep -F '<title>Mpad</title>' >/dev/null
-
-    related_json="$(curl -fsS "http://127.0.0.1:${APP_PORT}/api/pads/docker/smoke/related")"
+    related_json="$(curl -fsS "${API_ORIGIN}/api/pads/docker/smoke/related")"
     printf '%s' "$related_json" | grep -F '"/docker"' >/dev/null
     printf '%s' "$related_json" | grep -F '"/docker/smoke"' >/dev/null
 
@@ -108,25 +154,20 @@ test_stack() {
 Local Docker smoke test passed.
 
 App health: ${app_health}
-App origin: ${APP_ORIGIN}
+Client origin: ${CLIENT_ORIGIN}
 EOF
 }
 
-docker_ui_smoke() {
-    require_command bun
-
-    (
-        cd "$ROOT"
-        MPAD_PLAYWRIGHT_TARGET=docker bun x playwright test --config playwright.config.ts
-    )
-}
-
 smoke() {
-    trap 'down || true' EXIT INT TERM
+    trap 'stop_web_preview; down || true' EXIT INT TERM
 
     up
     test_stack
-    docker_ui_smoke
+    start_web_preview
+    MPAD_PLAYWRIGHT_TARGET=docker \
+        DOCKER_SMOKE_PORT="$APP_PORT" \
+        E2E_CLIENT_PORT="$CLIENT_PORT" \
+        bun x playwright test --config "$ROOT/playwright.config.ts"
 }
 
 case "${1:-}" in

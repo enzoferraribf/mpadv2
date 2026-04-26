@@ -63,6 +63,7 @@ export type ImportedPadRow = {
     createdAt: string
     parentPath: PadPath | null
     path: PadPath
+    rootPath: PadPath
     updatedAt: string
 }
 
@@ -100,6 +101,7 @@ export type ExistingTargetPadRow = {
     created_at: Date | string
     parent_path: PadPath | null
     path: PadPath
+    root_path: PadPath
     updated_at: Date | string
 }
 
@@ -108,7 +110,7 @@ export type ExistingTargetDocRow = {
     head_revision_id: number | string | null
     head_revision_number: number | string | null
     kind: PadDocKind
-    pad_path: PadPath
+    path: PadPath
     snapshot: Uint8Array | null
 }
 

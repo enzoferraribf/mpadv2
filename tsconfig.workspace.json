@@ -1,11 +1,15 @@
 {
     "extends": "./tsconfig.base.json",
     "compilerOptions": {
+        "baseUrl": ".",
         "paths": {
-            "@/*": ["./packages/client/src/*"],
-            "#/*": ["./packages/server/src/*"],
+            "@/*": ["./apps/web/src/*"],
+            "#/*": ["./apps/api/src/*"],
             "$/*": ["./tests/*"],
-            "@mpad/testkit/*": ["./packages/testkit/src/*"]
+            "@mpad/core/*": ["./packages/core/src/*"],
+            "@mpad/protocol/*": ["./packages/protocol/src/*"],
+            "@mpad/testkit/*": ["./packages/testkit/src/*"],
+            "@mpad/protocol/workspace": ["./packages/protocol/src/workspace.ts"]
         }
     }
 }

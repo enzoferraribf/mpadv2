@@ -5,19 +5,26 @@ import type { Awareness } from 'y-protocols/awareness'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as syncProtocol from 'y-protocols/sync'
 import type { Doc } from 'yjs'
-import type { InboundFileSignal, OutboundFileSignal } from './live-files'
+import {
+    type InboundFileSignal,
+    type OutboundFileSignal,
+    outboundFileSignalSchema,
+} from './live-files'
 
 const MESSAGE_SYNC = 0
 const MESSAGE_AWARENESS = 1
 const MESSAGE_FILE_SIGNAL = 2
+const MESSAGE_HEARTBEAT = 3
 
 export type SyncRoomMessage = { kind: 'sync'; data: Uint8Array }
 export type AwarenessRoomMessage = { kind: 'awareness'; data: Uint8Array }
+export type HeartbeatRoomMessage = { kind: 'heartbeat' }
 export type RoomDocMessage = SyncRoomMessage | AwarenessRoomMessage
 
 export type ClientRoomMessage =
     | RoomDocMessage
     | { kind: 'file-signal'; signal: OutboundFileSignal }
+    | HeartbeatRoomMessage
 
 export type ServerRoomMessage =
     | RoomDocMessage
@@ -27,52 +34,70 @@ export function readClientRoomMessage(data: Uint8Array): ClientRoomMessage {
     const decoder = decoding.createDecoder(data)
     const type = decoding.readVarUint(decoder)
 
-    if (type === MESSAGE_SYNC) return { kind: 'sync', data }
-    if (type === MESSAGE_AWARENESS) return { kind: 'awareness', data }
-    if (type === MESSAGE_FILE_SIGNAL) {
-        return {
-            kind: 'file-signal',
-            signal: JSON.parse(
-                decoding.readVarString(decoder),
-            ) as OutboundFileSignal,
-        }
+    switch (type) {
+        case MESSAGE_SYNC:
+            return { kind: 'sync', data }
+        case MESSAGE_AWARENESS:
+            return { kind: 'awareness', data }
+        case MESSAGE_FILE_SIGNAL:
+            return {
+                kind: 'file-signal',
+                signal: outboundFileSignalSchema.parse(
+                    JSON.parse(decoding.readVarString(decoder)),
+                ),
+            }
+        case MESSAGE_HEARTBEAT:
+            return { kind: 'heartbeat' }
+        default:
+            throw new Error(`Unknown room message type: ${type}`)
     }
-
-    throw new Error(`Unknown room message type: ${type}`)
 }
 
 export function readServerRoomMessage(data: Uint8Array): ServerRoomMessage {
     const decoder = decoding.createDecoder(data)
     const type = decoding.readVarUint(decoder)
 
-    if (type === MESSAGE_SYNC) return { kind: 'sync', data }
-    if (type === MESSAGE_AWARENESS) return { kind: 'awareness', data }
-    if (type === MESSAGE_FILE_SIGNAL) {
-        return {
-            kind: 'file-signal',
-            signal: JSON.parse(
-                decoding.readVarString(decoder),
-            ) as InboundFileSignal,
-        }
+    switch (type) {
+        case MESSAGE_SYNC:
+            return { kind: 'sync', data }
+        case MESSAGE_AWARENESS:
+            return { kind: 'awareness', data }
+        case MESSAGE_FILE_SIGNAL:
+            return {
+                kind: 'file-signal',
+                signal: JSON.parse(
+                    decoding.readVarString(decoder),
+                ) as InboundFileSignal,
+            }
+        default:
+            throw new Error(`Unknown room message type: ${type}`)
     }
-
-    throw new Error(`Unknown room message type: ${type}`)
 }
 
 export function encodeClientRoomMessage(message: ClientRoomMessage) {
-    if (message.kind === 'sync' || message.kind === 'awareness')
-        return message.data
-    if (message.kind === 'file-signal')
-        return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
-    return assertNever(message)
+    switch (message.kind) {
+        case 'sync':
+        case 'awareness':
+            return message.data
+        case 'file-signal':
+            return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
+        case 'heartbeat':
+            return encodeHeartbeatMessage()
+        default:
+            return assertNever(message)
+    }
 }
 
 export function encodeServerRoomMessage(message: ServerRoomMessage) {
-    if (message.kind === 'sync' || message.kind === 'awareness')
-        return message.data
-    if (message.kind === 'file-signal')
-        return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
-    return assertNever(message)
+    switch (message.kind) {
+        case 'sync':
+        case 'awareness':
+            return message.data
+        case 'file-signal':
+            return encodeJsonMessage(MESSAGE_FILE_SIGNAL, message.signal)
+        default:
+            return assertNever(message)
+    }
 }
 
 export function createDocUpdateMessage(update: Uint8Array): SyncRoomMessage {
@@ -139,5 +164,11 @@ function encodeJsonMessage(type: number, value: object) {
     const encoder = encoding.createEncoder()
     encoding.writeVarUint(encoder, type)
     encoding.writeVarString(encoder, JSON.stringify(value))
+    return encoding.toUint8Array(encoder)
+}
+
+function encodeHeartbeatMessage() {
+    const encoder = encoding.createEncoder()
+    encoding.writeVarUint(encoder, MESSAGE_HEARTBEAT)
     return encoding.toUint8Array(encoder)
 }

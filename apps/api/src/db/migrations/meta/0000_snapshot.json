@@ -1,0 +1,406 @@
+{
+    "id": "f0660a7b-ecee-4052-9c27-9996a0c1fb7c",
+    "prevId": "00000000-0000-0000-0000-000000000000",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.pad_docs": {
+            "name": "pad_docs",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "pad_id": {
+                    "name": "pad_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "kind": {
+                    "name": "kind",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "head_revision_id": {
+                    "name": "head_revision_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "head_revision_number": {
+                    "name": "head_revision_number",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "checkpoint_revision_id": {
+                    "name": "checkpoint_revision_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "checkpoint_revision_number": {
+                    "name": "checkpoint_revision_number",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "idx_pad_docs_pad_kind": {
+                    "name": "idx_pad_docs_pad_kind",
+                    "columns": [
+                        {
+                            "expression": "pad_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "kind",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "pad_docs_pad_id_pads_id_fk": {
+                    "name": "pad_docs_pad_id_pads_id_fk",
+                    "tableFrom": "pad_docs",
+                    "tableTo": "pads",
+                    "columnsFrom": ["pad_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "pad_docs_pad_kind_unique": {
+                    "name": "pad_docs_pad_kind_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["pad_id", "kind"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {
+                "pad_docs_kind_check": {
+                    "name": "pad_docs_kind_check",
+                    "value": "\"pad_docs\".\"kind\" IN ('text', 'drawing')"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.pad_revisions": {
+            "name": "pad_revisions",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "doc_id": {
+                    "name": "doc_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "revision_number": {
+                    "name": "revision_number",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "parent_revision_id": {
+                    "name": "parent_revision_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "reverted_from_revision_id": {
+                    "name": "reverted_from_revision_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "update": {
+                    "name": "update",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "snapshot": {
+                    "name": "snapshot",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "event_count": {
+                    "name": "event_count",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "idx_pad_revisions_doc_desc": {
+                    "name": "idx_pad_revisions_doc_desc",
+                    "columns": [
+                        {
+                            "expression": "doc_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "revision_number",
+                            "isExpression": false,
+                            "asc": false,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "idx_pad_revisions_doc_created_at": {
+                    "name": "idx_pad_revisions_doc_created_at",
+                    "columns": [
+                        {
+                            "expression": "doc_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": false,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "idx_pad_revisions_doc_snapshot": {
+                    "name": "idx_pad_revisions_doc_snapshot",
+                    "columns": [
+                        {
+                            "expression": "doc_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "revision_number",
+                            "isExpression": false,
+                            "asc": false,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "where": "\"pad_revisions\".\"snapshot\" IS NOT NULL",
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "pad_revisions_doc_id_pad_docs_id_fk": {
+                    "name": "pad_revisions_doc_id_pad_docs_id_fk",
+                    "tableFrom": "pad_revisions",
+                    "tableTo": "pad_docs",
+                    "columnsFrom": ["doc_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "pad_revisions_doc_revision_number_unique": {
+                    "name": "pad_revisions_doc_revision_number_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["doc_id", "revision_number"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.pads": {
+            "name": "pads",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "path": {
+                    "name": "path",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "root_path": {
+                    "name": "root_path",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "parent_path": {
+                    "name": "parent_path",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "idx_pads_root_path": {
+                    "name": "idx_pads_root_path",
+                    "columns": [
+                        {
+                            "expression": "root_path",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "path",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "idx_pads_parent_path": {
+                    "name": "idx_pads_parent_path",
+                    "columns": [
+                        {
+                            "expression": "parent_path",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "path",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "pads_path_unique": {
+                    "name": "pads_path_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["path"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {
+                "pads_path_check": {
+                    "name": "pads_path_check",
+                    "value": "\"pads\".\"path\" <> '/' AND \"pads\".\"path\" NOT LIKE '%//%' AND \"pads\".\"path\" ~ '^/.+$'"
+                },
+                "pads_path_launch_check": {
+                    "name": "pads_path_launch_check",
+                    "value": "octet_length(\"pads\".\"path\") <= 512 AND \"pads\".\"path\" !~ '[[:cntrl:]]' AND \"pads\".\"path\" NOT LIKE '%\\%%' ESCAPE '\\'"
+                },
+                "pads_root_path_check": {
+                    "name": "pads_root_path_check",
+                    "value": "\"pads\".\"root_path\" <> '/' AND \"pads\".\"root_path\" NOT LIKE '%//%' AND \"pads\".\"root_path\" ~ '^/.+$' AND (\"pads\".\"path\" = \"pads\".\"root_path\" OR \"pads\".\"path\" LIKE \"pads\".\"root_path\" || '/%')"
+                },
+                "pads_root_path_launch_check": {
+                    "name": "pads_root_path_launch_check",
+                    "value": "octet_length(\"pads\".\"root_path\") <= 512 AND \"pads\".\"root_path\" !~ '[[:cntrl:]]' AND \"pads\".\"root_path\" NOT LIKE '%\\%%' ESCAPE '\\'"
+                },
+                "pads_parent_path_check": {
+                    "name": "pads_parent_path_check",
+                    "value": "\"pads\".\"parent_path\" IS NULL OR (\"pads\".\"parent_path\" <> \"pads\".\"path\" AND \"pads\".\"parent_path\" <> '/' AND \"pads\".\"parent_path\" NOT LIKE '%//%' AND \"pads\".\"parent_path\" ~ '^/.+$')"
+                },
+                "pads_parent_path_launch_check": {
+                    "name": "pads_parent_path_launch_check",
+                    "value": "\"pads\".\"parent_path\" IS NULL OR (octet_length(\"pads\".\"parent_path\") <= 512 AND \"pads\".\"parent_path\" !~ '[[:cntrl:]]' AND \"pads\".\"parent_path\" NOT LIKE '%\\%%' ESCAPE '\\')"
+                }
+            },
+            "isRLSEnabled": false
+        }
+    },
+    "enums": {},
+    "schemas": {},
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

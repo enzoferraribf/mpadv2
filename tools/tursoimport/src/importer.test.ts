@@ -9,24 +9,21 @@ import {
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import { padPath } from '@mpad/core/pad-path'
-import { Doc, applyUpdate } from 'yjs'
 import { loadImportConfig } from './config'
 import {
-    buildDrawingDocBytes,
-    buildPadRows,
-    buildTextDocBytes,
-} from './convert'
+    countDocRevisions as countDocRevisionsWithSql,
+    countPadRows as countPadRowsWithSql,
+    drawingElement,
+    legacyPad,
+    readHeadDrawingOrder as readHeadDrawingOrderWithSql,
+    readHeadText as readHeadTextWithSql,
+    runImport as runImportWithSql,
+} from './importer-testkit'
 import { createSilentLogger } from './log'
 import { syncLegacyReplica } from './source'
-import {
-    applyLegacyImport,
-    migrateTargetDatabase,
-    openTargetDatabase,
-} from './target'
-import type { ConvertedLegacyPad, LegacyDrawingElement } from './types'
-import { toIsoTimestamp } from './utils'
+import { migrateTargetDatabase, openTargetDatabase } from './target'
+import type { ConvertedLegacyPad } from './types'
 
 const databaseUrl = process.env.DATABASE_URL
 const logger = createSilentLogger()
@@ -312,19 +309,21 @@ dbDescribe('incremental target import', () => {
         if (!sql) throw new Error('Missing SQL client')
 
         await sql`
-            INSERT INTO pads (path, parent_path, created_at, updated_at)
-            VALUES ('/broken/doc', '/broken', NOW(), NOW())
+            INSERT INTO pads (path, root_path, parent_path, created_at, updated_at)
+            VALUES ('/broken/doc', '/broken', '/broken', NOW(), NOW())
             ON CONFLICT (path) DO NOTHING
         `
         await sql`
-            INSERT INTO pads (path, parent_path, created_at, updated_at)
-            VALUES ('/broken', NULL, NOW(), NOW())
+            INSERT INTO pads (path, root_path, parent_path, created_at, updated_at)
+            VALUES ('/broken', '/broken', NULL, NOW(), NOW())
             ON CONFLICT (path) DO NOTHING
         `
 
         const [doc] = await sql<{ id: number }[]>`
-            INSERT INTO pad_docs (pad_path, kind, created_at, updated_at)
-            VALUES ('/broken/doc', 'text', NOW(), NOW())
+            INSERT INTO pad_docs (pad_id, kind, created_at, updated_at)
+            SELECT id, 'text', NOW(), NOW()
+            FROM pads
+            WHERE path = '/broken/doc'
             RETURNING id
         `
         const [revision] = await sql<{ id: number }[]>`
@@ -352,7 +351,7 @@ dbDescribe('incremental target import', () => {
         `
         await sql`
             UPDATE pad_docs
-            SET head_revision_id = ${revision!.id}
+            SET head_revision_id = ${revision!.id}, head_revision_number = 1
             WHERE id = ${doc!.id}
         `
 
@@ -370,90 +369,25 @@ dbDescribe('incremental target import', () => {
 
 async function runImport(pads: ConvertedLegacyPad[]) {
     if (!sql) throw new Error('Missing SQL client')
-    return applyLegacyImport(sql, pads, buildPadRows(pads), logger)
-}
-
-function legacyPad(input: {
-    drawingElements?: LegacyDrawingElement[]
-    path: string
-    text?: string
-    updatedAtMs: number
-}) {
-    const drawingElements = input.drawingElements ?? []
-    const text = input.text ?? ''
-    const pathValue = padPath(input.path)
-
-    return {
-        drawingElements,
-        drawingBytes: buildDrawingDocBytes(drawingElements),
-        hasDrawingContent: drawingElements.length > 0,
-        hasTextContent: text.length > 0,
-        path: pathValue,
-        rawIds: [pathValue],
-        text,
-        textBytes: buildTextDocBytes(text),
-        updatedAt: toIsoTimestamp(input.updatedAtMs),
-        updatedAtMs: input.updatedAtMs,
-        usedPlaceholder: false,
-    } satisfies ConvertedLegacyPad
-}
-
-function drawingElement(id: string): LegacyDrawingElement {
-    return {
-        id,
-        type: 'rectangle',
-        updated: 1,
-        version: 1,
-        versionNonce: 1,
-    }
+    return runImportWithSql(sql, pads, logger)
 }
 
 async function countPadRows() {
     if (!sql) throw new Error('Missing SQL client')
-    const [row] = await sql<{ count: number }[]>`
-        SELECT COUNT(*)::int AS count
-        FROM pads
-    `
-    return row?.count ?? 0
+    return countPadRowsWithSql(sql)
 }
 
 async function countDocRevisions(pathValue: string, kind: 'drawing' | 'text') {
     if (!sql) throw new Error('Missing SQL client')
-    const [row] = await sql<{ count: number }[]>`
-        SELECT COUNT(*)::int AS count
-        FROM pad_docs AS d
-        JOIN pad_revisions AS r ON r.doc_id = d.id
-        WHERE d.pad_path = ${padPath(pathValue)} AND d.kind = ${kind}
-    `
-    return row?.count ?? 0
+    return countDocRevisionsWithSql(sql, pathValue, kind)
 }
 
 async function readHeadText(pathValue: string) {
-    const snapshot = await readHeadSnapshot(pathValue, 'text')
-    const doc = new Doc()
-    if (snapshot.byteLength > 0) applyUpdate(doc, snapshot)
-    const text = doc.getText(Y_TEXT_KEY).toString()
-    doc.destroy()
-    return text
+    if (!sql) throw new Error('Missing SQL client')
+    return readHeadTextWithSql(sql, pathValue)
 }
 
 async function readHeadDrawingOrder(pathValue: string) {
-    const snapshot = await readHeadSnapshot(pathValue, 'drawing')
-    const doc = new Doc()
-    if (snapshot.byteLength > 0) applyUpdate(doc, snapshot)
-    const order = doc.getArray<string>('order').toArray()
-    doc.destroy()
-    return order
-}
-
-async function readHeadSnapshot(pathValue: string, kind: 'drawing' | 'text') {
     if (!sql) throw new Error('Missing SQL client')
-    const [row] = await sql<{ snapshot: Uint8Array }[]>`
-        SELECT r.snapshot
-        FROM pad_docs AS d
-        JOIN pad_revisions AS r ON r.id = d.head_revision_id
-        WHERE d.pad_path = ${padPath(pathValue)} AND d.kind = ${kind}
-    `
-
-    return row ? new Uint8Array(row.snapshot) : new Uint8Array()
+    return readHeadDrawingOrderWithSql(sql, pathValue)
 }

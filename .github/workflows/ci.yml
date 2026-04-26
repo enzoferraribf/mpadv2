@@ -14,6 +14,63 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      shell: ${{ steps.filter.outputs.shell }}
+      text: ${{ steps.filter.outputs.text }}
+      drawing: ${{ steps.filter.outputs.drawing }}
+      files: ${{ steps.filter.outputs.files }}
+      docker: ${{ steps.filter.outputs.docker }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'package.json'
+              - 'bun.lock'
+              - 'biome.json'
+              - 'scripts/check-repo-shape.ts'
+              - 'tsconfig*.json'
+              - 'playwright.config.ts'
+              - 'scripts/run-playwright.sh'
+              - 'apps/api/**'
+              - 'apps/web/src/main.tsx'
+              - 'apps/web/src/styles/**'
+              - 'packages/core/**'
+              - 'packages/protocol/**'
+              - 'apps/api/src/features/realtime/**'
+            shell:
+              - 'apps/web/src/routes/**'
+              - 'apps/api/src/features/shell/**'
+              - 'apps/api/src/features/tree/**'
+              - 'tests/e2e/shell/**'
+              - 'tests/docker/shell/**'
+            text:
+              - 'apps/api/src/features/text/**'
+              - 'tests/e2e/text/**'
+              - 'tests/docker/text/**'
+            drawing:
+              - 'apps/api/src/features/drawing/**'
+              - 'tests/e2e/drawing/**'
+              - 'tests/docker/drawing/**'
+            files:
+              - 'apps/api/src/features/files/**'
+              - 'tests/e2e/files/**'
+              - 'tests/docker/files/**'
+            docker:
+              - '.dockerignore'
+              - 'Dockerfile'
+              - 'compose.local.yml'
+              - 'README.md'
+              - 'scripts/docker-local.sh'
+              - '.github/workflows/ci.yml'
+
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -37,7 +94,12 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: checks
+    needs: [changes, checks]
+    if: github.ref == 'refs/heads/main' || needs.changes.outputs.shared == 'true' || needs.changes.outputs[matrix.lane] == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [shell, text, drawing, files]
 
     steps:
       - uses: actions/checkout@v5
@@ -53,33 +115,17 @@ jobs:
         run: bun x playwright install --with-deps chromium
 
       - name: Smoke tests
-        run: bun run smoke
-
-  docker_changes:
-    runs-on: ubuntu-latest
-    outputs:
-      docker: ${{ steps.filter.outputs.docker }}
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: dorny/paths-filter@v4
-        id: filter
-        with:
-          filters: |
-            docker:
-              - '.dockerignore'
-              - 'Dockerfile'
-              - 'compose.local.yml'
-              - 'DEPLOY.md'
-              - 'scripts/docker-local.sh'
-              - '.github/workflows/ci.yml'
+        run: bun run smoke:${{ matrix.lane }}
 
   docker_smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [checks, smoke, docker_changes]
-    if: github.ref == 'refs/heads/main' || needs.docker_changes.outputs.docker == 'true'
+    needs: [changes, checks]
+    if: github.ref == 'refs/heads/main' || needs.changes.outputs.shared == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs[matrix.lane] == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [shell, text, drawing, files]
 
     steps:
       - uses: actions/checkout@v5
@@ -95,4 +141,4 @@ jobs:
         run: bun x playwright install --with-deps chromium
 
       - name: Docker smoke
-        run: bun run docker:smoke
+        run: bun run docker:smoke:${{ matrix.lane }}

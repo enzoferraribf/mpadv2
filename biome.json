@@ -8,7 +8,7 @@
     "files": {
         "ignoreUnknown": true,
         "ignore": [
-            "packages/client/src/routeTree.gen.ts",
+            "apps/web/src/routeTree.gen.ts",
             "**/dist/**",
             ".turbo/**",
             ".tmp/**",
@@ -53,6 +53,9 @@
             "suspicious": {
                 "noCommentText": "off",
                 "noExplicitAny": "off"
+            },
+            "nursery": {
+                "noNestedTernary": "error"
             }
         }
     },

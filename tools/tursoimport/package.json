@@ -11,10 +11,11 @@
     "dependencies": {
         "@libsql/client": "^0.17.2",
         "@mpad/core": "workspace:*",
-        "yjs": "^13.6"
+        "drizzle-orm": "^0.45.2",
+        "yjs": "catalog:"
     },
     "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5.9"
+        "@types/bun": "catalog:",
+        "typescript": "catalog:"
     }
 }
