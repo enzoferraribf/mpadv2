@@ -8,6 +8,8 @@ import {
 } from '@mpad/core/pad-limits'
 import { z } from 'zod'
 
+z.config({ jitless: true })
+
 const cappedString = (maxBytes: number) =>
     z
         .string()

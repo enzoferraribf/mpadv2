@@ -48,7 +48,6 @@ function writeCloudflareHeaders(): Plugin {
             const url = new URL(apiOrigin)
             const websocketUrl = new URL(apiOrigin)
             websocketUrl.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-
             writeFileSync(
                 path.resolve(__dirname, 'dist/_headers'),
                 readCloudflareHeaders(url.origin, websocketUrl.origin),
@@ -59,7 +58,7 @@ function writeCloudflareHeaders(): Plugin {
 
 function readCloudflareHeaders(apiOrigin: string, websocketOrigin: string) {
     return `/*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ${apiOrigin} ${websocketOrigin}; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://esm.sh; connect-src 'self' ${apiOrigin} ${websocketOrigin}; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; upgrade-insecure-requests
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
