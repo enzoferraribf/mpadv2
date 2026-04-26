@@ -8,7 +8,6 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY packages/core/package.json ./packages/core/package.json
 COPY packages/protocol/package.json ./packages/protocol/package.json
 COPY packages/testkit/package.json ./packages/testkit/package.json
-COPY tools/tursoimport/package.json ./tools/tursoimport/package.json
 RUN bun install --frozen-lockfile --production
 
 FROM oven/bun:1.3.12-alpine AS runtime

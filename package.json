@@ -16,11 +16,11 @@
         "dev": "bun run --filter @mpad/web --filter @mpad/api dev",
         "build": "bun run --filter @mpad/web build",
         "build:local": "VITE_MPAD_API_ORIGIN=http://127.0.0.1:4000 bun run build",
-        "check": "biome check --formatter-enabled=true --linter-enabled=false . && biome lint . && bun run --filter @mpad/web typecheck && bun run --filter @mpad/api typecheck && bun run --filter @mpad/core typecheck && bun run --filter @mpad/protocol typecheck && bun run --filter @mpad/testkit typecheck && bun run --filter @mpad/tursoimport typecheck && bun run check:repo-shape",
+        "check": "biome check --formatter-enabled=true --linter-enabled=false . && biome lint . && bun run --filter @mpad/web typecheck && bun run --filter @mpad/api typecheck && bun run --filter @mpad/core typecheck && bun run --filter @mpad/protocol typecheck && bun run --filter @mpad/testkit typecheck && bun run check:repo-shape",
         "check:repo-shape": "bun run scripts/check-repo-shape.ts",
         "db:generate": "bunx drizzle-kit generate",
         "db:migrate": "bunx drizzle-kit migrate",
-        "test": "bun run --cwd apps/web test && ./scripts/docker-test-db.sh bun run --cwd apps/api test && ./scripts/docker-test-db.sh bun run --cwd tools/tursoimport test",
+        "test": "bun run --cwd apps/web test && ./scripts/docker-test-db.sh bun run --cwd apps/api test",
         "smoke": "bun run smoke:shell && bun run smoke:text && bun run smoke:drawing && bun run smoke:files",
         "smoke:shell": "MPAD_PLAYWRIGHT_LANE=shell ./scripts/run-playwright.sh --config playwright.config.ts",
         "smoke:text": "MPAD_PLAYWRIGHT_LANE=text ./scripts/run-playwright.sh --config playwright.config.ts",
@@ -31,8 +31,7 @@
         "docker:smoke:shell": "MPAD_PLAYWRIGHT_LANE=shell ./scripts/docker-local.sh smoke",
         "docker:smoke:text": "MPAD_PLAYWRIGHT_LANE=text ./scripts/docker-local.sh smoke",
         "docker:smoke:drawing": "MPAD_PLAYWRIGHT_LANE=drawing ./scripts/docker-local.sh smoke",
-        "docker:smoke:files": "MPAD_PLAYWRIGHT_LANE=files ./scripts/docker-local.sh smoke",
-        "tursoimport": "bun run --cwd tools/tursoimport import"
+        "docker:smoke:files": "MPAD_PLAYWRIGHT_LANE=files ./scripts/docker-local.sh smoke"
     },
     "devDependencies": {
         "@biomejs/biome": "^1.9.4",
