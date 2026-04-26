@@ -47,7 +47,7 @@ const editorTheme = EditorView.theme({
     '& .cm-cursorLayer .cm-cursor': {
         display: 'block',
         borderLeft: 'none !important',
-        border: '1px solid #ffffff !important',
+        border: '1px solid var(--stone-editor-cursor) !important',
         backgroundColor: 'transparent !important',
         width: '1ch',
         marginLeft: '0 !important',
