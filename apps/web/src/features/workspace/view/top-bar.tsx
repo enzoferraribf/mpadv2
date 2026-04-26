@@ -1,8 +1,49 @@
+import type { TextEditorHandle } from '@/features/text'
 import type { PadWorkspaceShellModel } from '@/features/workspace/application/controller'
-import { Settings2 } from 'lucide-react'
+import { FileDown, Settings2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-export function PadTopBar(input: { shell: PadWorkspaceShellModel }) {
+const markdownPreviewPanePromise = () =>
+    import('@/features/text/view/preview-pane')
+type MarkdownPreviewPaneComponent = Awaited<
+    ReturnType<typeof markdownPreviewPanePromise>
+>['MarkdownPreviewPane']
+
+export function PadTopBar(input: {
+    shell: PadWorkspaceShellModel
+    textEditor?: TextEditorHandle | null
+}) {
     const { commands, view } = input.shell
+    const [pdfContent, setPdfContent] = useState<string | null>(null)
+    const [MarkdownPdfPreview, setMarkdownPdfPreview] =
+        useState<MarkdownPreviewPaneComponent | null>(null)
+    const [printRequested, setPrintRequested] = useState(false)
+
+    useEffect(() => {
+        if (!printRequested || pdfContent === null) return
+
+        const frame = window.requestAnimationFrame(() => {
+            window.print()
+            setPrintRequested(false)
+        })
+
+        return () => window.cancelAnimationFrame(frame)
+    }, [pdfContent, printRequested])
+
+    async function exportPdf() {
+        const content = input.textEditor?.readContent()
+        if (!content) return
+
+        const previewPane = await markdownPreviewPanePromise()
+
+        if (/(^|\n)\s{0,3}(```|~~~)/.test(content)) {
+            await previewPane.preloadMarkdownHighlighter()
+        }
+
+        setMarkdownPdfPreview(() => previewPane.MarkdownPreviewPane)
+        setPdfContent(content)
+        setPrintRequested(true)
+    }
 
     return (
         <div className='app-topbar'>
@@ -64,6 +105,15 @@ export function PadTopBar(input: { shell: PadWorkspaceShellModel }) {
                         >
                             &#x25C9;
                         </button>
+                        <button
+                            className='pad-tab-action'
+                            onClick={exportPdf}
+                            title='Export PDF'
+                            aria-label='Export PDF'
+                            disabled={!input.textEditor}
+                        >
+                            <FileDown className='h-4 w-4' />
+                        </button>
                     </div>
                 ) : null}
                 {view.activeTab === 'drawing' ? (
@@ -81,6 +131,11 @@ export function PadTopBar(input: { shell: PadWorkspaceShellModel }) {
                     </div>
                 ) : null}
             </div>
+            {pdfContent === null || MarkdownPdfPreview === null ? null : (
+                <div className='markdown-pdf-export' aria-hidden='true'>
+                    <MarkdownPdfPreview content={pdfContent} />
+                </div>
+            )}
         </div>
     )
 }

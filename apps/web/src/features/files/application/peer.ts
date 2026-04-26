@@ -46,6 +46,7 @@ export function openFilePeer(input: OpenFilePeerInput): FilePeerSession {
 
     let receivedBytes = 0
     let settled = false
+    let transferComplete = false
     let downloadComplete = false
     let queue = Promise.resolve()
     let downloadTargetPromise: Promise<DownloadTarget> | null = null
@@ -66,7 +67,9 @@ export function openFilePeer(input: OpenFilePeerInput): FilePeerSession {
         if (settled) return
         settled = true
         await abortDownloadTarget()
-        if (error !== undefined) input.onError(asError(error))
+        if (error !== undefined && !transferComplete) {
+            input.onError(asError(error))
+        }
         if (!trackedPeer.destroyed) trackedPeer.destroy()
         input.onClose()
     }
@@ -92,6 +95,7 @@ export function openFilePeer(input: OpenFilePeerInput): FilePeerSession {
                 const target = await getDownloadTarget()
                 const localFile = await target.complete()
                 downloadComplete = true
+                transferComplete = true
                 input.onDownloadComplete(localFile)
                 return
             }
@@ -125,11 +129,14 @@ export function openFilePeer(input: OpenFilePeerInput): FilePeerSession {
             input.localFile,
             input.fileId,
             input.onUploadProgress,
+            () => {
+                transferComplete = true
+            },
         ).catch((error) => finish(error))
     })
 
     peer.on('close', () => {
-        void finish()
+        queue = queue.then(() => finish())
     })
     peer.on('error', (error: Error) => {
         void finish(error)
@@ -158,6 +165,7 @@ async function sendFile(
     localFile: LocalFile,
     fileId: string,
     onUploadProgress: (sentBytes: number) => void,
+    onComplete: () => void,
 ) {
     let sentBytes = 0
 
@@ -175,6 +183,7 @@ async function sendFile(
     }
 
     peer.send(encodeControlMessage({ kind: 'complete', fileId }))
+    onComplete()
 }
 
 function sleep(milliseconds: number) {

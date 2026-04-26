@@ -61,8 +61,10 @@ export function openBrowserRoom<
 
     const publishStatus = (
         status: PadRoomSession<TKind, TLocalState>['status'],
+        connectionError = session.connectionError,
     ) => {
         session.status = status
+        session.connectionError = connectionError
         publish({ ...session })
     }
 
@@ -94,7 +96,7 @@ export function openBrowserRoom<
 
     const handleOpen = () => {
         if (!state.active) return
-        publishStatus('connected')
+        publishStatus('connected', null)
         flushQueuedBytes(state, queuedBytes)
         startHeartbeat()
         session.send(createAwarenessMessage(awareness, [awareness.clientID]))
@@ -111,10 +113,13 @@ export function openBrowserRoom<
         })
     }
 
-    const handleClose = () => {
+    const handleClose = (event: CloseEvent) => {
         if (!state.active) return
         clearHeartbeat()
-        publishStatus('disconnected')
+        publishStatus(
+            'disconnected',
+            readCloseError(event, session.connectionError),
+        )
         removeRemoteAwareness(awareness)
         reconnect()
     }
@@ -196,6 +201,7 @@ function createSession<TKind extends PadRoomKind, TLocalState extends object>(
         awareness,
         peerId: awareness.clientID,
         status: 'connecting',
+        connectionError: null,
         setLocalState(state) {
             awareness.setLocalState(state)
         },
@@ -272,6 +278,13 @@ function removeRemoteAwareness(awareness: Awareness) {
         (id) => id !== awareness.clientID,
     )
     awarenessProtocol.removeAwarenessStates(awareness, remoteIds, 'disconnect')
+}
+
+function readCloseError(event: CloseEvent, fallback: string | null) {
+    if (event.wasClean && event.code === 1000) return null
+    if (event.reason.trim()) return event.reason
+    if (event.code === 1006) return fallback ?? 'Connection lost'
+    return `Connection closed (${event.code})`
 }
 
 function readSocketBytes(value: ArrayBuffer | Blob | string) {

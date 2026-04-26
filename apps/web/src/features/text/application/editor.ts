@@ -1,6 +1,5 @@
 import {
     EditorView,
-    drawSelection,
     highlightActiveLine,
     highlightActiveLineGutter,
 } from '@codemirror/view'
@@ -9,6 +8,7 @@ import { yCollab } from 'y-codemirror.next'
 import type { Awareness } from 'y-protocols/awareness'
 import type { Doc } from 'yjs'
 import { createMarkdownCodeMirrorExtensions } from './codemirror'
+import { createRemoteSelectionLineExtension } from './remote-selection-lines'
 
 export type CursorPosition = {
     line: number
@@ -52,11 +52,11 @@ export function createTextEditorHandle(
                     EditorView.contentAttributes.of({
                         'aria-label': 'Pad text editor',
                     }),
-                    drawSelection(),
                     highlightActiveLine(),
                     highlightActiveLineGutter(),
                     remoteCursorGuard,
                     yCollab(ytext, awareness),
+                    createRemoteSelectionLineExtension(ytext, awareness),
                     EditorView.updateListener.of((update) => {
                         if (!update.selectionSet && !update.docChanged) return
                         callbacks.onCursorChange?.(readCursor(update.state))

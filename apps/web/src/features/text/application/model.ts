@@ -15,6 +15,7 @@ export type TextWorkspaceModel =
     | {
           kind: 'ready'
           connection: PadTextRoom['status']
+          connectionError: string | null
           peerCount: number
           editor: ReturnType<typeof createTextEditorHandle>
       }
@@ -57,6 +58,7 @@ export function useTextWorkspace(
     return {
         kind: 'ready',
         connection: room.status,
+        connectionError: room.connectionError,
         peerCount: roomSnapshot.peerCount,
         editor,
     }

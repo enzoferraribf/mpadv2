@@ -1,19 +1,12 @@
 import { PadStatusBar } from '@/features/workspace/view/status-bar'
+import { OpeningLoader } from '@/shared/ui/feedback/opening-loader'
+import { TextLoadingSkeleton } from '@/shared/ui/feedback/text-loading-skeleton'
 import type { PadPath } from '@mpad/core/pad-path'
 
 const filesFallbackItems = Array.from(
     { length: 10 },
     (_, index) => `file-skeleton-${index}`,
 )
-const textFallbackLines = Array.from(
-    { length: 12 },
-    (_, index) => `text-line-${index}`,
-)
-const drawingFallbackTools = Array.from(
-    { length: 7 },
-    (_, index) => `drawing-tool-${index}`,
-)
-
 export function PadRouteFallback(input: { path: PadPath }) {
     return (
         <main className='app-shell' data-testid='pad-page'>
@@ -37,16 +30,12 @@ export function PadRouteFallback(input: { path: PadPath }) {
             <div className='app-content'>
                 <div className='app-main'>
                     <section className='loading-shell workspace-shell'>
-                        <div className='route-loader'>
-                            <span className='mpad-logo'>
-                                Opening{' '}
-                                {input.path.split('/').filter(Boolean).at(-1) ??
-                                    'pad'}
-                            </span>
-                            <div className='route-loader-bar'>
-                                <span />
-                            </div>
-                        </div>
+                        <OpeningLoader
+                            label={
+                                input.path.split('/').filter(Boolean).at(-1) ??
+                                'pad'
+                            }
+                        />
                     </section>
                     <PadStatusBar
                         path={input.path}
@@ -85,10 +74,10 @@ export function FilesPaneFallback() {
 export function DrawingWorkspaceFallback() {
     return (
         <section
-            className='workspace-shell min-h-0'
+            className='loading-shell workspace-shell min-h-0'
             data-testid='drawing-workspace'
         >
-            <DrawingCanvasFallback />
+            <OpeningLoader label='Excalidraw' />
         </section>
     )
 }
@@ -96,16 +85,7 @@ export function DrawingWorkspaceFallback() {
 export function TextWorkspaceFallback() {
     return (
         <section className='workspace-shell min-h-0'>
-            <div className='text-loader-grid'>
-                <div className='text-loader-pane'>
-                    {textFallbackLines.map((line, index) => (
-                        <div
-                            className={`lazy-line ${index % 3 === 0 ? 'wide' : ''}`}
-                            key={line}
-                        />
-                    ))}
-                </div>
-            </div>
+            <TextLoadingSkeleton />
         </section>
     )
 }
@@ -120,21 +100,6 @@ export function DialogFallback() {
                 <div className='lazy-command-row' />
                 <div className='lazy-command-row' />
             </div>
-        </div>
-    )
-}
-
-function DrawingCanvasFallback() {
-    return (
-        <div className='drawing-loader'>
-            <div className='drawing-loader-toolbar'>
-                {drawingFallbackTools.map((tool) => (
-                    <span key={tool} />
-                ))}
-            </div>
-            <div className='drawing-loader-shape one' />
-            <div className='drawing-loader-shape two' />
-            <div className='drawing-loader-line' />
         </div>
     )
 }

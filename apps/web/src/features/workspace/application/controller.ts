@@ -32,6 +32,7 @@ export type PadWorkspaceShellModel = {
     view: PadWorkspaceViewState
     status: {
         connection: PadConnection
+        connectionError: string | null
         peerCount: number
     }
     commands: PadWorkspaceShellCommands
@@ -101,6 +102,8 @@ export function usePadPageController(path: PadPath): PadPageController {
             status: {
                 connection:
                     text.kind === 'ready' ? text.connection : 'connecting',
+                connectionError:
+                    text.kind === 'ready' ? text.connectionError : null,
                 peerCount: text.kind === 'ready' ? text.peerCount : 0,
             },
             commands: shellCommands,

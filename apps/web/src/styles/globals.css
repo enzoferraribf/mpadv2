@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+    font-family: "Literata";
+    font-style: normal;
+    font-weight: 200 900;
+    font-display: swap;
+    src: url("/fonts/literata/literata-variable.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Literata";
+    font-style: italic;
+    font-weight: 200 900;
+    font-display: swap;
+    src: url("/fonts/literata/literata-italic-variable.ttf") format("truetype");
+}
+
 @layer base {
     :root,
     :root.light {
@@ -253,10 +269,11 @@
 .markdown-body {
     color: var(--stone-syntax-markdown) !important;
     background: transparent !important;
-    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif !important;
+    font-family: "Literata", Georgia, serif !important;
     font-size: 15px !important;
     line-height: 1.8 !important;
     letter-spacing: normal;
+    font-optical-sizing: auto;
     overflow-wrap: anywhere;
 }
 
@@ -282,24 +299,24 @@
 }
 
 .markdown-body h1 {
-    font-family: Georgia, "Times New Roman", serif !important;
+    font-family: "Literata", Georgia, serif !important;
     font-size: 2rem !important;
     font-weight: 600 !important;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
     padding-bottom: 0.75rem !important;
     border-bottom: 1px solid var(--stone-border) !important;
 }
 
 .markdown-body h2 {
-    font-family: Georgia, "Times New Roman", serif !important;
+    font-family: "Literata", Georgia, serif !important;
     font-size: 1.5rem !important;
     font-weight: 500 !important;
     margin-top: 2rem !important;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
 }
 
 .markdown-body h3 {
-    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif !important;
+    font-family: "Literata", Georgia, serif !important;
     font-size: 0.875rem !important;
     font-weight: 600 !important;
     text-transform: uppercase;
@@ -494,6 +511,10 @@
 
 .markdown-body img {
     margin: 0 auto;
+}
+
+.markdown-pdf-export {
+    display: none;
 }
 
 .cm-editor-image {
@@ -877,6 +898,11 @@
         background: var(--stone-elevated);
     }
 
+    .pad-tab-action:disabled {
+        cursor: default;
+        opacity: 0.45;
+    }
+
     .pad-tab-action.active {
         color: var(--stone-text-secondary);
     }
@@ -911,6 +937,13 @@
         display: flex;
         align-items: center;
         gap: 5px;
+    }
+
+    .pad-statusbar-error {
+        max-width: min(360px, 35vw);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--stone-danger);
     }
 
     .pad-statusbar-dot {
@@ -1405,5 +1438,68 @@
         .landing-pip-go {
             width: 48px;
         }
+    }
+}
+
+@media print {
+    @page {
+        margin: 18mm;
+    }
+
+    :root.dark {
+        color-scheme: light;
+    }
+
+    html,
+    body {
+        background: #fff !important;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .markdown-pdf-export,
+    .markdown-pdf-export * {
+        visibility: visible !important;
+    }
+
+    .markdown-pdf-export {
+        --stone-surface: #fbf7f1;
+        --stone-text: #241f18;
+        --stone-text-secondary: #5f5649;
+        --stone-text-muted: #6f6658;
+        --stone-accent: #a66c3f;
+        --stone-border: #d9cfbf;
+        --stone-editor-bg: #f7f1e8;
+        --stone-syntax-markdown: #4f4538;
+        --stone-heading-accent: #8d5b32;
+        --stone-syntax-comment: #8b806f;
+        --stone-syntax-keyword: #9a5932;
+        --stone-syntax-string: #466b57;
+        --stone-syntax-number: #9f6a2b;
+        --stone-syntax-type: #3e8aa2;
+        --stone-syntax-meta: #72563e;
+        --stone-code-foreground: #241f18;
+        --stone-inline-code-bg: rgba(36, 31, 24, 0.04);
+        --stone-row-alt-bg: rgba(36, 31, 24, 0.025);
+        --stone-blockquote-bg: rgba(62, 138, 162, 0.08);
+        display: block;
+        position: absolute;
+        inset: 0;
+        min-height: 100%;
+        padding: 0;
+        background: #fff !important;
+        color: #241f18;
+    }
+
+    .markdown-pdf-export .markdown-body {
+        max-width: none;
+        background: #fff !important;
+        color: #4f4538 !important;
+    }
+
+    .markdown-pdf-export .markdown-body pre {
+        break-inside: avoid;
     }
 }

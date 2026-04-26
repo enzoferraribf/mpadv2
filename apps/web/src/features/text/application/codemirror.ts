@@ -55,6 +55,14 @@ const editorTheme = EditorView.theme({
     '.cm-selectionBackground': {
         backgroundColor: 'var(--stone-editor-selection) !important',
     },
+    '.cm-ySelection': {
+        borderRadius: '2px',
+        boxDecorationBreak: 'clone',
+        WebkitBoxDecorationBreak: 'clone',
+    },
+    '.cm-line.cm-yLineSelection': {
+        backgroundColor: 'transparent !important',
+    },
     '.cm-ySelectionInfo': {
         top: '-1.9em',
         left: '-2px',

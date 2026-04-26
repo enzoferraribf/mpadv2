@@ -12,6 +12,7 @@ import {
 import { PadSidebar } from '@/features/workspace/view/sidebar'
 import { PadStatusBar } from '@/features/workspace/view/status-bar'
 import { lazyWithPreload } from '@/shared/lib/lazy-with-preload'
+import { OpeningLoader } from '@/shared/ui/feedback/opening-loader'
 import {
     ResizableHandle,
     ResizablePanel,
@@ -79,11 +80,7 @@ export function PadPageLoading(input: {
                 className='loading-shell workspace-shell'
                 data-testid='workspace-shell'
             >
-                <div className='loading-card'>
-                    <span className='mpad-logo'>
-                        Opening {input.shell.view.padName}
-                    </span>
-                </div>
+                <OpeningLoader label={input.shell.view.padName} />
             </section>
         </PadPageFrame>
     )
@@ -161,6 +158,7 @@ function PadPageFrame(input: {
             <PadStatusBar
                 path={input.shell.view.path}
                 connection={input.shell.status.connection}
+                connectionError={input.shell.status.connectionError}
                 peerCount={input.shell.status.peerCount}
                 clockLabel={input.shell.view.clockLabel}
                 cursorLabel={input.shell.view.cursorLabel}

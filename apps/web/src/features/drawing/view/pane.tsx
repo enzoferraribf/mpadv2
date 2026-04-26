@@ -3,6 +3,7 @@ import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import '@excalidraw/excalidraw/index.css'
 import type { DrawingHandle } from '@/features/drawing/application/handle'
+import { OpeningLoader } from '@/shared/ui/feedback/opening-loader'
 import {
     type FlushPlan,
     readChangeFlushPlan,
@@ -152,8 +153,8 @@ export function DrawingPane(input: {
 
     if (!input.drawing) {
         return (
-            <div className='flex h-full items-center justify-center text-sm text-[--stone-text-dim]'>
-                Connecting drawing…
+            <div className='loading-shell h-full'>
+                <OpeningLoader label='Excalidraw' />
             </div>
         )
     }
@@ -164,8 +165,8 @@ export function DrawingPane(input: {
         <div className='h-full w-full overflow-hidden'>
             <Suspense
                 fallback={
-                    <div className='flex h-full items-center justify-center text-sm text-[--stone-text-dim]'>
-                        Loading drawing…
+                    <div className='loading-shell h-full'>
+                        <OpeningLoader label='Excalidraw' />
                     </div>
                 }
             >

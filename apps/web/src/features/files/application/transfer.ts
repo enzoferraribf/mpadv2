@@ -133,12 +133,33 @@ export function downloadLiveFile(input: {
 }) {
     const localFile = input.state.localFiles[input.file.meta.id]
     if (localFile) {
-        void saveLocalFile(localFile).catch((error) =>
-            toast.error((error as Error).message),
-        )
+        void saveLocalFile(localFile).catch((error) => {
+            input.dispatch({
+                kind: 'local-file-removed',
+                fileId: input.file.meta.id,
+            })
+            void deleteLocalFileData(localFile)
+            downloadRemoteLiveFile(input)
+            if (
+                !input.room ||
+                !chooseRemoteOwner(input.file.owners, input.room.peerId)
+            ) {
+                toast.error((error as Error).message)
+            }
+        })
         return
     }
 
+    downloadRemoteLiveFile(input)
+}
+
+function downloadRemoteLiveFile(input: {
+    room: PadFileRoom | null
+    sessions: FileTransferSessions
+    state: FileMachineState
+    dispatch: (event: Parameters<typeof reduceFileMachine>[1]) => void
+    file: LiveFileState
+}) {
     if (!input.room) return
     if (input.sessions[input.file.meta.id]) return
 

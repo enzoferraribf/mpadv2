@@ -22,10 +22,10 @@ export const MAX_FILE_REJECT_REASON_BYTES = 180
 export const MAX_FILE_SIGNAL_BYTES = 16 * 1024
 export const MAX_PEER_NAME_BYTES = 80
 export const MAX_WS_MESSAGE_BYTES_PER_WINDOW = 2 * 1024 * 1024
-export const MAX_WS_MESSAGES_PER_WINDOW = 120
+export const MAX_WS_MESSAGES_PER_WINDOW = 2400
 export const MAX_WS_UPGRADES_PER_WINDOW = 60
 export const MAX_WS_ACTIVE_PER_IP = 64
-export const MAX_PAD_WRITES_PER_WINDOW = 120
+export const MAX_PAD_WRITES_PER_WINDOW = 1200
 export const MAX_WS_BUFFERED_BYTES = 512 * 1024
 
 export const Y_TEXT_KEY = 'text'

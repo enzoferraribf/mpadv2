@@ -1,4 +1,8 @@
 import { describe, expect, test } from 'bun:test'
+import {
+    MAX_PAD_WRITES_PER_WINDOW,
+    MAX_WS_MESSAGES_PER_WINDOW,
+} from '@mpad/core/pad-limits'
 import { createRateLimiter } from '#/platform/runtime/rate-limit'
 
 describe('rate limiter', () => {
@@ -35,9 +39,10 @@ describe('rate limiter', () => {
             rateLimitWsUpgrades: 10,
         })
 
-        expect(
-            await limiter.canAcceptMessage('127.0.0.1', 2 * 1024 * 1024),
-        ).toBe(true)
+        for (let index = 0; index < MAX_WS_MESSAGES_PER_WINDOW; index += 1) {
+            expect(await limiter.canAcceptMessage('127.0.0.1', 1)).toBe(true)
+        }
+
         expect(await limiter.canAcceptMessage('127.0.0.1', 1)).toBe(false)
     })
 
@@ -48,7 +53,7 @@ describe('rate limiter', () => {
             rateLimitWsUpgrades: 10,
         })
 
-        for (let index = 0; index < 120; index += 1) {
+        for (let index = 0; index < MAX_PAD_WRITES_PER_WINDOW; index += 1) {
             expect(await limiter.canWritePad('/pad:text')).toBe(true)
         }
 

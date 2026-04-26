@@ -1,5 +1,6 @@
 import type { DrawingHandle } from '@/features/drawing/application/handle'
 import type { DrawingTheme } from '@/features/drawing/domain/theme'
+import { OpeningLoader } from '@/shared/ui/feedback/opening-loader'
 import { Suspense, lazy } from 'react'
 
 const LazyDrawingWorkspace = lazy(() =>
@@ -31,11 +32,8 @@ export function DrawingWorkspacePane(input: {
 
 function DrawingWorkspaceFallback() {
     return (
-        <div
-            className='flex h-full items-center justify-center text-sm text-[--stone-text-dim]'
-            data-testid='drawing-workspace'
-        >
-            Loading drawing…
+        <div className='loading-shell h-full' data-testid='drawing-workspace'>
+            <OpeningLoader label='Excalidraw' />
         </div>
     )
 }

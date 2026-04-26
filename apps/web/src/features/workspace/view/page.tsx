@@ -50,7 +50,12 @@ export function PadPage({ path }: { path: PadPath }) {
 
     return (
         <main className='app-shell' data-testid='pad-page'>
-            <PadTopBar shell={model.shell} />
+            <PadTopBar
+                shell={model.shell}
+                textEditor={
+                    model.text.kind === 'ready' ? model.text.editor : null
+                }
+            />
             {model.text.kind === 'ready' ? (
                 <PadPageReady
                     model={{

@@ -70,6 +70,9 @@ function readCloudflareHeaders(apiOrigin: string, websocketOrigin: string) {
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /index.html
   Cache-Control: no-cache
 `

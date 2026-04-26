@@ -63,6 +63,7 @@ export type PadRoomSession<
     awareness: Awareness
     peerId: number
     status: PadConnection
+    connectionError: string | null
     setLocalState: (state: TLocalState | null) => void
     send: (message: ClientRoomMessage) => void
     onMessage: (listener: (message: ServerRoomMessage) => void) => () => void

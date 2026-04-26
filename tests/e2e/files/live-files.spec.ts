@@ -23,6 +23,19 @@ test('downloads a live file from another peer', async ({ browser }) => {
     await pageB.waitForFunction(
         () => window.__mpad__?.hasLocalFile('readme.txt') === true,
     )
+    await pageB.evaluate(async () => {
+        const root = await navigator.storage.getDirectory()
+        const files = (await root.getDirectoryHandle('mpad-live-files')) as
+            FileSystemDirectoryHandle & { keys(): AsyncIterable<string> }
+        for await (const name of files.keys()) {
+            await files.removeEntry(name)
+        }
+    })
+
+    await pageB.evaluate(() => window.__mpad__.requestFile('readme.txt'))
+    await pageB.waitForFunction(
+        () => window.__mpad__?.hasLocalFile('readme.txt') === true,
+    )
 
     await contextA.close()
     await contextB.close()

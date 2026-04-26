@@ -3,6 +3,7 @@ import type { PadPath } from '@mpad/core/pad-path'
 export function PadStatusBar(input: {
     path: PadPath
     connection: 'connecting' | 'connected' | 'disconnected'
+    connectionError?: string | null
     peerCount: number
     clockLabel: string
     cursorLabel: string
@@ -16,6 +17,15 @@ export function PadStatusBar(input: {
                 <span className={`pad-statusbar-dot ${input.connection}`} />
                 {input.peerCount} peer{input.peerCount !== 1 ? 's' : ''}
             </span>
+            {input.connectionError ? (
+                <span
+                    className='pad-statusbar-segment pad-statusbar-error'
+                    data-testid='status-error'
+                    title={input.connectionError}
+                >
+                    {input.connectionError}
+                </span>
+            ) : null}
             <span className='pad-statusbar-segment' data-testid='status-cursor'>
                 {input.cursorLabel}
             </span>

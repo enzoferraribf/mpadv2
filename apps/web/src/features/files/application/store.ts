@@ -69,13 +69,13 @@ export async function deleteLocalFileData(localFile: LocalFile) {
 }
 
 export async function saveLocalFile(localFile: LocalFile) {
-    const blob = await getLocalBlob(localFile)
+    const blob = await createDownloadBlob(localFile)
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.download = localFile.meta.name
     link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 0)
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
 export async function* readLocalFileChunks(
@@ -98,6 +98,13 @@ async function getLocalBlob(localFile: LocalFile): Promise<Blob> {
 
     const handle = await root.getFileHandle(localFile.meta.id)
     return handle.getFile()
+}
+
+async function createDownloadBlob(localFile: LocalFile): Promise<Blob> {
+    const blob = await getLocalBlob(localFile)
+    return new Blob([await blob.arrayBuffer()], {
+        type: localFile.meta.mimeType,
+    })
 }
 
 function createMemoryDownloadTarget(meta: LiveFileMeta): DownloadTarget {
