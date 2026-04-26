@@ -36,6 +36,31 @@ export function legacyPad(input: {
     } satisfies ConvertedLegacyPad
 }
 
+export function importedPad(input: {
+    drawingElements?: LegacyDrawingElement[]
+    path: string
+    text?: string
+    updatedAtMs: number
+}) {
+    const drawingElements = input.drawingElements ?? []
+    const text = input.text ?? ''
+    const pathValue = input.path as ConvertedLegacyPad['path']
+
+    return {
+        drawingElements,
+        drawingBytes: buildDrawingDocBytes(drawingElements),
+        hasDrawingContent: drawingElements.length > 0,
+        hasTextContent: text.length > 0,
+        path: pathValue,
+        rawIds: [pathValue],
+        text,
+        textBytes: buildTextDocBytes(text),
+        updatedAt: toIsoTimestamp(input.updatedAtMs),
+        updatedAtMs: input.updatedAtMs,
+        usedPlaceholder: false,
+    } satisfies ConvertedLegacyPad
+}
+
 export function drawingElement(id: string): LegacyDrawingElement {
     return {
         id,
@@ -72,7 +97,7 @@ export async function countDocRevisions(
         FROM pad_docs AS d
         JOIN pads AS p ON p.id = d.pad_id
         JOIN pad_revisions AS r ON r.doc_id = d.id
-        WHERE p.path = ${padPath(pathValue)} AND d.kind = ${kind}
+        WHERE p.path = ${pathValue} AND d.kind = ${kind}
     `
     return row?.count ?? 0
 }
@@ -105,7 +130,7 @@ async function readHeadSnapshot(
         FROM pad_docs AS d
         JOIN pads AS p ON p.id = d.pad_id
         JOIN pad_revisions AS r ON r.id = d.head_revision_id
-        WHERE p.path = ${padPath(pathValue)} AND d.kind = ${kind}
+        WHERE p.path = ${pathValue} AND d.kind = ${kind}
     `
 
     return row ? new Uint8Array(row.snapshot) : new Uint8Array()

@@ -370,7 +370,7 @@
                 },
                 "pads_path_launch_check": {
                     "name": "pads_path_launch_check",
-                    "value": "octet_length(\"pads\".\"path\") <= 512 AND \"pads\".\"path\" !~ '[[:cntrl:]]' AND \"pads\".\"path\" NOT LIKE '%\\%%' ESCAPE '\\'"
+                    "value": "octet_length(\"pads\".\"path\") <= 512 AND \"pads\".\"path\" !~ '[[:cntrl:]]'"
                 },
                 "pads_root_path_check": {
                     "name": "pads_root_path_check",
@@ -378,7 +378,7 @@
                 },
                 "pads_root_path_launch_check": {
                     "name": "pads_root_path_launch_check",
-                    "value": "octet_length(\"pads\".\"root_path\") <= 512 AND \"pads\".\"root_path\" !~ '[[:cntrl:]]' AND \"pads\".\"root_path\" NOT LIKE '%\\%%' ESCAPE '\\'"
+                    "value": "octet_length(\"pads\".\"root_path\") <= 512 AND \"pads\".\"root_path\" !~ '[[:cntrl:]]'"
                 },
                 "pads_parent_path_check": {
                     "name": "pads_parent_path_check",
@@ -386,7 +386,7 @@
                 },
                 "pads_parent_path_launch_check": {
                     "name": "pads_parent_path_launch_check",
-                    "value": "\"pads\".\"parent_path\" IS NULL OR (octet_length(\"pads\".\"parent_path\") <= 512 AND \"pads\".\"parent_path\" !~ '[[:cntrl:]]' AND \"pads\".\"parent_path\" NOT LIKE '%\\%%' ESCAPE '\\')"
+                    "value": "\"pads\".\"parent_path\" IS NULL OR (octet_length(\"pads\".\"parent_path\") <= 512 AND \"pads\".\"parent_path\" !~ '[[:cntrl:]]')"
                 }
             },
             "isRLSEnabled": false

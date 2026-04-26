@@ -39,7 +39,7 @@ export const pads = pgTable(
         ),
         check(
             'pads_path_launch_check',
-            sql`octet_length(${table.path}) <= 512 AND ${table.path} !~ '[[:cntrl:]]' AND ${table.path} NOT LIKE '%\\%%' ESCAPE '\\'`,
+            sql`octet_length(${table.path}) <= 512 AND ${table.path} !~ '[[:cntrl:]]'`,
         ),
         check(
             'pads_root_path_check',
@@ -47,7 +47,7 @@ export const pads = pgTable(
         ),
         check(
             'pads_root_path_launch_check',
-            sql`octet_length(${table.rootPath}) <= 512 AND ${table.rootPath} !~ '[[:cntrl:]]' AND ${table.rootPath} NOT LIKE '%\\%%' ESCAPE '\\'`,
+            sql`octet_length(${table.rootPath}) <= 512 AND ${table.rootPath} !~ '[[:cntrl:]]'`,
         ),
         check(
             'pads_parent_path_check',
@@ -55,7 +55,7 @@ export const pads = pgTable(
         ),
         check(
             'pads_parent_path_launch_check',
-            sql`${table.parentPath} IS NULL OR (octet_length(${table.parentPath}) <= 512 AND ${table.parentPath} !~ '[[:cntrl:]]' AND ${table.parentPath} NOT LIKE '%\\%%' ESCAPE '\\')`,
+            sql`${table.parentPath} IS NULL OR (octet_length(${table.parentPath}) <= 512 AND ${table.parentPath} !~ '[[:cntrl:]]')`,
         ),
         index('idx_pads_root_path').on(table.rootPath, table.path),
         index('idx_pads_parent_path').on(table.parentPath, table.path),

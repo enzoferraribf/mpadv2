@@ -14,6 +14,7 @@ import { loadImportConfig } from './config'
 import {
     countDocRevisions as countDocRevisionsWithSql,
     countPadRows as countPadRowsWithSql,
+    importedPad,
     drawingElement,
     legacyPad,
     readHeadDrawingOrder as readHeadDrawingOrderWithSql,
@@ -21,7 +22,7 @@ import {
     runImport as runImportWithSql,
 } from './importer-testkit'
 import { createSilentLogger } from './log'
-import { syncLegacyReplica } from './source'
+import { selectLegacyPadRows, syncLegacyReplica } from './source'
 import { migrateTargetDatabase, openTargetDatabase } from './target'
 import type { ConvertedLegacyPad } from './types'
 
@@ -141,6 +142,21 @@ describe('legacy sqlite sync', () => {
     })
 })
 
+describe('legacy source selection', () => {
+    test('allows legacy pad path characters during import', () => {
+        const selected = selectLegacyPadRows([
+            {
+                content: '{}',
+                id: '/team/%unsafe?/doc#1:old',
+                lastTransaction: null,
+                lastUpdate: 1,
+            },
+        ])
+
+        expect(selected.rows[0]?.path).toBe('/team/%unsafe?/doc#1:old')
+    })
+})
+
 const dbDescribe = sql ? describe : describe.skip
 
 dbDescribe('incremental target import', () => {
@@ -172,6 +188,26 @@ dbDescribe('incremental target import', () => {
         expect(await countDocRevisions('/team/sketch', 'drawing')).toBe(1)
         expect(await readHeadText('/team/doc')).toBe('hello')
         expect(await readHeadDrawingOrder('/team/sketch')).toEqual(['shape-1'])
+    })
+
+    test('imports pads with legacy percent path characters', async () => {
+        const path = '/%2002-resp-atv'
+
+        const stats = await runImport([
+            importedPad({
+                path,
+                text: 'legacy',
+                updatedAtMs: 1_000,
+            }),
+        ])
+
+        expect(stats).toMatchObject({
+            padRowsWritten: 1,
+            textDocsCreated: 1,
+            textRevisionsAppended: 1,
+        })
+        expect(await countDocRevisions(path, 'text')).toBe(1)
+        expect(await readHeadText(path)).toBe('legacy')
     })
 
     test('does zero writes on a no-change rerun', async () => {

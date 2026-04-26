@@ -13,6 +13,9 @@ import { Doc } from 'yjs'
 describe('core and protocol boundaries', () => {
     test('normalizes pad paths', () => {
         expect(padPath('team//notes/alpha')).toBe('/team/notes/alpha')
+        expect(padPath(`team/${'a'.repeat(160)}`)).toBe(
+            `/team/${'a'.repeat(160)}`,
+        )
         expect(() => padPath('')).toThrow('Pad path is required')
         expect(() => padPath('team/%/alpha')).toThrow(
             'Pad path contains unsafe characters',
