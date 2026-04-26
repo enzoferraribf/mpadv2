@@ -45,7 +45,10 @@ export function useDrawingState(
         }
 
         const sync = () => {
-            setElements(drawing.getElements())
+            setElements((current) => {
+                const next = drawing.getElements()
+                return sameElements(current, next) ? current : next
+            })
             setCollaborators(drawing.getCollaborators())
         }
 

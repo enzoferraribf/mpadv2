@@ -35,8 +35,10 @@ export function DrawingPane(input: {
         input.drawing,
         localOriginRef.current,
     )
+    const [localBusy, setLocalBusy] = useState(false)
     const applyingRemoteRef = useRef(false)
     const pointerActiveRef = useRef(false)
+    const wasLocalBusyRef = useRef(false)
     const pendingElementsRef = useRef<readonly ExcalidrawElement[] | null>(null)
     const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -91,17 +93,44 @@ export function DrawingPane(input: {
         }
     }
 
-    useEffect(() => {
+    function applyRemoteElements(nextElements: readonly ExcalidrawElement[]) {
         if (!api) return
-        pendingElementsRef.current = elements
+        pendingElementsRef.current = nextElements
         applyingRemoteRef.current = true
         api.updateScene({
-            elements,
+            elements: nextElements,
         })
         queueMicrotask(() => {
             applyingRemoteRef.current = false
         })
-    }, [api, elements])
+    }
+
+    function readLocalBusy(input: {
+        pointerActive: boolean
+        editingLinearElement: boolean
+        editingTextElement: boolean
+    }) {
+        return (
+            input.pointerActive ||
+            input.editingLinearElement ||
+            input.editingTextElement
+        )
+    }
+
+    useEffect(() => {
+        if (!api) return
+        if (localBusy) return
+        if (wasLocalBusyRef.current) return
+        applyRemoteElements(elements)
+    }, [api, elements, localBusy])
+
+    useEffect(() => {
+        const wasLocalBusy = wasLocalBusyRef.current
+        wasLocalBusyRef.current = localBusy
+        if (!api || !input.drawing || localBusy || !wasLocalBusy) return
+        flushScene(input.drawing)
+        applyRemoteElements(input.drawing.getElements())
+    }, [api, input.drawing, localBusy])
 
     useEffect(() => {
         if (!api) return
@@ -175,6 +204,17 @@ export function DrawingPane(input: {
                     isCollaborating
                     onChange={(nextElements, appState) => {
                         if (applyingRemoteRef.current) return
+                        setLocalBusy(
+                            readLocalBusy({
+                                pointerActive: pointerActiveRef.current,
+                                editingLinearElement: Boolean(
+                                    appState.editingLinearElement,
+                                ),
+                                editingTextElement: Boolean(
+                                    appState.editingTextElement,
+                                ),
+                            }),
+                        )
                         if (
                             sameElements(
                                 pendingElementsRef.current ?? [],
@@ -201,18 +241,29 @@ export function DrawingPane(input: {
                     }}
                     onPointerDown={() => {
                         pointerActiveRef.current = true
+                        setLocalBusy(true)
                     }}
                     onPointerUp={() => {
                         pointerActiveRef.current = false
+                        const appState = api?.getAppState()
+                        const editingLinearElement = Boolean(
+                            appState?.editingLinearElement,
+                        )
+                        const editingTextElement = Boolean(
+                            appState?.editingTextElement,
+                        )
+                        setLocalBusy(
+                            readLocalBusy({
+                                pointerActive: false,
+                                editingLinearElement,
+                                editingTextElement,
+                            }),
+                        )
                         applyFlushPlan(
                             drawing,
                             readPointerUpFlushPlan({
-                                editingLinearElement: Boolean(
-                                    api?.getAppState().editingLinearElement,
-                                ),
-                                editingTextElement: Boolean(
-                                    api?.getAppState().editingTextElement,
-                                ),
+                                editingLinearElement,
+                                editingTextElement,
                             }),
                         )
                     }}
