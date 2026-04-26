@@ -81,7 +81,7 @@
         --stone-active-bg: rgba(166, 108, 63, 0.08);
         --stone-active-line-bg: rgba(166, 108, 63, 0.05);
         --stone-editor-selection: rgba(166, 108, 63, 0.12);
-        --stone-editor-cursor: #241f18;
+        --stone-editor-cursor: #ffffff;
         --stone-editor-caret-shadow: #f7f1e8;
         --stone-overlay-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
         --stone-blockquote-bg: rgba(62, 138, 162, 0.08);
@@ -161,7 +161,7 @@
         --stone-active-bg: rgba(252, 152, 103, 0.14);
         --stone-active-line-bg: rgba(255, 255, 255, 0.035);
         --stone-editor-selection: rgba(255, 216, 102, 0.14);
-        --stone-editor-cursor: #ffd866;
+        --stone-editor-cursor: #ffffff;
         --stone-editor-caret-shadow: #161711;
         --stone-overlay-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
         --stone-blockquote-bg: rgba(120, 220, 232, 0.08);

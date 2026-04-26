@@ -1,6 +1,6 @@
 import { markdown } from '@codemirror/lang-markdown'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { EditorView, lineNumbers } from '@codemirror/view'
+import { EditorView, drawSelection, lineNumbers } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import { createMarkdownImageWidgetExtension } from './image-widgets'
 
@@ -22,6 +22,7 @@ const editorTheme = EditorView.theme({
         minHeight: '100%',
         paddingTop: '36px',
         paddingBottom: '28px',
+        caretColor: 'transparent',
     },
     '.cm-line': {
         paddingLeft: '8px',
@@ -46,7 +47,7 @@ const editorTheme = EditorView.theme({
     '& .cm-cursorLayer .cm-cursor': {
         display: 'block',
         borderLeft: 'none !important',
-        border: '1px solid var(--stone-editor-cursor) !important',
+        border: '1px solid #ffffff !important',
         backgroundColor: 'transparent !important',
         width: '1ch',
         marginLeft: '0 !important',
@@ -165,6 +166,7 @@ export function createMarkdownCodeMirrorExtensions() {
     return [
         markdown(),
         lineNumbers(),
+        drawSelection(),
         EditorView.lineWrapping,
         createMarkdownImageWidgetExtension(),
         editorTheme,
