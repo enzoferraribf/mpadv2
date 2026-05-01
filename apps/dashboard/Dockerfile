@@ -24,14 +24,19 @@ ENV NODE_ENV=production
 ENV DASHBOARD_HOST=0.0.0.0
 ENV DASHBOARD_PORT=4010
 
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/bun.lock ./bun.lock
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/dashboard/package.json ./apps/dashboard/package.json
+COPY package.json bun.lock tsconfig.base.json tsconfig.browser.json tsconfig.workspace.json ./
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/dashboard/package.json ./apps/dashboard/package.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/web/vendor/noop-mermaid-to-excalidraw/package.json ./apps/web/vendor/noop-mermaid-to-excalidraw/package.json
+COPY packages/core/package.json ./packages/core/package.json
+COPY packages/protocol/package.json ./packages/protocol/package.json
+COPY packages/testkit/package.json ./packages/testkit/package.json
+RUN bun install --frozen-lockfile --production
+
 COPY --from=build /app/apps/dashboard/dist ./apps/dashboard/dist
 COPY --from=build /app/apps/dashboard/src ./apps/dashboard/src
 COPY --from=build /app/packages/core ./packages/core
-COPY tsconfig.base.json tsconfig.browser.json tsconfig.workspace.json ./
 
 EXPOSE 4010
 USER bun
