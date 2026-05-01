@@ -14,6 +14,7 @@
         "@vitejs/plugin-react": "^6.0.1",
         "clsx": "^2.1",
         "lucide-react": "^0.468",
+        "@mpad/core": "workspace:*",
         "react": "^19.1",
         "react-dom": "^19.1",
         "recharts": "^3.6.0",

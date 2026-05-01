@@ -33,6 +33,7 @@
       "name": "@mpad/dashboard",
       "version": "0.1.0",
       "dependencies": {
+        "@mpad/core": "workspace:*",
         "@vitejs/plugin-react": "^6.0.1",
         "clsx": "^2.1",
         "lucide-react": "^0.468",
