@@ -24,7 +24,7 @@ export function Button({
     return (
         <button
             className={cn(
-                'inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition hover:bg-accent disabled:pointer-events-none disabled:opacity-50',
+                'inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition hover:border-primary/60 hover:bg-accent disabled:pointer-events-none disabled:opacity-50',
                 className,
             )}
             {...props}
@@ -39,7 +39,7 @@ export function Input({
     return (
         <input
             className={cn(
-                'h-9 rounded-md border border-border bg-background px-3 text-sm outline-none ring-offset-background transition focus:ring-2 focus:ring-primary/30',
+                'h-9 rounded-md border border-border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/70 focus:ring-2 focus:ring-primary/25',
                 className,
             )}
             {...props}

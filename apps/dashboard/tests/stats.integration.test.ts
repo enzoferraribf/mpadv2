@@ -60,6 +60,9 @@ run('dashboard stats db integration', () => {
         expect(stats.totals.padsEdited).toBe(0)
         expect(stats.totals.textDocuments).toBe(0)
         expect(stats.totals.drawingDocuments).toBe(0)
+        expect(stats.dailyActivity).toHaveLength(3)
+        expect(stats.topEditedPads).toHaveLength(0)
+        expect(stats.stalePads).toHaveLength(0)
     })
 
     test('counts pads, revisions, and document kinds', async () => {
@@ -88,17 +91,79 @@ run('dashboard stats db integration', () => {
         expect(stats.totals.drawingDocuments).toBe(1)
         expect(stats.totals.totalPads).toBe(2)
         expect(stats.totals.rootPaths).toBe(1)
+        expect(stats.totals.activeRootPaths).toBe(1)
         expect(stats.totals.rootPathsCreated).toBe(1)
+        expect(stats.totals.existingRootPaths).toBe(0)
         expect(stats.totals.activeDays).toBe(2)
         expect(stats.totals.averageRevisionBytes).toBe(1)
+        expect(stats.totals.creationToEditRate).toBe(100)
+        expect(stats.totals.averageEditsPerEditedPad).toBe(1)
+        expect(stats.totals.averagePadsPerRoot).toBe(2)
+        expect(stats.totals.textDocumentRatio).toBe(50)
+        expect(stats.totals.newRootShare).toBe(100)
         expect(stats.totals.latestRevisionAt).not.toBeNull()
+        expect(stats.dailyActivity[0]).toMatchObject({
+            date: '2026-05-01',
+            padsCreated: 1,
+            padsEdited: 1,
+            textRevisions: 1,
+            drawingRevisions: 0,
+            revisionBytes: 1,
+            totalActivity: 3,
+        })
         expect(stats.hourlyRevisions[11]).toEqual({
             hour: 11,
             revisions: 2,
         })
+        expect(stats.topEditedPads[0]).toMatchObject({
+            path: '/team/a',
+            revisions: 1,
+            revisionBytes: 1,
+        })
         expect(stats.busiestRootPaths[0]).toEqual({
             path: '/team',
-            count: 2,
+            revisions: 2,
+            pads: 2,
+        })
+        expect(stats.largestRevisionPaths[0]).toMatchObject({
+            revisions: 1,
+            revisionBytes: 1,
+        })
+        expect(stats.topRootsByPads[0]).toMatchObject({
+            path: '/team',
+            pads: 2,
+        })
+        expect(stats.recentlyActivePads[0]).toMatchObject({
+            path: '/team/b',
+            revisions: 1,
+        })
+        expect(stats.stalePads).toHaveLength(0)
+    })
+
+    test('lists stale pads without revisions in the range', async () => {
+        await truncateTables()
+
+        await insertDoc({
+            path: '/archive/a',
+            rootPath: '/archive',
+            kind: 'text',
+            createdAt: '2026-04-01T10:00:00Z',
+        })
+        await insertDoc({
+            path: '/team/a',
+            rootPath: '/team',
+            kind: 'text',
+            createdAt: '2026-05-01T10:00:00Z',
+        })
+
+        const stats = await readDashboardStats(sql, range(), 'Europe/London')
+
+        expect(stats.totals.rootPaths).toBe(2)
+        expect(stats.totals.activeRootPaths).toBe(1)
+        expect(stats.totals.rootPathsCreated).toBe(1)
+        expect(stats.stalePads[0]).toMatchObject({
+            path: '/archive/a',
+            revisions: 1,
         })
     })
 })
