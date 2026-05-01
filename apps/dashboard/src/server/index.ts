@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { SQL } from 'bun'
-import { parseStatsDateRange } from './date-range'
+import { StatsDateRangeError, parseStatsDateRange } from './date-range'
 import { readDashboardConfig } from './env'
 import { readDashboardStats } from './stats'
 
@@ -27,6 +27,9 @@ const server = Bun.serve({
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : 'Internal Server Error'
+            if (error instanceof StatsDateRangeError) {
+                return Response.json({ error: message }, { status: 400 })
+            }
             console.error('dashboard request failed', {
                 method: request.method,
                 path: url.pathname,

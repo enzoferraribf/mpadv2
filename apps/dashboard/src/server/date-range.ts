@@ -6,6 +6,8 @@ export type ParsedRange = {
     days: string[]
 }
 
+export class StatsDateRangeError extends Error {}
+
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
 
 export function parseStatsDateRange(
@@ -20,10 +22,12 @@ export function parseStatsDateRange(
 
     assertDate(from, 'from')
     assertDate(to, 'to')
-    if (from > to) throw new Error('from must be before or equal to to')
+    if (from > to)
+        throw new StatsDateRangeError('from must be before or equal to to')
 
     const days = eachDay(from, to)
-    if (days.length > 366) throw new Error('range cannot exceed 366 days')
+    if (days.length > 366)
+        throw new StatsDateRangeError('range cannot exceed 366 days')
 
     return {
         from,
@@ -65,7 +69,7 @@ function eachDay(from: string, to: string) {
 
 function assertDate(value: string, name: string) {
     if (!datePattern.test(value) || Number.isNaN(Date.parse(`${value}T00:00Z`)))
-        throw new Error(`invalid ${name} date`)
+        throw new StatsDateRangeError(`invalid ${name} date`)
 }
 
 function readTimeZoneOffsetMs(date: Date, timezone: string) {
