@@ -27,7 +27,12 @@ const server = Bun.serve({
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : 'Internal Server Error'
-            return Response.json({ error: message }, { status: 400 })
+            console.error('dashboard request failed', {
+                method: request.method,
+                path: url.pathname,
+                error,
+            })
+            return Response.json({ error: message }, { status: 500 })
         }
     },
 })
