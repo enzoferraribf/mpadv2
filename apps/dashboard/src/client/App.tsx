@@ -10,17 +10,6 @@ import {
     SquarePen,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Line,
-    LineChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-} from 'recharts'
 import { addDays, formatBytes, formatNumber, isoDate } from './lib'
 import { Button, Card, Input, Table } from './ui'
 
@@ -67,14 +56,6 @@ export function App() {
             stats?.topEditedPads.map((row) => [
                 row.path,
                 formatNumber(row.count),
-            ]) ?? [],
-        [stats],
-    )
-    const largestRows = useMemo(
-        () =>
-            stats?.largestTextPads.map((row) => [
-                row.path,
-                formatNumber(row.characters),
             ]) ?? [],
         [stats],
     )
@@ -128,13 +109,6 @@ export function App() {
                     {error}
                 </Card>
             ) : null}
-            {stats && stats.warnings.unreadableDocuments > 0 ? (
-                <Card className='border-amber-200 bg-amber-50 p-4 text-sm text-amber-900'>
-                    {stats.warnings.unreadableDocuments} document
-                    {stats.warnings.unreadableDocuments === 1 ? '' : 's'} could
-                    not be decoded and were skipped.
-                </Card>
-            ) : null}
 
             <section className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
                 <Kpi
@@ -159,8 +133,8 @@ export function App() {
                 />
                 <Kpi
                     icon={<Clock3 className='h-4 w-4' />}
-                    label='Drawings'
-                    value={stats?.totals.drawings}
+                    label='Text docs'
+                    value={stats?.totals.textDocuments}
                 />
                 <Kpi
                     icon={<Database className='h-4 w-4' />}
@@ -174,8 +148,8 @@ export function App() {
                 />
                 <Kpi
                     icon={<Brush className='h-4 w-4' />}
-                    label='Drawing elements'
-                    value={stats?.totals.drawingElements}
+                    label='Drawing docs'
+                    value={stats?.totals.drawingDocuments}
                 />
                 <Kpi
                     icon={<FileQuestion className='h-4 w-4' />}
@@ -185,79 +159,31 @@ export function App() {
                 />
             </section>
 
-            <section className='grid gap-3 lg:grid-cols-[1.4fr_1fr]'>
-                <ChartCard title='Activity'>
-                    <ResponsiveContainer width='100%' height={280}>
-                        <LineChart data={stats?.series ?? []}>
-                            <CartesianGrid strokeDasharray='3 3' />
-                            <XAxis dataKey='date' tickMargin={8} />
-                            <YAxis allowDecimals={false} width={36} />
-                            <Tooltip />
-                            <Line
-                                dataKey='padsCreated'
-                                name='Created'
-                                stroke='#0f766e'
-                                strokeWidth={2}
-                            />
-                            <Line
-                                dataKey='padsEdited'
-                                name='Edited'
-                                stroke='#b45309'
-                                strokeWidth={2}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-                <ChartCard title='Revisions'>
-                    <ResponsiveContainer width='100%' height={280}>
-                        <BarChart data={stats?.series ?? []}>
-                            <CartesianGrid strokeDasharray='3 3' />
-                            <XAxis dataKey='date' tickMargin={8} />
-                            <YAxis allowDecimals={false} width={36} />
-                            <Tooltip />
-                            <Bar
-                                dataKey='textRevisions'
-                                name='Text'
-                                fill='#2563eb'
-                            />
-                            <Bar
-                                dataKey='drawingRevisions'
-                                name='Drawing'
-                                fill='#9333ea'
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-            </section>
-
-            <section className='grid gap-3 lg:grid-cols-2'>
-                <ChartCard title='Text characters per pad'>
-                    <ResponsiveContainer width='100%' height={260}>
-                        <BarChart data={stats?.textSizeDistribution ?? []}>
-                            <CartesianGrid strokeDasharray='3 3' />
-                            <XAxis dataKey='label' tickMargin={8} />
-                            <YAxis allowDecimals={false} width={36} />
-                            <Tooltip />
-                            <Bar dataKey='count' fill='#0f766e' />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-                <ChartCard title='Drawing elements per pad'>
-                    <ResponsiveContainer width='100%' height={260}>
-                        <BarChart
-                            data={stats?.drawingElementDistribution ?? []}
-                        >
-                            <CartesianGrid strokeDasharray='3 3' />
-                            <XAxis dataKey='label' tickMargin={8} />
-                            <YAxis allowDecimals={false} width={36} />
-                            <Tooltip />
-                            <Bar dataKey='count' fill='#b45309' />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-            </section>
-
             <section className='grid gap-3 lg:grid-cols-3'>
+                <Card className='p-4'>
+                    <h2 className='mb-3 text-sm font-semibold'>
+                        Daily activity
+                    </h2>
+                    <Table
+                        columns={[
+                            'Date',
+                            'Created',
+                            'Edited',
+                            'Text',
+                            'Drawing',
+                        ]}
+                        rows={
+                            stats?.series.map((row) => [
+                                row.date,
+                                formatNumber(row.padsCreated),
+                                formatNumber(row.padsEdited),
+                                formatNumber(row.textRevisions),
+                                formatNumber(row.drawingRevisions),
+                            ]) ?? []
+                        }
+                        empty='No activity in range'
+                    />
+                </Card>
                 <Card className='p-4'>
                     <h2 className='mb-3 text-sm font-semibold'>
                         Top edited pads
@@ -266,16 +192,6 @@ export function App() {
                         columns={['Path', 'Revisions']}
                         rows={topEditedRows}
                         empty='No edits in range'
-                    />
-                </Card>
-                <Card className='p-4'>
-                    <h2 className='mb-3 text-sm font-semibold'>
-                        Largest text pads
-                    </h2>
-                    <Table
-                        columns={['Path', 'Characters']}
-                        rows={largestRows}
-                        empty='No text pads'
                     />
                 </Card>
                 <Card className='p-4'>
@@ -336,21 +252,6 @@ function Kpi({
                 {label}
             </div>
             <div className='mt-3 text-2xl font-semibold'>{displayValue}</div>
-        </Card>
-    )
-}
-
-function ChartCard({
-    title,
-    children,
-}: {
-    title: string
-    children: React.ReactNode
-}) {
-    return (
-        <Card className='p-4'>
-            <h2 className='mb-3 text-sm font-semibold'>{title}</h2>
-            {children}
         </Card>
     )
 }

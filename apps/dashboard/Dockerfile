@@ -14,7 +14,6 @@ RUN bun install --frozen-lockfile
 FROM deps AS build
 
 COPY apps/dashboard ./apps/dashboard
-COPY packages/core ./packages/core
 RUN bun run --filter @mpad/dashboard build
 
 FROM oven/bun:1.3.12-alpine AS runtime
@@ -36,7 +35,6 @@ RUN bun install --frozen-lockfile --production
 
 COPY --from=build /app/apps/dashboard/dist ./apps/dashboard/dist
 COPY --from=build /app/apps/dashboard/src ./apps/dashboard/src
-COPY --from=build /app/packages/core ./packages/core
 
 EXPOSE 4010
 USER bun

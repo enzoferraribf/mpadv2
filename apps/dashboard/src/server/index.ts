@@ -8,7 +8,6 @@ import { readDashboardStats } from './stats'
 const config = readDashboardConfig()
 const sql = new SQL(config.DATABASE_URL)
 const clientDist = path.resolve(import.meta.dir, '../../dist/client')
-const cache = new Map<string, { expiresAt: number; body: string }>()
 
 const server = Bun.serve({
     hostname: config.DASHBOARD_HOST,
@@ -46,23 +45,12 @@ console.log(
 
 async function handleStats(url: URL) {
     const range = parseStatsDateRange(url, config.DASHBOARD_TIME_ZONE)
-    const key = url.search
-    const cached = cache.get(key)
-    if (cached && cached.expiresAt > Date.now()) {
-        return json(cached.body)
-    }
-
     const stats = await readDashboardStats(
         sql,
         range,
         config.DASHBOARD_TIME_ZONE,
     )
-    const body = JSON.stringify(stats)
-    cache.set(key, {
-        body,
-        expiresAt: Date.now() + config.DASHBOARD_CACHE_TTL_MS,
-    })
-    return json(body)
+    return json(JSON.stringify(stats))
 }
 
 function json(body: string) {

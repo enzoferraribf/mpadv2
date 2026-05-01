@@ -1,29 +1,12 @@
-import type {
-    DashboardStats,
-    MetricPoint,
-    PadCountRow,
-    PadSizeRow,
-} from '@/shared/stats'
+import type { DashboardStats, MetricPoint, PadCountRow } from '@/shared/stats'
 import type { SQL } from 'bun'
-import { readBytea } from './bytea'
 import type { ParsedRange } from './date-range'
-import { readDrawingElementCount, readTextCharacters } from './doc-read'
-import type { StoredRevision } from './doc-read'
-import { buildHistogram } from './histogram'
 
 type Sql = SQL
 
-type DocRow = {
-    doc_id: number
-    path: string
-    kind: 'text' | 'drawing'
-}
-
-type RevisionRow = {
-    doc_id: number
-    revision_number: number
-    update: unknown
-    snapshot: unknown | null
+type DocumentCounts = {
+    textDocuments: number
+    drawingDocuments: number
 }
 
 export async function readDashboardStats(
@@ -31,48 +14,19 @@ export async function readDashboardStats(
     range: ParsedRange,
     timezone: string,
 ): Promise<DashboardStats> {
-    const [dailyRows, topEditedPads, busiestRootPaths, revisionBytes, docs] =
-        await Promise.all([
-            readDailyRows(sql, range, timezone),
-            readTopEditedPads(sql, range),
-            readBusiestRootPaths(sql, range),
-            readTotalRevisionBytes(sql, range),
-            readDocs(sql),
-        ])
-
-    const docIds = docs.map((doc) => doc.doc_id)
-    const revisions = docIds.length
-        ? await readDocRevisions(sql, docIds)
-        : new Map<number, StoredRevision[]>()
-    const textPads: PadSizeRow[] = []
-    const drawingElementCounts: number[] = []
-    let unreadableDocuments = 0
-
-    for (const doc of docs) {
-        const docRevisions = revisions.get(doc.doc_id) ?? []
-        if (doc.kind === 'text') {
-            const characters = readMetric(doc, () =>
-                readTextCharacters(docRevisions),
-            )
-            if (characters === null) {
-                unreadableDocuments += 1
-                continue
-            }
-            textPads.push({
-                path: doc.path,
-                characters,
-            })
-            continue
-        }
-        const elementCount = readMetric(doc, () =>
-            readDrawingElementCount(docRevisions),
-        )
-        if (elementCount === null) {
-            unreadableDocuments += 1
-            continue
-        }
-        drawingElementCounts.push(elementCount)
-    }
+    const [
+        dailyRows,
+        topEditedPads,
+        busiestRootPaths,
+        revisionBytes,
+        documentCounts,
+    ] = await Promise.all([
+        readDailyRows(sql, range, timezone),
+        readTopEditedPads(sql, range),
+        readBusiestRootPaths(sql, range),
+        readTotalRevisionBytes(sql, range),
+        readDocumentCounts(sql),
+    ])
 
     const dailyByDate = new Map(dailyRows.map((row) => [row.date, row]))
     const series = range.days.map((date) => ({
@@ -91,31 +45,14 @@ export async function readDashboardStats(
             padsEdited: await readEditedPadTotal(sql, range),
             textRevisions: sum(series, 'textRevisions'),
             drawingRevisions: sum(series, 'drawingRevisions'),
-            drawings: drawingElementCounts.filter((count) => count > 0).length,
-            drawingElements: drawingElementCounts.reduce(
-                (total, count) => total + count,
-                0,
-            ),
+            textDocuments: documentCounts.textDocuments,
+            drawingDocuments: documentCounts.drawingDocuments,
             totalRevisionBytes: revisionBytes,
             fileTransfersTracked: false,
         },
         series,
-        textSizeDistribution: buildHistogram(
-            textPads.map((pad) => pad.characters),
-            [0, 1, 100, 1000, 5000, 20000],
-        ),
-        drawingElementDistribution: buildHistogram(
-            drawingElementCounts,
-            [0, 1, 5, 20, 100],
-        ),
         topEditedPads,
-        largestTextPads: textPads
-            .sort((left, right) => right.characters - left.characters)
-            .slice(0, 10),
         busiestRootPaths,
-        warnings: {
-            unreadableDocuments,
-        },
     }
 }
 
@@ -199,56 +136,15 @@ async function readTotalRevisionBytes(sql: Sql, range: ParsedRange) {
     return Number(row?.bytes ?? 0)
 }
 
-async function readDocs(sql: Sql) {
-    return sql<DocRow[]>`
-        SELECT d.id AS doc_id, p.path, d.kind
-        FROM pad_docs d
-        JOIN pads p ON p.id = d.pad_id
-        WHERE d.head_revision_id IS NOT NULL
-        ORDER BY p.path ASC, d.kind ASC
+async function readDocumentCounts(sql: Sql): Promise<DocumentCounts> {
+    const [row] = await sql<DocumentCounts[]>`
+        SELECT
+            COUNT(*) FILTER (WHERE kind = 'text')::int AS "textDocuments",
+            COUNT(*) FILTER (WHERE kind = 'drawing')::int AS "drawingDocuments"
+        FROM pad_docs
+        WHERE head_revision_id IS NOT NULL
     `
-}
-
-async function readDocRevisions(sql: Sql, docIds: number[]) {
-    const rows = await sql<RevisionRow[]>`
-        SELECT doc_id, revision_number, update, snapshot
-        FROM pad_revisions
-        WHERE doc_id IN ${sql(docIds)}
-        ORDER BY doc_id ASC, revision_number ASC
-    `
-    const byDoc = new Map<number, StoredRevision[]>()
-    for (const row of rows) {
-        const revisions = byDoc.get(row.doc_id) ?? []
-        try {
-            revisions.push({
-                revisionNumber: row.revision_number,
-                update: readBytea(row.update),
-                snapshot: row.snapshot ? readBytea(row.snapshot) : null,
-            })
-        } catch (error) {
-            console.warn('Skipping unreadable revision bytes', {
-                docId: row.doc_id,
-                revisionNumber: row.revision_number,
-                error,
-            })
-        }
-        byDoc.set(row.doc_id, revisions)
-    }
-    return byDoc
-}
-
-function readMetric(doc: DocRow, read: () => number) {
-    try {
-        return read()
-    } catch (error) {
-        console.warn('Skipping unreadable document', {
-            docId: doc.doc_id,
-            kind: doc.kind,
-            path: doc.path,
-            error,
-        })
-        return null
-    }
+    return row ?? { textDocuments: 0, drawingDocuments: 0 }
 }
 
 function sum(series: MetricPoint[], key: keyof Omit<MetricPoint, 'date'>) {

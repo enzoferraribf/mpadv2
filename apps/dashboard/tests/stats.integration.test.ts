@@ -1,7 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { Y_DRAWING_ELEMENTS_KEY, Y_TEXT_KEY } from '@mpad/core/pad-limits'
 import { SQL } from 'bun'
-import { Doc, encodeStateAsUpdate } from 'yjs'
 import type { ParsedRange } from '../src/server/date-range'
 import { readDashboardStats } from '../src/server/stats'
 
@@ -60,26 +58,23 @@ run('dashboard stats db integration', () => {
 
         expect(stats.totals.padsCreated).toBe(0)
         expect(stats.totals.padsEdited).toBe(0)
-        expect(stats.largestTextPads).toEqual([])
+        expect(stats.totals.textDocuments).toBe(0)
+        expect(stats.totals.drawingDocuments).toBe(0)
     })
 
-    test('counts pads, revisions, text size, and drawing elements', async () => {
+    test('counts pads, revisions, and document kinds', async () => {
         await truncateTables()
-        const textUpdate = createTextUpdate('hello world')
-        const drawingUpdate = createDrawingUpdate(2)
 
         await insertDoc({
             path: '/team/a',
             rootPath: '/team',
             kind: 'text',
-            update: textUpdate,
             createdAt: '2026-05-01T10:00:00Z',
         })
         await insertDoc({
             path: '/team/b',
             rootPath: '/team',
             kind: 'drawing',
-            update: drawingUpdate,
             createdAt: '2026-05-02T10:00:00Z',
         })
 
@@ -89,12 +84,8 @@ run('dashboard stats db integration', () => {
         expect(stats.totals.padsEdited).toBe(2)
         expect(stats.totals.textRevisions).toBe(1)
         expect(stats.totals.drawingRevisions).toBe(1)
-        expect(stats.totals.drawings).toBe(1)
-        expect(stats.totals.drawingElements).toBe(2)
-        expect(stats.largestTextPads[0]).toEqual({
-            path: '/team/a',
-            characters: 11,
-        })
+        expect(stats.totals.textDocuments).toBe(1)
+        expect(stats.totals.drawingDocuments).toBe(1)
         expect(stats.busiestRootPaths[0]).toEqual({
             path: '/team',
             count: 2,
@@ -120,7 +111,6 @@ async function insertDoc(input: {
     path: string
     rootPath: string
     kind: 'text' | 'drawing'
-    update: Uint8Array
     createdAt: string
 }) {
     const [pad] = await sql<{ id: number }[]>`
@@ -135,7 +125,7 @@ async function insertDoc(input: {
     `
     const [revision] = await sql<{ id: number }[]>`
         INSERT INTO pad_revisions (doc_id, revision_number, update, event_count, created_at)
-        VALUES (${doc!.id}, 1, ${input.update}, 1, ${input.createdAt})
+        VALUES (${doc!.id}, 1, ${new Uint8Array([1])}, 1, ${input.createdAt})
         RETURNING id
     `
     await sql`
@@ -143,23 +133,4 @@ async function insertDoc(input: {
         SET head_revision_id = ${revision!.id}, head_revision_number = 1
         WHERE id = ${doc!.id}
     `
-}
-
-function createTextUpdate(text: string) {
-    const doc = new Doc()
-    doc.getText(Y_TEXT_KEY).insert(0, text)
-    const update = encodeStateAsUpdate(doc)
-    doc.destroy()
-    return update
-}
-
-function createDrawingUpdate(count: number) {
-    const doc = new Doc()
-    const map = doc.getMap<string>(Y_DRAWING_ELEMENTS_KEY)
-    for (let index = 0; index < count; index += 1) {
-        map.set(String(index), JSON.stringify({ id: String(index) }))
-    }
-    const update = encodeStateAsUpdate(doc)
-    doc.destroy()
-    return update
 }

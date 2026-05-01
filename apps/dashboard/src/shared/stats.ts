@@ -12,19 +12,9 @@ export type MetricPoint = {
     drawingRevisions: number
 }
 
-export type HistogramBin = {
-    label: string
-    count: number
-}
-
 export type PadCountRow = {
     path: string
     count: number
-}
-
-export type PadSizeRow = {
-    path: string
-    characters: number
 }
 
 export type DashboardStats = {
@@ -35,18 +25,12 @@ export type DashboardStats = {
         padsEdited: number
         textRevisions: number
         drawingRevisions: number
-        drawings: number
-        drawingElements: number
+        textDocuments: number
+        drawingDocuments: number
         totalRevisionBytes: number
         fileTransfersTracked: false
     }
     series: MetricPoint[]
-    textSizeDistribution: HistogramBin[]
-    drawingElementDistribution: HistogramBin[]
     topEditedPads: PadCountRow[]
-    largestTextPads: PadSizeRow[]
     busiestRootPaths: PadCountRow[]
-    warnings: {
-        unreadableDocuments: number
-    }
 }
