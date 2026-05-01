@@ -614,16 +614,19 @@ function ActivityChart({ series }: { series: MetricPoint[] }) {
                         axisLine={false}
                         dataKey='date'
                         minTickGap={22}
+                        padding={dateAxisPadding}
                         stroke={chartText}
                         tickFormatter={formatShortDate}
                         tickLine={false}
+                        tickMargin={8}
                     />
                     <YAxis
                         allowDecimals={false}
                         axisLine={false}
                         stroke={chartText}
                         tickLine={false}
-                        width={34}
+                        tickMargin={8}
+                        width={56}
                     />
                     <Tooltip
                         contentStyle={tooltipStyle}
@@ -666,16 +669,19 @@ function RevisionBars({ series }: { series: MetricPoint[] }) {
                         axisLine={false}
                         dataKey='date'
                         minTickGap={22}
+                        padding={dateAxisPadding}
                         stroke={chartText}
                         tickFormatter={formatShortDate}
                         tickLine={false}
+                        tickMargin={8}
                     />
                     <YAxis
                         allowDecimals={false}
                         axisLine={false}
                         stroke={chartText}
                         tickLine={false}
-                        width={34}
+                        tickMargin={8}
+                        width={56}
                     />
                     <Tooltip
                         contentStyle={tooltipStyle}
@@ -719,13 +725,15 @@ function HourlyChart({ series }: { series: HourPoint[] }) {
                         stroke={chartText}
                         tickFormatter={formatHour}
                         tickLine={false}
+                        tickMargin={8}
                     />
                     <YAxis
                         allowDecimals={false}
                         axisLine={false}
                         stroke={chartText}
                         tickLine={false}
-                        width={34}
+                        tickMargin={8}
+                        width={56}
                     />
                     <Tooltip
                         contentStyle={tooltipStyle}
@@ -759,16 +767,19 @@ function StorageChart({ series }: { series: DailyActivityRow[] }) {
                         axisLine={false}
                         dataKey='date'
                         minTickGap={22}
+                        padding={dateAxisPadding}
                         stroke={chartText}
                         tickFormatter={formatShortDate}
                         tickLine={false}
+                        tickMargin={8}
                     />
                     <YAxis
                         axisLine={false}
                         stroke={chartText}
                         tickFormatter={(value) => formatBytes(Number(value))}
                         tickLine={false}
-                        width={60}
+                        tickMargin={8}
+                        width={78}
                     />
                     <Tooltip
                         contentStyle={tooltipStyle}
@@ -1035,7 +1046,8 @@ function formatStat(value: number | undefined) {
     return value === undefined ? '...' : formatNumber(value)
 }
 
-const chartMargin = { bottom: 0, left: 0, right: 8, top: 8 }
+const chartMargin = { bottom: 8, left: 10, right: 22, top: 12 }
+const dateAxisPadding = { left: 8, right: 16 }
 
 function tooltipNumber(value: unknown) {
     return formatNumber(Number(value))
