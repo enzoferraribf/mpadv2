@@ -46,4 +46,7 @@ export type DashboardStats = {
     topEditedPads: PadCountRow[]
     largestTextPads: PadSizeRow[]
     busiestRootPaths: PadCountRow[]
+    warnings: {
+        unreadableDocuments: number
+    }
 }

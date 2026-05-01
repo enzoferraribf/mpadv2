@@ -128,6 +128,13 @@ export function App() {
                     {error}
                 </Card>
             ) : null}
+            {stats && stats.warnings.unreadableDocuments > 0 ? (
+                <Card className='border-amber-200 bg-amber-50 p-4 text-sm text-amber-900'>
+                    {stats.warnings.unreadableDocuments} document
+                    {stats.warnings.unreadableDocuments === 1 ? '' : 's'} could
+                    not be decoded and were skipped.
+                </Card>
+            ) : null}
 
             <section className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
                 <Kpi

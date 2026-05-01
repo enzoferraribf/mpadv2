@@ -46,17 +46,32 @@ export async function readDashboardStats(
         : new Map<number, StoredRevision[]>()
     const textPads: PadSizeRow[] = []
     const drawingElementCounts: number[] = []
+    let unreadableDocuments = 0
 
     for (const doc of docs) {
         const docRevisions = revisions.get(doc.doc_id) ?? []
         if (doc.kind === 'text') {
+            const characters = readMetric(doc, () =>
+                readTextCharacters(docRevisions),
+            )
+            if (characters === null) {
+                unreadableDocuments += 1
+                continue
+            }
             textPads.push({
                 path: doc.path,
-                characters: readTextCharacters(docRevisions),
+                characters,
             })
             continue
         }
-        drawingElementCounts.push(readDrawingElementCount(docRevisions))
+        const elementCount = readMetric(doc, () =>
+            readDrawingElementCount(docRevisions),
+        )
+        if (elementCount === null) {
+            unreadableDocuments += 1
+            continue
+        }
+        drawingElementCounts.push(elementCount)
     }
 
     const dailyByDate = new Map(dailyRows.map((row) => [row.date, row]))
@@ -98,6 +113,9 @@ export async function readDashboardStats(
             .sort((left, right) => right.characters - left.characters)
             .slice(0, 10),
         busiestRootPaths,
+        warnings: {
+            unreadableDocuments,
+        },
     }
 }
 
@@ -201,14 +219,36 @@ async function readDocRevisions(sql: Sql, docIds: number[]) {
     const byDoc = new Map<number, StoredRevision[]>()
     for (const row of rows) {
         const revisions = byDoc.get(row.doc_id) ?? []
-        revisions.push({
-            revisionNumber: row.revision_number,
-            update: readBytea(row.update),
-            snapshot: row.snapshot ? readBytea(row.snapshot) : null,
-        })
+        try {
+            revisions.push({
+                revisionNumber: row.revision_number,
+                update: readBytea(row.update),
+                snapshot: row.snapshot ? readBytea(row.snapshot) : null,
+            })
+        } catch (error) {
+            console.warn('Skipping unreadable revision bytes', {
+                docId: row.doc_id,
+                revisionNumber: row.revision_number,
+                error,
+            })
+        }
         byDoc.set(row.doc_id, revisions)
     }
     return byDoc
+}
+
+function readMetric(doc: DocRow, read: () => number) {
+    try {
+        return read()
+    } catch (error) {
+        console.warn('Skipping unreadable document', {
+            docId: doc.doc_id,
+            kind: doc.kind,
+            path: doc.path,
+            error,
+        })
+        return null
+    }
 }
 
 function sum(series: MetricPoint[], key: keyof Omit<MetricPoint, 'date'>) {
