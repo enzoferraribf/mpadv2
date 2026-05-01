@@ -27,7 +27,7 @@ export const allowedTopLevel = new Set([
     'tsconfig.workspace.json',
 ])
 
-export const allowedApps = new Set(['api', 'web'])
+export const allowedApps = new Set(['api', 'dashboard', 'web'])
 export const allowedPackages = new Set(['core', 'protocol', 'testkit'])
 
 export const browserOnlyPackages = [
@@ -37,6 +37,7 @@ export const browserOnlyPackages = [
     /^@codemirror\//,
     /^@excalidraw\//,
     /^cmdk$/,
+    /^recharts$/,
     /^github-markdown-css$/,
     /^lucide-react$/,
     /^next-themes$/,

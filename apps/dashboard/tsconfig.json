@@ -1,0 +1,12 @@
+{
+    "extends": "../../tsconfig.browser.json",
+    "compilerOptions": {
+        "types": ["bun", "vite/client"],
+        "paths": {
+            "@/*": ["./src/*"],
+            "@mpad/core/*": ["../../packages/core/src/*"],
+            "@mpad/protocol/*": ["../../packages/protocol/src/*"]
+        }
+    },
+    "include": ["src", "tests"]
+}
