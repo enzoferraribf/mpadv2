@@ -15,6 +15,14 @@ export function formatBytes(value: number) {
     return `${(value / 1024 / 1024).toFixed(1)} MB`
 }
 
+export function formatDateTime(value: string | null) {
+    if (!value) return 'None'
+    return new Intl.DateTimeFormat('en-GB', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value))
+}
+
 export function isoDate(date: Date) {
     return date.toISOString().slice(0, 10)
 }

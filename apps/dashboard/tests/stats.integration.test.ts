@@ -86,6 +86,16 @@ run('dashboard stats db integration', () => {
         expect(stats.totals.drawingRevisions).toBe(1)
         expect(stats.totals.textDocuments).toBe(1)
         expect(stats.totals.drawingDocuments).toBe(1)
+        expect(stats.totals.totalPads).toBe(2)
+        expect(stats.totals.rootPaths).toBe(1)
+        expect(stats.totals.rootPathsCreated).toBe(1)
+        expect(stats.totals.activeDays).toBe(2)
+        expect(stats.totals.averageRevisionBytes).toBe(1)
+        expect(stats.totals.latestRevisionAt).not.toBeNull()
+        expect(stats.hourlyRevisions[11]).toEqual({
+            hour: 11,
+            revisions: 2,
+        })
         expect(stats.busiestRootPaths[0]).toEqual({
             path: '/team',
             count: 2,

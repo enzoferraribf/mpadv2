@@ -1,4 +1,9 @@
-import type { DashboardStats, MetricPoint, PadCountRow } from '@/shared/stats'
+import type {
+    DashboardStats,
+    HourPoint,
+    MetricPoint,
+    PadCountRow,
+} from '@/shared/stats'
 import type { SQL } from 'bun'
 import type { ParsedRange } from './date-range'
 
@@ -7,6 +12,16 @@ type Sql = SQL
 type DocumentCounts = {
     textDocuments: number
     drawingDocuments: number
+}
+
+type PadTotals = {
+    totalPads: number
+    rootPaths: number
+    rootPathsCreated: number
+}
+
+type RevisionSummary = {
+    latestRevisionAt: string | null
 }
 
 export async function readDashboardStats(
@@ -20,12 +35,18 @@ export async function readDashboardStats(
         busiestRootPaths,
         revisionBytes,
         documentCounts,
+        padTotals,
+        hourlyRows,
+        revisionSummary,
     ] = await Promise.all([
         readDailyRows(sql, range, timezone),
         readTopEditedPads(sql, range),
         readBusiestRootPaths(sql, range),
         readTotalRevisionBytes(sql, range),
         readDocumentCounts(sql),
+        readPadTotals(sql, range),
+        readHourlyRevisions(sql, range, timezone),
+        readRevisionSummary(sql, range),
     ])
 
     const dailyByDate = new Map(dailyRows.map((row) => [row.date, row]))
@@ -36,6 +57,8 @@ export async function readDashboardStats(
         textRevisions: dailyByDate.get(date)?.textRevisions ?? 0,
         drawingRevisions: dailyByDate.get(date)?.drawingRevisions ?? 0,
     }))
+    const totalRevisions =
+        sum(series, 'textRevisions') + sum(series, 'drawingRevisions')
 
     return {
         range: { from: range.from, to: range.to, timezone },
@@ -48,9 +71,19 @@ export async function readDashboardStats(
             textDocuments: documentCounts.textDocuments,
             drawingDocuments: documentCounts.drawingDocuments,
             totalRevisionBytes: revisionBytes,
+            totalPads: padTotals.totalPads,
+            rootPaths: padTotals.rootPaths,
+            rootPathsCreated: padTotals.rootPathsCreated,
+            activeDays: series.filter(hasActivity).length,
+            averageRevisionBytes:
+                totalRevisions === 0
+                    ? 0
+                    : Math.round(revisionBytes / totalRevisions),
+            latestRevisionAt: revisionSummary.latestRevisionAt,
             fileTransfersTracked: false,
         },
         series,
+        hourlyRevisions: fillHourlyRevisions(hourlyRows),
         topEditedPads,
         busiestRootPaths,
     }
@@ -147,6 +180,64 @@ async function readDocumentCounts(sql: Sql): Promise<DocumentCounts> {
     return row ?? { textDocuments: 0, drawingDocuments: 0 }
 }
 
+async function readPadTotals(sql: Sql, range: ParsedRange): Promise<PadTotals> {
+    const [row] = await sql<PadTotals[]>`
+        SELECT
+            COUNT(*)::int AS "totalPads",
+            COUNT(DISTINCT root_path)::int AS "rootPaths",
+            COUNT(DISTINCT root_path) FILTER (
+                WHERE created_at >= ${range.startUtc} AND created_at < ${range.endUtc}
+            )::int AS "rootPathsCreated"
+        FROM pads
+    `
+    return row ?? { totalPads: 0, rootPaths: 0, rootPathsCreated: 0 }
+}
+
+async function readHourlyRevisions(
+    sql: Sql,
+    range: ParsedRange,
+    timezone: string,
+) {
+    return sql<HourPoint[]>`
+        SELECT
+            EXTRACT(HOUR FROM created_at AT TIME ZONE ${timezone})::int AS hour,
+            COUNT(*)::int AS revisions
+        FROM pad_revisions
+        WHERE created_at >= ${range.startUtc} AND created_at < ${range.endUtc}
+        GROUP BY 1
+        ORDER BY 1
+    `
+}
+
+async function readRevisionSummary(
+    sql: Sql,
+    range: ParsedRange,
+): Promise<RevisionSummary> {
+    const [row] = await sql<RevisionSummary[]>`
+        SELECT MAX(created_at)::text AS "latestRevisionAt"
+        FROM pad_revisions
+        WHERE created_at >= ${range.startUtc} AND created_at < ${range.endUtc}
+    `
+    return row ?? { latestRevisionAt: null }
+}
+
+function fillHourlyRevisions(rows: HourPoint[]) {
+    const byHour = new Map(rows.map((row) => [row.hour, row.revisions]))
+    return Array.from({ length: 24 }, (_, hour) => ({
+        hour,
+        revisions: byHour.get(hour) ?? 0,
+    }))
+}
+
 function sum(series: MetricPoint[], key: keyof Omit<MetricPoint, 'date'>) {
     return series.reduce((total, point) => total + point[key], 0)
+}
+
+function hasActivity(point: MetricPoint) {
+    return (
+        point.padsCreated > 0 ||
+        point.padsEdited > 0 ||
+        point.textRevisions > 0 ||
+        point.drawingRevisions > 0
+    )
 }

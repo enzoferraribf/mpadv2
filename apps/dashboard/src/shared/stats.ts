@@ -17,6 +17,11 @@ export type PadCountRow = {
     count: number
 }
 
+export type HourPoint = {
+    hour: number
+    revisions: number
+}
+
 export type DashboardStats = {
     range: DateRange
     generatedAt: string
@@ -28,9 +33,16 @@ export type DashboardStats = {
         textDocuments: number
         drawingDocuments: number
         totalRevisionBytes: number
+        totalPads: number
+        rootPaths: number
+        rootPathsCreated: number
+        activeDays: number
+        averageRevisionBytes: number
+        latestRevisionAt: string | null
         fileTransfersTracked: false
     }
     series: MetricPoint[]
+    hourlyRevisions: HourPoint[]
     topEditedPads: PadCountRow[]
     busiestRootPaths: PadCountRow[]
 }
