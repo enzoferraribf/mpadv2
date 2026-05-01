@@ -5,6 +5,7 @@ import type {
     PadSizeRow,
 } from '@/shared/stats'
 import type { SQL } from 'bun'
+import { readBytea } from './bytea'
 import type { ParsedRange } from './date-range'
 import { readDrawingElementCount, readTextCharacters } from './doc-read'
 import type { StoredRevision } from './doc-read'
@@ -21,8 +22,8 @@ type DocRow = {
 type RevisionRow = {
     doc_id: number
     revision_number: number
-    update: Uint8Array
-    snapshot: Uint8Array | null
+    update: unknown
+    snapshot: unknown | null
 }
 
 export async function readDashboardStats(
@@ -202,8 +203,8 @@ async function readDocRevisions(sql: Sql, docIds: number[]) {
         const revisions = byDoc.get(row.doc_id) ?? []
         revisions.push({
             revisionNumber: row.revision_number,
-            update: new Uint8Array(row.update),
-            snapshot: row.snapshot ? new Uint8Array(row.snapshot) : null,
+            update: readBytea(row.update),
+            snapshot: row.snapshot ? readBytea(row.snapshot) : null,
         })
         byDoc.set(row.doc_id, revisions)
     }
