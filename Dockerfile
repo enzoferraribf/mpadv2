@@ -2,13 +2,14 @@ FROM oven/bun:1.3.12-alpine AS production-deps
 
 WORKDIR /app
 COPY package.json bun.lock tsconfig.base.json tsconfig.bun.json tsconfig.browser.json tsconfig.lib.json tsconfig.workspace.json ./
+COPY apps/dashboard/package.json ./apps/dashboard/package.json
 COPY apps/web/package.json ./apps/web/package.json
 COPY apps/web/vendor/noop-mermaid-to-excalidraw/package.json ./apps/web/vendor/noop-mermaid-to-excalidraw/package.json
 COPY apps/api/package.json ./apps/api/package.json
 COPY packages/core/package.json ./packages/core/package.json
 COPY packages/protocol/package.json ./packages/protocol/package.json
 COPY packages/testkit/package.json ./packages/testkit/package.json
-RUN bun install --frozen-lockfile --production
+RUN bun install --frozen-lockfile --production --filter @mpad/api
 
 FROM oven/bun:1.3.12-alpine AS runtime
 
