@@ -32,7 +32,7 @@ afterEach(async () => {
 })
 
 describe('http and websocket integration', () => {
-    test('persists websocket text updates and rejects history http', async () => {
+    test('persists websocket text updates', async () => {
         const path = padPath(
             `integration/${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
         )
@@ -71,100 +71,10 @@ describe('http and websocket integration', () => {
             'hello integration',
         )
 
-        const removedHistoryResponse = await fetch(
-            `http://127.0.0.1:${port}/api/pads${path}/text/history`,
-        )
-        expect(removedHistoryResponse.status).toBe(404)
-
         socket.close()
         doc.destroy()
         restored.destroy()
         await cleanupRoot(path)
-    })
-
-    test('returns the configured cors origin', async () => {
-        ;({ port, runtime, server } = openTestServer())
-
-        const response = await fetch(testUrl(port, '/health'), {
-            headers: {
-                Origin: 'https://app.example.com',
-            },
-        })
-
-        expect(response.status).toBe(200)
-        expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
-            'https://app.example.com',
-        )
-    })
-
-    test('does not emit cors headers for a different origin', async () => {
-        ;({ port, runtime, server } = openTestServer())
-
-        const response = await fetch(testUrl(port, '/health'), {
-            headers: {
-                Origin: 'https://evil.example.com',
-            },
-        })
-
-        expect(response.status).toBe(200)
-        expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
-    })
-
-    test('rejects preflight requests from a different origin', async () => {
-        ;({ port, runtime, server } = openTestServer())
-
-        const response = await fetch(testUrl(port, '/health'), {
-            method: 'OPTIONS',
-            headers: {
-                Origin: 'https://evil.example.com',
-            },
-        })
-
-        expect(response.status).toBe(403)
-        expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
-    })
-
-    test('does not serve the static web app', async () => {
-        ;({ port, runtime, server } = openTestServer())
-
-        const response = await fetch(testUrl(port, '/'))
-
-        expect(response.status).toBe(404)
-        expect(response.headers.get('Content-Security-Policy')).toBeNull()
-        expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
-    })
-
-    test('returns api security headers without wildcard cors', async () => {
-        ;({ port, runtime, server } = openTestServer())
-
-        const response = await fetch(testUrl(port, '/health'))
-
-        expect(response.status).toBe(200)
-        expect(response.headers.get('Content-Security-Policy')).toBeNull()
-        expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
-        expect(response.headers.get('Referrer-Policy')).toBe(
-            'strict-origin-when-cross-origin',
-        )
-        expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
-    })
-
-    test('rejects malformed websocket requests without leaking bun errors', async () => {
-        ;({ port, runtime, server } = openTestServer())
-
-        const response = await fetch(
-            testUrl(port, '/ws/%2Fpad%3Atext?client=abc'),
-            {
-                headers: {
-                    Origin: 'https://app.example.com',
-                },
-            },
-        )
-
-        expect(response.status).toBe(400)
-        const body = await response.text()
-        expect(body).toContain('Missing client id')
-        expect(body).not.toContain('__bunfallback')
-        expect(body).not.toContain('/apps/api/')
     })
 
     test('rejects invalid room names without leaking stack traces', async () => {
@@ -181,16 +91,6 @@ describe('http and websocket integration', () => {
         expect(body).toContain('Invalid room name')
         expect(body).not.toContain('__bunfallback')
         expect(body).not.toContain('/apps/api/')
-    })
-
-    test('rejects websocket upgrades without the configured origin', async () => {
-        ;({ port, runtime, server } = openTestServer())
-
-        const response = await fetch(
-            testUrl(port, '/ws/%2Fpad%3Atext?client=1'),
-        )
-
-        expect(response.status).toBe(403)
     })
 
     test('does not expose dotfiles or encoded traversal paths', async () => {

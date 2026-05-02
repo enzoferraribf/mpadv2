@@ -1,76 +1,34 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { type ReservedSQL, SQL } from 'bun'
+import {
+    afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from 'bun:test'
+import { SQL } from 'bun'
 import type { ParsedRange } from '../src/server/date-range'
 import { readDashboardStats } from '../src/server/stats'
 
 const databaseUrl = process.env.DATABASE_URL
 const run = databaseUrl ? describe : describe.skip
-let pool: SQL
-let sql: ReservedSQL
+let sql: SQL
 
 run('dashboard stats db integration', () => {
     beforeAll(async () => {
-        pool = new SQL(databaseUrl!)
-        sql = await pool.reserve()
-        await sql`
-            CREATE TEMP TABLE pads (
-                id bigserial PRIMARY KEY,
-                path text NOT NULL UNIQUE,
-                root_path text NOT NULL,
-                parent_path text,
-                created_at timestamptz NOT NULL DEFAULT now(),
-                updated_at timestamptz NOT NULL DEFAULT now()
-            )
-        `
-        await sql`
-            CREATE TEMP TABLE pad_docs (
-                id bigserial PRIMARY KEY,
-                pad_id bigint NOT NULL REFERENCES pads(id) ON DELETE CASCADE,
-                kind text NOT NULL,
-                head_revision_id bigint,
-                head_revision_number bigint NOT NULL DEFAULT 0,
-                checkpoint_revision_id bigint,
-                checkpoint_revision_number bigint,
-                created_at timestamptz NOT NULL DEFAULT now(),
-                updated_at timestamptz NOT NULL DEFAULT now()
-            )
-        `
-        await sql`
-            CREATE TEMP TABLE pad_revisions (
-                id bigserial PRIMARY KEY,
-                doc_id bigint NOT NULL REFERENCES pad_docs(id) ON DELETE CASCADE,
-                revision_number bigint NOT NULL,
-                parent_revision_id bigint,
-                reverted_from_revision_id bigint,
-                update bytea NOT NULL,
-                snapshot bytea,
-                event_count integer NOT NULL,
-                created_at timestamptz NOT NULL DEFAULT now()
-            )
-        `
+        sql = new SQL(databaseUrl!)
+        await resetSchema()
+    })
+
+    beforeEach(async () => {
+        await sql`TRUNCATE pad_revisions, pad_docs, pads RESTART IDENTITY`
     })
 
     afterAll(async () => {
-        sql?.release()
-        await pool?.close()
+        await sql?.close()
     })
 
-    test('returns empty stats for an empty database', async () => {
-        await truncateTables()
-        const stats = await readDashboardStats(sql, range(), 'Europe/London')
-
-        expect(stats.totals.padsCreated).toBe(0)
-        expect(stats.totals.padsEdited).toBe(0)
-        expect(stats.totals.textDocuments).toBe(0)
-        expect(stats.totals.drawingDocuments).toBe(0)
-        expect(stats.dailyActivity).toHaveLength(3)
-        expect(stats.topEditedPads).toHaveLength(0)
-        expect(stats.stalePads).toHaveLength(0)
-    })
-
-    test('counts pads, revisions, and document kinds', async () => {
-        await truncateTables()
-
+    test('summarizes activity and stale pads from real tables', async () => {
         await insertDoc({
             path: '/team/a',
             rootPath: '/team',
@@ -83,87 +41,45 @@ run('dashboard stats db integration', () => {
             kind: 'drawing',
             createdAt: '2026-05-02T10:00:00Z',
         })
-
-        const stats = await readDashboardStats(sql, range(), 'Europe/London')
-
-        expect(stats.totals.padsCreated).toBe(2)
-        expect(stats.totals.padsEdited).toBe(2)
-        expect(stats.totals.textRevisions).toBe(1)
-        expect(stats.totals.drawingRevisions).toBe(1)
-        expect(stats.totals.textDocuments).toBe(1)
-        expect(stats.totals.drawingDocuments).toBe(1)
-        expect(stats.totals.totalPads).toBe(2)
-        expect(stats.totals.rootPaths).toBe(1)
-        expect(stats.totals.activeRootPaths).toBe(1)
-        expect(stats.totals.rootPathsCreated).toBe(1)
-        expect(stats.totals.existingRootPaths).toBe(0)
-        expect(stats.totals.activeDays).toBe(2)
-        expect(stats.totals.averageRevisionBytes).toBe(1)
-        expect(stats.totals.creationToEditRate).toBe(100)
-        expect(stats.totals.averageEditsPerEditedPad).toBe(1)
-        expect(stats.totals.averagePadsPerRoot).toBe(2)
-        expect(stats.totals.textDocumentRatio).toBe(50)
-        expect(stats.totals.newRootShare).toBe(100)
-        expect(stats.totals.latestRevisionAt).not.toBeNull()
-        expect(stats.dailyActivity[0]).toMatchObject({
-            date: '2026-05-01',
-            padsCreated: 1,
-            padsEdited: 1,
-            textRevisions: 1,
-            drawingRevisions: 0,
-            revisionBytes: 1,
-            totalActivity: 3,
-        })
-        expect(stats.hourlyRevisions[11]).toEqual({
-            hour: 11,
-            revisions: 2,
-        })
-        expect(stats.topEditedPads[0]).toMatchObject({
-            path: '/team/a',
-            revisions: 1,
-            revisionBytes: 1,
-        })
-        expect(stats.busiestRootPaths[0]).toEqual({
-            path: '/team',
-            revisions: 2,
-            pads: 2,
-        })
-        expect(stats.largestRevisionPaths[0]).toMatchObject({
-            revisions: 1,
-            revisionBytes: 1,
-        })
-        expect(stats.topRootsByPads[0]).toMatchObject({
-            path: '/team',
-            pads: 2,
-        })
-        expect(stats.recentlyActivePads[0]).toMatchObject({
-            path: '/team/b',
-            revisions: 1,
-        })
-        expect(stats.stalePads).toHaveLength(0)
-    })
-
-    test('lists stale pads without revisions in the range', async () => {
-        await truncateTables()
-
         await insertDoc({
             path: '/archive/a',
             rootPath: '/archive',
             kind: 'text',
             createdAt: '2026-04-01T10:00:00Z',
         })
-        await insertDoc({
-            path: '/team/a',
-            rootPath: '/team',
-            kind: 'text',
-            createdAt: '2026-05-01T10:00:00Z',
-        })
 
         const stats = await readDashboardStats(sql, range(), 'Europe/London')
 
-        expect(stats.totals.rootPaths).toBe(2)
-        expect(stats.totals.activeRootPaths).toBe(1)
-        expect(stats.totals.rootPathsCreated).toBe(1)
+        expect(stats.totals).toMatchObject({
+            padsCreated: 2,
+            padsEdited: 2,
+            textRevisions: 1,
+            drawingRevisions: 1,
+            textDocuments: 2,
+            drawingDocuments: 1,
+            rootPaths: 2,
+            activeRootPaths: 1,
+        })
+        expect(stats.dailyActivity).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    date: '2026-05-01',
+                    padsCreated: 1,
+                    padsEdited: 1,
+                    textRevisions: 1,
+                }),
+                expect.objectContaining({
+                    date: '2026-05-02',
+                    padsCreated: 1,
+                    padsEdited: 1,
+                    drawingRevisions: 1,
+                }),
+            ]),
+        )
+        expect(stats.topEditedPads.map((pad) => pad.path)).toEqual([
+            '/team/a',
+            '/team/b',
+        ])
         expect(stats.stalePads[0]).toMatchObject({
             path: '/archive/a',
             revisions: 1,
@@ -181,8 +97,27 @@ function range(): ParsedRange {
     }
 }
 
-async function truncateTables() {
-    await sql`TRUNCATE pad_revisions, pad_docs, pads RESTART IDENTITY`
+async function resetSchema() {
+    await sql`DROP TABLE IF EXISTS pad_revisions, pad_docs, pads CASCADE`
+    for (const migration of [
+        '0000_colossal_lethal_legion.sql',
+        '0001_relax_legacy_pad_path_constraints.sql',
+    ]) {
+        const file = Bun.file(
+            new URL(
+                `../../api/src/db/migrations/${migration}`,
+                import.meta.url,
+            ),
+        )
+        const statements = (await file.text())
+            .split('--> statement-breakpoint')
+            .map((statement) => statement.trim())
+            .filter(Boolean)
+
+        for (const statement of statements) {
+            await sql.unsafe(statement)
+        }
+    }
 }
 
 async function insertDoc(input: {

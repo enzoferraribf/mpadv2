@@ -74,14 +74,10 @@ jobs:
           retention-days: 14
 
   docker_smoke:
-    name: Docker smoke (${{ matrix.lane }})
+    name: Docker smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [checks]
-    strategy:
-      fail-fast: false
-      matrix:
-        lane: [shell, text, drawing, files]
 
     steps:
       - uses: actions/checkout@v5
@@ -97,15 +93,15 @@ jobs:
         run: bun x playwright install --with-deps chromium
 
       - name: Docker smoke
-        run: bun run docker:smoke:${{ matrix.lane }}
+        run: bun run docker:smoke
 
       - name: Upload Docker smoke artifacts
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: docker-smoke-${{ matrix.lane }}-artifacts
+          name: docker-smoke-artifacts
           path: |
-            .tmp/playwright/docker/${{ matrix.lane }}
+            .tmp/playwright/docker
             test-results
             playwright-report
           if-no-files-found: ignore

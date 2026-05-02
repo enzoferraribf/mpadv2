@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test'
-import { dockerAppUrl } from '../../playwright-env'
-import { openPad } from '../docker-test'
+import { dockerAppUrl } from '../playwright-env'
+import { openPad, waitForPad } from './docker-test'
 
-test('serves landing, health, and related pads from the docker app', async ({
+test('serves the docker app with db-backed pads and text persistence', async ({
     page,
 }) => {
-    const root = `docker-shell-${Date.now()}`
+    const root = `docker-smoke-${Date.now()}`
     const child = `${root}/child`
 
     await page.goto('/')
@@ -20,9 +20,20 @@ test('serves landing, health, and related pads from the docker app', async ({
     const related = await page.request.get(
         `${dockerAppUrl}/api/pads/${child}/related`,
     )
-    expect(related.ok()).toBe(true)
     expect(await related.json()).toEqual([
         { path: `/${root}`, parentPath: null, name: root },
         { path: `/${child}`, parentPath: `/${root}`, name: 'child' },
     ])
+
+    await page.evaluate(() => window.__mpad__.setText('# docker smoke'))
+    await page.waitForFunction(
+        () => window.__mpad__?.getText() === '# docker smoke',
+    )
+    await page.waitForTimeout(3_500)
+    await page.reload()
+    await waitForPad(page)
+
+    await expect
+        .poll(() => page.evaluate(() => window.__mpad__?.getText()))
+        .toBe('# docker smoke')
 })

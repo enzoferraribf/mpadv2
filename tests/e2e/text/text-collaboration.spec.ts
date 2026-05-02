@@ -8,7 +8,9 @@ import {
     waitForTextPersistence,
 } from '$/e2e/mpad-test'
 
-test('syncs markdown between two pads', async ({ browser }) => {
+test('syncs markdown between peers and persists after reload', async ({
+    browser,
+}) => {
     const path = `notes/${Date.now()}-text`
     const contextA = await browser.newContext()
     const contextB = await browser.newContext()
@@ -29,25 +31,47 @@ test('syncs markdown between two pads', async ({ browser }) => {
         pageB.getByRole('heading', { name: 'shared title' }),
     ).toBeVisible()
 
+    await waitForTextPersistence(pageB)
+    await pageB.reload()
+    await waitForPad(pageB)
+    await waitForText(pageB, '# shared title')
+    await setLayout(pageB, 'Preview')
+    await expect(
+        pageB.getByRole('heading', { name: 'shared title' }),
+    ).toBeVisible()
+
     await contextA.close()
     await contextB.close()
 })
 
-test('keeps text after a reload', async ({ browser }) => {
-    const path = `notes/${Date.now()}-reload`
-    const context = await browser.newContext()
-    const page = await context.newPage()
+test('exports the current markdown through the print flow', async ({
+    page,
+}) => {
+    const path = `notes/${Date.now()}-pdf`
 
+    await page.addInitScript(() => {
+        window.print = () => {
+            ;(
+                window as unknown as {
+                    __mpadPrintCalled?: boolean
+                }
+            ).__mpadPrintCalled = true
+        }
+    })
     await openPad(page, path)
-    await page.evaluate(() => window.__mpad__.appendText('# persisted'))
-    await waitForText(page, '# persisted')
+    await page.evaluate(() =>
+        window.__mpad__.setText('# Exported\n\n```ts\nconst value = 1\n```'),
+    )
+    await waitForText(page, '# Exported\n\n```ts\nconst value = 1\n```')
+    await page.getByLabel('Export PDF').click()
 
-    await waitForTextPersistence(page)
-    await page.reload()
-    await waitForPad(page)
-    await waitForText(page, '# persisted')
-    await setLayout(page, 'Preview')
-    await expect(page.getByRole('heading', { name: 'persisted' })).toBeVisible()
-
-    await context.close()
+    await expect(page.locator('.markdown-pdf-export')).toContainText('Exported')
+    await page.waitForFunction(
+        () =>
+            (
+                window as unknown as {
+                    __mpadPrintCalled?: boolean
+                }
+            ).__mpadPrintCalled === true,
+    )
 })
