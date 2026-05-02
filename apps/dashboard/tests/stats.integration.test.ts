@@ -1,15 +1,17 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { SQL } from 'bun'
+import { type ReservedSQL, SQL } from 'bun'
 import type { ParsedRange } from '../src/server/date-range'
 import { readDashboardStats } from '../src/server/stats'
 
 const databaseUrl = process.env.DATABASE_URL
 const run = databaseUrl ? describe : describe.skip
-let sql: SQL
+let pool: SQL
+let sql: ReservedSQL
 
 run('dashboard stats db integration', () => {
     beforeAll(async () => {
-        sql = new SQL(databaseUrl!)
+        pool = new SQL(databaseUrl!)
+        sql = await pool.reserve()
         await sql`
             CREATE TEMP TABLE pads (
                 id bigserial PRIMARY KEY,
@@ -49,7 +51,8 @@ run('dashboard stats db integration', () => {
     })
 
     afterAll(async () => {
-        await sql?.close()
+        sql?.release()
+        await pool?.close()
     })
 
     test('returns empty stats for an empty database', async () => {
