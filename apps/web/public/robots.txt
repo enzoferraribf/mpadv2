@@ -1,2 +1,53 @@
+User-agent: Googlebot
+Allow: /$
+Allow: /assets/
+Allow: /fonts/
+Allow: /sitemap.xml$
+Disallow: /
+
+User-agent: Googlebot-Image
+Allow: /assets/
+Allow: /fonts/
+Disallow: /
+
+User-agent: Google-InspectionTool
+Allow: /$
+Allow: /assets/
+Allow: /fonts/
+Allow: /sitemap.xml$
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: GoogleOther
+Disallow: /
+
+User-agent: GoogleOther-Image
+Disallow: /
+
+User-agent: GoogleOther-Video
+Disallow: /
+
+User-agent: Google-CloudVertexBot
+Disallow: /
+
+User-agent: Storebot-Google
+Disallow: /
+
+User-agent: AdsBot-Google
+Disallow: /
+
+User-agent: AdsBot-Google-Mobile
+Disallow: /
+
+User-agent: APIs-Google
+Disallow: /
+
+User-agent: Mediapartners-Google
+Disallow: /
+
 User-agent: *
 Disallow: /
+
+Sitemap: https://missopad.com/sitemap.xml

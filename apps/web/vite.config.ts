@@ -64,7 +64,6 @@ function readCloudflareHeaders(apiOrigin: string, websocketOrigin: string) {
   X-Frame-Options: DENY
   Permissions-Policy: browsing-topics=(), camera=(), geolocation=(), microphone=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  X-Robots-Tag: noindex, nofollow, noarchive
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
