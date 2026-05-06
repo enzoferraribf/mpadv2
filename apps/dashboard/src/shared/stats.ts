@@ -17,37 +17,6 @@ export type DailyActivityRow = MetricPoint & {
     revisionBytes: number
 }
 
-export type RevisionPathRow = {
-    path: string
-    revisions: number
-    revisionBytes: number
-    latestRevisionAt: string | null
-}
-
-export type RootActivityRow = {
-    path: string
-    revisions: number
-    pads: number
-}
-
-export type RootPadsRow = {
-    path: string
-    pads: number
-    latestPadCreatedAt: string | null
-}
-
-export type PadActivityRow = {
-    path: string
-    revisions: number
-    latestRevisionAt: string | null
-}
-
-export type StalePadRow = {
-    path: string
-    revisions: number
-    lastUpdatedAt: string | null
-}
-
 export type HourPoint = {
     hour: number
     revisions: number
@@ -82,10 +51,4 @@ export type DashboardStats = {
     series: MetricPoint[]
     dailyActivity: DailyActivityRow[]
     hourlyRevisions: HourPoint[]
-    topEditedPads: RevisionPathRow[]
-    busiestRootPaths: RootActivityRow[]
-    largestRevisionPaths: RevisionPathRow[]
-    topRootsByPads: RootPadsRow[]
-    recentlyActivePads: PadActivityRow[]
-    stalePads: StalePadRow[]
 }

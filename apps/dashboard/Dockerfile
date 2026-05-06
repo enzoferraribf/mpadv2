@@ -35,6 +35,7 @@ RUN bun install --frozen-lockfile --production
 
 COPY --from=build /app/apps/dashboard/dist ./apps/dashboard/dist
 COPY --from=build /app/apps/dashboard/src ./apps/dashboard/src
+COPY apps/dashboard/tsconfig.json ./apps/dashboard/tsconfig.json
 
 EXPOSE 4010
 USER bun

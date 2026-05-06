@@ -2,6 +2,8 @@
 **/dist
 **/.turbo
 **/.tanstack
+.DS_Store
+.vscode/
 .tmp
 .turso
 .env

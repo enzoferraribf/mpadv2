@@ -7,24 +7,22 @@
 </p>
 
 <p align="center">
-  Real-time pads for markdown, drawing, live files, and related pages
+  Real-time pads for markdown, drawing, live files, and related pages.
 </p>
 
-<br>
+## What It Is
 
-`mpad` is a real-time pad app.
+`mpad` is a small real-time pad app. Open a path like `/notes/demo` and start working. There is no auth flow, workspace setup, or page creation step.
 
-Open any path and start working. There is no auth flow, no workspace setup, and no page creation step. A pad gives you shared markdown, one shared drawing surface, live peer-to-peer files, and related pads from the same path tree.
+A pad has:
 
-## What it does
+- shared markdown with persisted reloads
+- one shared drawing surface
+- live peer-to-peer file transfer
+- related pad discovery from the same path tree
+- an aggregate dashboard for usage stats
 
-- Real-time markdown editing with persisted reloads
-- One shared drawing surface per pad
-- Live peer-to-peer file transfer inside the room
-- Related pad discovery from the current path tree
-- Static client on the browser host with API and WebSocket transport on the API host
-
-## Development
+## Local Development
 
 Install dependencies:
 
@@ -32,29 +30,72 @@ Install dependencies:
 bun install
 ```
 
-Create a local `.env` at the repo root:
+Create `.env` from `.env.example`:
 
 ```sh
 DATABASE_URL=postgres://mpad:mpad@127.0.0.1:15432/mpad_local
 PORT=4000
-CLIENT_ORIGIN=http://127.0.0.1:4174
+CLIENT_ORIGIN=http://127.0.0.1:5173
 CLIENT_IP_SOURCE=direct
 TRUST_PROXY_HEADERS=false
 VITE_MPAD_API_ORIGIN=http://127.0.0.1:4000
+DASHBOARD_HOST=127.0.0.1
+DASHBOARD_PORT=4010
+DASHBOARD_TIME_ZONE=Europe/London
 ```
 
-Start the app:
+Start Postgres, then run:
 
 ```sh
 bun dev
 ```
 
-The web app and API run through Bun workspaces. For a deploy-shaped local smoke pass, use:
+The web app runs on Vite's default port and the API runs on `PORT`.
+
+Run the dashboard locally with the same `DATABASE_URL`:
+
+```sh
+bun run --cwd apps/dashboard dev
+```
+
+## Docker
+
+The API Dockerfile is `apps/api/Dockerfile`. Dokploy should build the API with:
+
+- context: `.`
+- dockerfile: `apps/api/Dockerfile`
+
+The dashboard Dockerfile is `apps/dashboard/Dockerfile`. Deploy it separately if you want dashboard access. The repo has no Dokploy compose file.
+
+For a deploy-shaped local smoke pass:
 
 ```sh
 bun run docker:smoke
 ```
 
-That command builds the static web app with `VITE_MPAD_API_ORIGIN` pointed at
-the Docker API, serves the built files locally, and runs the Docker smoke lanes
-against that split shape.
+That command starts Postgres, API, dashboard, builds the web app with `VITE_MPAD_API_ORIGIN` pointed at the Docker API, serves the static web app, and runs the Docker Playwright smoke test.
+
+Default local Docker ports:
+
+- API: `http://127.0.0.1:13000`
+- dashboard: `http://127.0.0.1:13010`
+- web preview: `http://127.0.0.1:4174`
+- Postgres: `127.0.0.1:15432`
+
+## Checks
+
+```sh
+bun run check
+bun run test
+bun run docker:smoke
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
+
+See [SPEC.md](./SPEC.md) for the architecture and feature details.

@@ -1,14 +1,14 @@
 import { FileTransferProgress } from '@/features/files/view/progress'
-import type { PadPath } from '@mpad/core/pad-path'
-import type { LiveFileState } from '@mpad/protocol/live-files'
-import { Download, HardDrive, Trash2 } from 'lucide-react'
 import {
     CommandDialog,
     CommandEmpty,
     CommandGroup,
     CommandInput,
     CommandList,
-} from './command-dialog'
+} from '@/shared/ui/command'
+import type { PadPath } from '@mpad/core/pad-path'
+import type { LiveFileState } from '@mpad/protocol/live-files'
+import { Download, HardDrive, Trash2 } from 'lucide-react'
 import { formatFileSize } from './format'
 
 export function FilesDialog(input: {
@@ -20,7 +20,12 @@ export function FilesDialog(input: {
     onDownload: (file: LiveFileState) => void
 }) {
     return (
-        <CommandDialog open={input.open} onOpenChange={input.onOpenChange}>
+        <CommandDialog
+            open={input.open}
+            onOpenChange={input.onOpenChange}
+            title='Live files dialog'
+            description='Search and manage live files for this pad.'
+        >
             <CommandInput placeholder={`Search live files in ${input.path}`} />
             <CommandList>
                 {input.files.length === 0 ? (

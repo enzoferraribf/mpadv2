@@ -28,7 +28,7 @@ run('dashboard stats db integration', () => {
         await sql?.close()
     })
 
-    test('summarizes activity and stale pads from real tables', async () => {
+    test('summarizes aggregate activity without pad names', async () => {
         await insertDoc({
             path: '/team/a',
             rootPath: '/team',
@@ -76,14 +76,12 @@ run('dashboard stats db integration', () => {
                 }),
             ]),
         )
-        expect(stats.topEditedPads.map((pad) => pad.path)).toEqual([
-            '/team/a',
-            '/team/b',
-        ])
-        expect(stats.stalePads[0]).toMatchObject({
-            path: '/archive/a',
-            revisions: 1,
-        })
+        const body = JSON.stringify(stats)
+        expect(body).not.toContain('/team')
+        expect(body).not.toContain('/team/a')
+        expect(body).not.toContain('/team/b')
+        expect(body).not.toContain('/archive')
+        expect(body).not.toContain('/archive/a')
     })
 })
 

@@ -8,6 +8,7 @@ export function checkRepoStructure(context: RepoShapeContext) {
     checkWorkspaceNames(context, 'apps', allowedApps)
     checkWorkspaceNames(context, 'packages', allowedPackages)
     checkDddShape(context)
+    checkNoFeatureLocalCommandDialogs(context)
 }
 
 function checkTopLevel(context: RepoShapeContext) {
@@ -121,6 +122,20 @@ function checkNoRootDomainFile(context: RepoShapeContext, relativeDir: string) {
         if (entry.name === 'index.ts') continue
         context.violations.push(
             `${relativeDir}/${entry.name} should live under domain or application`,
+        )
+    }
+}
+
+function checkNoFeatureLocalCommandDialogs(context: RepoShapeContext) {
+    const featuresDir = path.join(context.repoRoot, 'apps/web/src/features')
+    if (!existsSync(featuresDir)) return
+
+    for (const feature of readdirSync(featuresDir, { withFileTypes: true })) {
+        if (!feature.isDirectory()) continue
+        const relativePath = `apps/web/src/features/${feature.name}/view/command-dialog.tsx`
+        if (!existsSync(path.join(context.repoRoot, relativePath))) continue
+        context.violations.push(
+            `${relativePath} should use apps/web/src/shared/ui/command.tsx`,
         )
     }
 }

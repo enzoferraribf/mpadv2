@@ -18,6 +18,7 @@ services:
   app:
     build:
       context: .
+      dockerfile: apps/api/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,6 +30,21 @@ services:
       TRUST_PROXY_HEADERS: false
     ports:
       - "${MPAD_LOCAL_APP_PORT:-13000}:4000"
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DASHBOARD_HOST: 0.0.0.0
+      DASHBOARD_PORT: 4010
+      DASHBOARD_TIME_ZONE: ${MPAD_LOCAL_DASHBOARD_TIME_ZONE:-Europe/London}
+      DATABASE_URL: postgres://${MPAD_LOCAL_POSTGRES_USER:-mpad}:${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}@postgres:5432/${MPAD_LOCAL_POSTGRES_DB:-mpad_local}
+    ports:
+      - "${MPAD_LOCAL_DASHBOARD_PORT:-13010}:4010"
 
 volumes:
   mpad-local-postgres-data:

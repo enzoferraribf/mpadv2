@@ -16,7 +16,12 @@ const staleReferences = [
 export function checkMarkdownFiles(context: RepoShapeContext) {
     walkFiles(context.repoRoot, (filePath) => {
         if (!filePath.endsWith('.md')) return
-        if (readRelative(context, filePath) === 'README.md') return
+        if (
+            readRelative(context, filePath) === 'CONTRIBUTING.md' ||
+            readRelative(context, filePath) === 'README.md' ||
+            readRelative(context, filePath) === 'SPEC.md'
+        )
+            return
         context.violations.push(
             `unexpected markdown file ${readRelative(context, filePath)}`,
         )

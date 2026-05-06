@@ -3,11 +3,6 @@ import type {
     DashboardStats,
     HourPoint,
     MetricPoint,
-    PadActivityRow,
-    RevisionPathRow,
-    RootActivityRow,
-    RootPadsRow,
-    StalePadRow,
 } from '@/shared/stats'
 import type { SQL } from 'bun'
 import type { ParsedRange } from './date-range'
@@ -35,10 +30,6 @@ type DailyActivitySqlRow = Omit<DailyActivityRow, 'revisionBytes'> & {
     revisionBytes: number | string
 }
 
-type RevisionPathSqlRow = Omit<RevisionPathRow, 'revisionBytes'> & {
-    revisionBytes: number | string
-}
-
 export async function readDashboardStats(
     sql: Sql,
     range: ParsedRange,
@@ -47,31 +38,19 @@ export async function readDashboardStats(
     const [
         dailyRows,
         editedPadTotal,
-        topEditedPads,
-        busiestRootPaths,
         revisionBytes,
         documentCounts,
         padTotals,
         hourlyRows,
         revisionSummary,
-        largestRevisionPaths,
-        topRootsByPads,
-        recentlyActivePads,
-        stalePads,
     ] = await Promise.all([
         readDailyRows(sql, range, timezone),
         readEditedPadTotal(sql, range),
-        readTopEditedPads(sql, range),
-        readBusiestRootPaths(sql, range),
         readTotalRevisionBytes(sql, range),
         readDocumentCounts(sql),
         readPadTotals(sql, range),
         readHourlyRevisions(sql, range, timezone),
         readRevisionSummary(sql, range),
-        readLargestRevisionPaths(sql, range),
-        readTopRootsByPads(sql),
-        readRecentlyActivePads(sql, range),
-        readStalePads(sql, range),
     ])
 
     const dailyByDate = new Map(dailyRows.map((row) => [row.date, row]))
@@ -149,12 +128,6 @@ export async function readDashboardStats(
         series,
         dailyActivity,
         hourlyRevisions: fillHourlyRevisions(hourlyRows),
-        topEditedPads,
-        busiestRootPaths,
-        largestRevisionPaths,
-        topRootsByPads,
-        recentlyActivePads,
-        stalePads,
     }
 }
 
@@ -217,46 +190,6 @@ async function readEditedPadTotal(sql: Sql, range: ParsedRange) {
         WHERE r.created_at >= ${range.startUtc} AND r.created_at < ${range.endUtc}
     `
     return row?.count ?? 0
-}
-
-async function readTopEditedPads(
-    sql: Sql,
-    range: ParsedRange,
-): Promise<RevisionPathRow[]> {
-    const rows = await sql<RevisionPathSqlRow[]>`
-        SELECT
-            p.path,
-            COUNT(*)::int AS revisions,
-            COALESCE(SUM(octet_length(r.update)), 0)::bigint AS "revisionBytes",
-            MAX(r.created_at)::text AS "latestRevisionAt"
-        FROM pad_revisions r
-        JOIN pad_docs d ON d.id = r.doc_id
-        JOIN pads p ON p.id = d.pad_id
-        WHERE r.created_at >= ${range.startUtc} AND r.created_at < ${range.endUtc}
-        GROUP BY p.path
-        ORDER BY revisions DESC, p.path ASC
-        LIMIT 100
-    `
-    return normalizeRevisionPathRows(rows)
-}
-
-async function readBusiestRootPaths(
-    sql: Sql,
-    range: ParsedRange,
-): Promise<RootActivityRow[]> {
-    return sql<RootActivityRow[]>`
-        SELECT
-            p.root_path AS path,
-            COUNT(*)::int AS revisions,
-            COUNT(DISTINCT p.id)::int AS pads
-        FROM pad_revisions r
-        JOIN pad_docs d ON d.id = r.doc_id
-        JOIN pads p ON p.id = d.pad_id
-        WHERE r.created_at >= ${range.startUtc} AND r.created_at < ${range.endUtc}
-        GROUP BY p.root_path
-        ORDER BY revisions DESC, p.root_path ASC
-        LIMIT 100
-    `
 }
 
 async function readTotalRevisionBytes(sql: Sql, range: ParsedRange) {
@@ -354,106 +287,11 @@ async function readRevisionSummary(
     return row ?? { latestRevisionAt: null }
 }
 
-async function readLargestRevisionPaths(
-    sql: Sql,
-    range: ParsedRange,
-): Promise<RevisionPathRow[]> {
-    const rows = await sql<RevisionPathSqlRow[]>`
-        SELECT
-            p.path,
-            COUNT(*)::int AS revisions,
-            COALESCE(SUM(octet_length(r.update)), 0)::bigint AS "revisionBytes",
-            MAX(r.created_at)::text AS "latestRevisionAt"
-        FROM pad_revisions r
-        JOIN pad_docs d ON d.id = r.doc_id
-        JOIN pads p ON p.id = d.pad_id
-        WHERE r.created_at >= ${range.startUtc} AND r.created_at < ${range.endUtc}
-        GROUP BY p.path
-        ORDER BY "revisionBytes" DESC, p.path ASC
-        LIMIT 100
-    `
-    return normalizeRevisionPathRows(rows)
-}
-
-async function readTopRootsByPads(sql: Sql): Promise<RootPadsRow[]> {
-    return sql<RootPadsRow[]>`
-        SELECT
-            root_path AS path,
-            COUNT(*)::int AS pads,
-            MAX(created_at)::text AS "latestPadCreatedAt"
-        FROM pads
-        GROUP BY root_path
-        ORDER BY pads DESC, root_path ASC
-        LIMIT 100
-    `
-}
-
-async function readRecentlyActivePads(
-    sql: Sql,
-    range: ParsedRange,
-): Promise<PadActivityRow[]> {
-    return sql<PadActivityRow[]>`
-        SELECT
-            p.path,
-            COUNT(*)::int AS revisions,
-            MAX(r.created_at)::text AS "latestRevisionAt"
-        FROM pad_revisions r
-        JOIN pad_docs d ON d.id = r.doc_id
-        JOIN pads p ON p.id = d.pad_id
-        WHERE r.created_at >= ${range.startUtc} AND r.created_at < ${range.endUtc}
-        GROUP BY p.path
-        ORDER BY "latestRevisionAt" DESC, p.path ASC
-        LIMIT 100
-    `
-}
-
-async function readStalePads(
-    sql: Sql,
-    range: ParsedRange,
-): Promise<StalePadRow[]> {
-    return sql<StalePadRow[]>`
-        WITH revision_totals AS (
-            SELECT
-                p.id AS pad_id,
-                COUNT(r.id)::int AS revisions,
-                MAX(r.created_at) AS last_revision_at
-            FROM pads p
-            LEFT JOIN pad_docs d ON d.pad_id = p.id
-            LEFT JOIN pad_revisions r ON r.doc_id = d.id
-            GROUP BY p.id
-        ),
-        pads_with_range_revisions AS (
-            SELECT DISTINCT p.id AS pad_id
-            FROM pads p
-            JOIN pad_docs d ON d.pad_id = p.id
-            JOIN pad_revisions r ON r.doc_id = d.id
-            WHERE r.created_at >= ${range.startUtc} AND r.created_at < ${range.endUtc}
-        )
-        SELECT
-            p.path,
-            COALESCE(revision_totals.revisions, 0)::int AS revisions,
-            COALESCE(revision_totals.last_revision_at, p.created_at)::text AS "lastUpdatedAt"
-        FROM pads p
-        LEFT JOIN revision_totals ON revision_totals.pad_id = p.id
-        LEFT JOIN pads_with_range_revisions ON pads_with_range_revisions.pad_id = p.id
-        WHERE pads_with_range_revisions.pad_id IS NULL
-        ORDER BY COALESCE(revision_totals.last_revision_at, p.created_at) ASC, p.path ASC
-        LIMIT 100
-    `
-}
-
 function fillHourlyRevisions(rows: HourPoint[]) {
     const byHour = new Map(rows.map((row) => [row.hour, row.revisions]))
     return Array.from({ length: 24 }, (_, hour) => ({
         hour,
         revisions: byHour.get(hour) ?? 0,
-    }))
-}
-
-function normalizeRevisionPathRows(rows: RevisionPathSqlRow[]) {
-    return rows.map((row) => ({
-        ...row,
-        revisionBytes: Number(row.revisionBytes),
     }))
 }
 

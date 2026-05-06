@@ -22,7 +22,12 @@ export function CommandMenu(input: {
     commands: PadWorkspaceShellCommands
 }) {
     return (
-        <CommandDialog open={input.open} onOpenChange={input.onOpenChange}>
+        <CommandDialog
+            open={input.open}
+            onOpenChange={input.onOpenChange}
+            title='Command menu'
+            description='Search commands and workspace actions.'
+        >
             <CommandInput placeholder='Search commands' />
             <CommandList>
                 <CommandGroup heading='Workspace'>

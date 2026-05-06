@@ -10,9 +10,11 @@ POSTGRES_USER="${MPAD_LOCAL_POSTGRES_USER:-mpad}"
 POSTGRES_PASSWORD="${MPAD_LOCAL_POSTGRES_PASSWORD:-mpad}"
 POSTGRES_PORT="${MPAD_LOCAL_POSTGRES_PORT:-15432}"
 APP_PORT="${MPAD_LOCAL_APP_PORT:-13000}"
+DASHBOARD_PORT="${MPAD_LOCAL_DASHBOARD_PORT:-13010}"
 CLIENT_PORT="${MPAD_LOCAL_CLIENT_PORT:-4174}"
 CLIENT_ORIGIN="http://127.0.0.1:${CLIENT_PORT}"
 API_ORIGIN="http://127.0.0.1:${APP_PORT}"
+DASHBOARD_ORIGIN="http://127.0.0.1:${DASHBOARD_PORT}"
 WEB_PREVIEW_PID=""
 WEB_PREVIEW_LOG="$ROOT/.tmp/web-preview.log"
 
@@ -116,16 +118,18 @@ up() {
         compose down --volumes --remove-orphans >/dev/null 2>&1 || true
     fi
 
-    compose up -d --build postgres app >/dev/null
+    compose up -d --build postgres app dashboard >/dev/null
     wait_for_postgres
     wait_for_http "${API_ORIGIN}/health" app
+    wait_for_http "${DASHBOARD_ORIGIN}/api/health" dashboard
 
     cat <<EOF
 Local Docker stack is up.
 
-    API:      ${API_ORIGIN}
-    Client:   ${CLIENT_ORIGIN}
-    Postgres: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
+    API:       ${API_ORIGIN}
+    Dashboard: ${DASHBOARD_ORIGIN}
+    Client:    ${CLIENT_ORIGIN}
+    Postgres:  postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
 EOF
 }
 
@@ -145,6 +149,8 @@ test_stack() {
 
     app_health="$(curl -fsS "${API_ORIGIN}/health")"
     [ "$app_health" = '{"status":"ok"}' ]
+    dashboard_health="$(curl -fsS "${DASHBOARD_ORIGIN}/api/health")"
+    [ "$dashboard_health" = '{"status":"ok"}' ]
 
     related_json="$(curl -fsS "${API_ORIGIN}/api/pads/docker/smoke/related")"
     printf '%s' "$related_json" | grep -F '"/docker"' >/dev/null
@@ -154,6 +160,7 @@ test_stack() {
 Local Docker smoke test passed.
 
 App health: ${app_health}
+Dashboard health: ${dashboard_health}
 Client origin: ${CLIENT_ORIGIN}
 EOF
 }

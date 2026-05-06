@@ -11,6 +11,11 @@ import { Command as CommandPrimitive } from 'cmdk'
 import { Search } from 'lucide-react'
 import * as React from 'react'
 
+type CommandDialogProps = DialogProps & {
+    title?: string
+    description?: string
+}
+
 export const Command = React.forwardRef<
     React.ElementRef<typeof CommandPrimitive>,
     React.ComponentPropsWithoutRef<typeof CommandPrimitive>
@@ -26,15 +31,18 @@ export const Command = React.forwardRef<
 ))
 Command.displayName = 'Command'
 
-export function CommandDialog({ children, ...props }: DialogProps) {
+export function CommandDialog({
+    children,
+    description = 'Search commands and workspace actions.',
+    title = 'Command dialog',
+    ...props
+}: CommandDialogProps) {
     return (
         <Dialog {...props}>
             <DialogContent className='max-w-2xl overflow-hidden p-0'>
                 <VisuallyHidden>
-                    <DialogTitle>Command Dialog</DialogTitle>
-                    <DialogDescription>
-                        Search commands and workspace actions.
-                    </DialogDescription>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
                 </VisuallyHidden>
                 <Command className='[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pb-2 [&_[cmdk-group-heading]]:pt-4 [&_[cmdk-group-heading]]:text-[0.65rem] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.15em] [&_[cmdk-group-heading]]:text-[--stone-text-dim] [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:border-t [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:border-[--stone-border] [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-4 [&_[cmdk-input-wrapper]_svg]:w-4 [&_[cmdk-input]]:h-14 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-0'>
                     {children}

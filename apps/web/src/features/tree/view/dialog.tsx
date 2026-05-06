@@ -1,6 +1,3 @@
-import { type PadPath, rootPadPath } from '@mpad/core/pad-path'
-import type { PadTreeItem } from '@mpad/protocol/pad-tree'
-import { FolderTree } from 'lucide-react'
 import {
     CommandDialog,
     CommandEmpty,
@@ -8,7 +5,10 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from './command-dialog'
+} from '@/shared/ui/command'
+import { type PadPath, rootPadPath } from '@mpad/core/pad-path'
+import type { PadTreeItem } from '@mpad/protocol/pad-tree'
+import { FolderTree } from 'lucide-react'
 
 export function TreeDialog(input: {
     open: boolean
@@ -22,7 +22,12 @@ export function TreeDialog(input: {
     const scopePath = rootPadPath(input.path)
 
     return (
-        <CommandDialog open={input.open} onOpenChange={input.onOpenChange}>
+        <CommandDialog
+            open={input.open}
+            onOpenChange={input.onOpenChange}
+            title='Pad tree dialog'
+            description='Search and open pads in the workspace tree.'
+        >
             <CommandInput placeholder={`Search pads in ${scopePath}`} />
             <CommandList>
                 {items.length === 0 ? (
