@@ -1,4 +1,6 @@
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import '@fontsource-variable/fira-code'
+import '@fontsource-variable/nunito-sans'
 import { createRoot } from 'react-dom/client'
 import { routeTree } from './routeTree.gen'
 import './styles/globals.css'

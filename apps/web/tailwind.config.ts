@@ -9,9 +9,9 @@ const config = {
         },
         extend: {
             fontFamily: {
-                sans: ['Nunito Sans', 'Avenir Next', 'Segoe UI', 'sans-serif'],
-                serif: ['Fraunces', 'serif'],
-                mono: ['Fira Code', 'monospace'],
+                sans: ['var(--font-ui)'],
+                serif: ['Literata', 'Georgia', 'serif'],
+                mono: ['var(--font-mono)'],
             },
             backgroundImage: {
                 'brand-gradient':

@@ -17,6 +17,8 @@
         "@codemirror/state": "^6.6.0",
         "@codemirror/view": "^6.38.6",
         "@excalidraw/excalidraw": "0.18.1",
+        "@fontsource-variable/fira-code": "^5.2.7",
+        "@fontsource-variable/nunito-sans": "^5.2.7",
         "@lezer/highlight": "^1.2.3",
         "@mpad/core": "workspace:*",
         "@mpad/protocol": "workspace:*",

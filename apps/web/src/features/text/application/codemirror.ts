@@ -15,7 +15,7 @@ const editorTheme = EditorView.theme({
     },
     '.cm-scroller': {
         overflow: 'auto',
-        fontFamily: "'Fira Code', monospace",
+        fontFamily: 'var(--font-mono)',
         lineHeight: '1.8',
     },
     '.cm-content': {
@@ -70,7 +70,7 @@ const editorTheme = EditorView.theme({
         opacity: '1',
         padding: '2px 7px',
         borderRadius: '999px',
-        fontFamily: "'Assistant', sans-serif",
+        fontFamily: 'var(--font-ui)',
         fontSize: '11px',
         fontWeight: '700',
         letterSpacing: '0.02em',
