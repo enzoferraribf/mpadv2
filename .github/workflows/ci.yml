@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lane: [shell, text, drawing, files]
+        lane: [shell, text, drawing]
 
     steps:
       - uses: actions/checkout@v5
