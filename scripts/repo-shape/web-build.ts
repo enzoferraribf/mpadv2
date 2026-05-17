@@ -14,11 +14,9 @@ type WebManifest = Record<
 const forbiddenLandingImports = [
     /@codemirror/i,
     /@excalidraw/i,
-    /simple-peer/i,
     /react-markdown/i,
     /remark-/i,
     /src\/features\/drawing/i,
-    /src\/features\/files\/workspace/i,
     /src\/features\/text\/workspace/i,
     /src\/features\/text\/preview/i,
 ]

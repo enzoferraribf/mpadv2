@@ -73,9 +73,6 @@ export function usePadWorkspaceView(path: PadPath) {
             onCtrlKeyPressed('.', () =>
                 dispatch({ kind: 'dialog-toggled', dialog: 'tree' }),
             ),
-            onCtrlKeyPressed(';', () =>
-                dispatch({ kind: 'dialog-toggled', dialog: 'files' }),
-            ),
             onCtrlKeyPressed('b', () => dispatch({ kind: 'sidebar-toggled' })),
         ]
 

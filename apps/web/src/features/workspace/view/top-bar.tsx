@@ -75,12 +75,6 @@ export function PadTopBar(input: {
                     >
                         Drawing
                     </button>
-                    <button
-                        className={`pad-tab${view.activeTab === 'files' ? ' active' : ''}`}
-                        onClick={() => commands.openTab('files')}
-                    >
-                        Files
-                    </button>
                 </div>
                 {view.activeTab === 'text' ? (
                     <div className='pad-tab-actions'>

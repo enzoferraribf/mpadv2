@@ -1,4 +1,3 @@
-import { assert } from '@mpad/core/assert'
 import { WS_POLICY_CLOSE_CODE } from '@mpad/core/pad-limits'
 import type { PadPath } from '@mpad/core/pad-path'
 import { type PadDocKind, parsePadRoomName } from '@mpad/core/pad-room'
@@ -54,9 +53,6 @@ export async function handlePadDocMessage(
     message: ClientRoomMessage,
 ) {
     if (message.kind === 'heartbeat') return
-    if (message.kind === 'file-signal') {
-        throw new Error(`Pad doc room does not accept ${message.kind}`)
-    }
     if (
         message.kind === 'sync' &&
         !(await runtime.rateLimiter.canWritePad(socket.data.roomName))
@@ -101,7 +97,6 @@ async function loadPadDocRoom(runtime: ServerRuntime, roomName: string) {
     if (existing) return existing
 
     const parsedRoom = parsePadRoomName(roomName)
-    assert(parsedRoom.kind !== 'files', 'File rooms do not persist pad docs')
     await runtime.ensurePadExists(parsedRoom.path)
 
     const stored = await runtime.docRepository.loadDoc(

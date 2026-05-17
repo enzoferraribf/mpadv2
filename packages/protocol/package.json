@@ -5,7 +5,6 @@
     "type": "module",
     "exports": {
         "./http": "./src/http.ts",
-        "./live-files": "./src/live-files.ts",
         "./pad-connection": "./src/pad-connection.ts",
         "./pad-tree": "./src/pad-tree.ts",
         "./peer": "./src/peer.ts",

@@ -22,11 +22,10 @@
         "db:generate": "bunx drizzle-kit generate",
         "db:migrate": "bunx drizzle-kit migrate",
         "test": "bun run --cwd apps/web test && bun run --cwd apps/dashboard test && ./scripts/docker-test-db.sh bun run --cwd apps/api test && ./scripts/docker-test-db.sh bun run --cwd apps/dashboard test",
-        "smoke": "bun run smoke:shell && bun run smoke:text && bun run smoke:drawing && bun run smoke:files",
+        "smoke": "bun run smoke:shell && bun run smoke:text && bun run smoke:drawing",
         "smoke:shell": "MPAD_PLAYWRIGHT_LANE=shell ./scripts/run-playwright.sh --config playwright.config.ts",
         "smoke:text": "MPAD_PLAYWRIGHT_LANE=text ./scripts/run-playwright.sh --config playwright.config.ts",
         "smoke:drawing": "MPAD_PLAYWRIGHT_LANE=drawing ./scripts/run-playwright.sh --config playwright.config.ts",
-        "smoke:files": "MPAD_PLAYWRIGHT_LANE=files ./scripts/run-playwright.sh --config playwright.config.ts",
         "smoke:visual": "MPAD_PLAYWRIGHT_TARGET=visual ./scripts/run-playwright.sh --config playwright.config.ts",
         "docker:smoke": "./scripts/docker-local.sh smoke"
     },

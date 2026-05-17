@@ -2,10 +2,6 @@ import {
     type DrawingPadModel,
     useDrawingPad,
 } from '@/features/drawing/application/model'
-import {
-    type LiveFilesModel,
-    useLiveFiles,
-} from '@/features/files/application/model'
 import { type TextWorkspaceModel, useTextWorkspace } from '@/features/text'
 import {
     type WorkspaceNavigationModel,
@@ -18,11 +14,9 @@ import {
 } from '@/features/workspace/application/view-model'
 import { loadLocalPeer } from '@/shared/realtime/client'
 import type { PadPath } from '@mpad/core/pad-path'
-import type { LiveFileState } from '@mpad/protocol/live-files'
 import type { PadConnection } from '@mpad/protocol/pad-connection'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
-import { toast } from 'sonner'
 
 export type PadWorkspaceShellCommands = PadWorkspaceViewCommands & {
     navigateToPad: (path: PadPath) => void
@@ -38,19 +32,10 @@ export type PadWorkspaceShellModel = {
     commands: PadWorkspaceShellCommands
 }
 
-export type PadWorkspaceFilesModel = {
-    connection: PadConnection
-    files: LiveFileState[]
-    deleteFile: LiveFilesModel['deleteFile']
-    downloadFile: LiveFilesModel['downloadFile']
-    uploadFile: LiveFilesModel['uploadFile']
-}
-
 export type PadWorkspaceModel = {
     shell: PadWorkspaceShellModel
     text: TextWorkspaceModel
     drawing: DrawingPadModel
-    files: PadWorkspaceFilesModel
     navigation: WorkspaceNavigationModel
 }
 
@@ -66,11 +51,6 @@ export function usePadPageController(path: PadPath): PadPageController {
         peer,
         view.state.activeTab === 'drawing',
     )
-    const liveFiles = useLiveFiles(
-        path,
-        peer,
-        view.state.activeTab === 'files' || view.state.dialog === 'files',
-    )
     const navigation = useWorkspaceNavigation(path)
 
     const shellCommands: PadWorkspaceShellCommands = {
@@ -78,21 +58,6 @@ export function usePadPageController(path: PadPath): PadPageController {
         navigateToPad(nextPath) {
             navigate({ to: '/$', params: { _splat: nextPath.slice(1) } })
             view.commands.closeDialog()
-        },
-    }
-
-    const files: PadWorkspaceFilesModel = {
-        connection: liveFiles.connection,
-        files: liveFiles.files,
-        deleteFile(id) {
-            liveFiles.deleteFile(id)
-            toast.success('Local file removed')
-        },
-        downloadFile(file) {
-            liveFiles.downloadFile(file)
-        },
-        uploadFile(file) {
-            liveFiles.uploadFile(file)
         },
     }
 
@@ -110,7 +75,6 @@ export function usePadPageController(path: PadPath): PadPageController {
         },
         text,
         drawing,
-        files,
         navigation,
     }
 }

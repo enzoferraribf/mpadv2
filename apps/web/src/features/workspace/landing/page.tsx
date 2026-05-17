@@ -24,7 +24,7 @@ export function LandingPage() {
                         </span>
                     </h1>
                     <p className='landing-tagline'>
-                        markdown, drawing, live files, related pads
+                        markdown, drawing, related pads
                     </p>
                 </header>
                 <LandingPadInput

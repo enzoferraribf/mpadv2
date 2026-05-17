@@ -10,7 +10,6 @@ describe('text awareness', () => {
                 3,
                 {
                     user: { name: 'A', color: '#fff', colorLight: '#eee' },
-                    files: [],
                 },
             ],
         ])

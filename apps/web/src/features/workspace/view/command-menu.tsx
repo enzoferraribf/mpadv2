@@ -7,14 +7,7 @@ import {
     CommandItem,
     CommandList,
 } from '@/shared/ui/command'
-import {
-    Blocks,
-    Columns2,
-    Eye,
-    FileText,
-    FolderTree,
-    PanelRightOpen,
-} from 'lucide-react'
+import { Blocks, Columns2, Eye, FolderTree, PanelRightOpen } from 'lucide-react'
 
 export function CommandMenu(input: {
     open: boolean
@@ -57,20 +50,6 @@ export function CommandMenu(input: {
                         <CommandCopy
                             heading='Explorer'
                             description='Browse related pads.'
-                        />
-                    </CommandItem>
-                    <CommandItem
-                        onSelect={() =>
-                            run(input, () => input.commands.openDialog('files'))
-                        }
-                        className='gap-3'
-                    >
-                        <span className='command-icon-wrap'>
-                            <FileText className='h-4 w-4' />
-                        </span>
-                        <CommandCopy
-                            heading='Files'
-                            description='Browse live files.'
                         />
                     </CommandItem>
                 </CommandGroup>

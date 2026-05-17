@@ -70,11 +70,7 @@ export function PadPage({ path }: { path: PadPath }) {
                     navigationItems={navigationItems}
                 />
             )}
-            <PadPageDialogs
-                shell={model.shell}
-                navigation={model.navigation}
-                files={model.files}
-            />
+            <PadPageDialogs shell={model.shell} navigation={model.navigation} />
         </main>
     )
 }

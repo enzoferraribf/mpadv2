@@ -70,7 +70,6 @@ function checkDddShape(context: RepoShapeContext) {
         'apps/api/src',
         new Set([
             'db',
-            'files',
             'index.ts',
             'platform',
             'schema-migrate.ts',
@@ -81,7 +80,6 @@ function checkDddShape(context: RepoShapeContext) {
 
     for (const featureRoot of [
         'apps/web/src/features/drawing',
-        'apps/web/src/features/files',
         'apps/web/src/features/text',
         'apps/web/src/features/tree',
         'apps/web/src/features/workspace',

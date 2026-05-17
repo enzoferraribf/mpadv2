@@ -3,10 +3,6 @@ import { OpeningLoader } from '@/shared/ui/feedback/opening-loader'
 import { TextLoadingSkeleton } from '@/shared/ui/feedback/text-loading-skeleton'
 import type { PadPath } from '@mpad/core/pad-path'
 
-const filesFallbackItems = Array.from(
-    { length: 10 },
-    (_, index) => `file-skeleton-${index}`,
-)
 export function PadRouteFallback(input: { path: PadPath }) {
     return (
         <main className='app-shell' data-testid='pad-page'>
@@ -22,7 +18,6 @@ export function PadRouteFallback(input: { path: PadPath }) {
                 <div className='app-topbar-right'>
                     <div className='pad-tabs'>
                         <div className='lazy-tab-skeleton wide' />
-                        <div className='lazy-tab-skeleton' />
                         <div className='lazy-tab-skeleton' />
                     </div>
                 </div>
@@ -47,27 +42,6 @@ export function PadRouteFallback(input: { path: PadPath }) {
                 </div>
             </div>
         </main>
-    )
-}
-
-export function FilesPaneFallback() {
-    return (
-        <section className='workspace-shell min-h-0'>
-            <div className='files-pane'>
-                <div className='files-grid'>
-                    {filesFallbackItems.map((item) => (
-                        <div
-                            className='files-card files-card-skeleton'
-                            key={item}
-                        >
-                            <div className='files-card-icon' />
-                            <div className='lazy-line short' />
-                            <div className='lazy-line tiny' />
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
     )
 }
 

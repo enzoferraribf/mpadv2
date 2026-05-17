@@ -1,16 +1,11 @@
 import { DrawingSettingsDialog } from '@/features/drawing'
-import { FilesDialog } from '@/features/files'
 import { TreeDialog, type WorkspaceNavigationModel } from '@/features/tree'
-import type {
-    PadWorkspaceFilesModel,
-    PadWorkspaceShellModel,
-} from '@/features/workspace/application/controller'
+import type { PadWorkspaceShellModel } from '@/features/workspace/application/controller'
 import { CommandMenu } from '@/features/workspace/view/command-menu'
 
 export function WorkspaceDialogs(input: {
     shell: PadWorkspaceShellModel
     navigation: WorkspaceNavigationModel
-    files: PadWorkspaceFilesModel
 }) {
     const { commands, view } = input.shell
     const tree = input.navigation.kind === 'ready' ? input.navigation.items : []
@@ -37,16 +32,6 @@ export function WorkspaceDialogs(input: {
                 path={view.path}
                 tree={tree}
                 onSelect={commands.navigateToPad}
-            />
-            <FilesDialog
-                open={view.dialog === 'files'}
-                onOpenChange={(open) =>
-                    open ? commands.openDialog('files') : commands.closeDialog()
-                }
-                path={view.path}
-                files={input.files.files}
-                onDelete={input.files.deleteFile}
-                onDownload={input.files.downloadFile}
             />
             <DrawingSettingsDialog
                 open={view.dialog === 'drawing-settings'}

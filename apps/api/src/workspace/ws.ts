@@ -1,11 +1,6 @@
 import { assertNever } from '@mpad/core/assert'
 import { readClientRoomMessage } from '@mpad/protocol/room-message-codec'
 import type { ServerWebSocket } from 'bun'
-import {
-    closeLiveFileRoomClient,
-    handleLiveFileRoomMessage,
-    openLiveFileRoomClient,
-} from '#/files/service'
 import type { ServerRuntime } from '#/platform/runtime/runtime'
 import type { WsData } from '#/platform/ws/data'
 import {
@@ -20,9 +15,6 @@ export async function openWorkspaceSocket(
     socket: ServerWebSocket<WsData>,
 ) {
     switch (socket.data.roomKind) {
-        case 'files':
-            await openLiveFileRoomClient(runtime, socket)
-            return
         case 'text':
         case 'drawing':
             await joinPadDocRoom(runtime, socket)
@@ -37,9 +29,6 @@ export async function closeWorkspaceSocket(
     socket: ServerWebSocket<WsData>,
 ) {
     switch (socket.data.roomKind) {
-        case 'files':
-            await closeLiveFileRoomClient(runtime, socket)
-            return
         case 'text':
         case 'drawing':
             await leavePadDocRoom(runtime, socket)
@@ -57,9 +46,6 @@ export async function handleWorkspaceSocketMessage(
     const message = readClientRoomMessage(data)
 
     switch (socket.data.roomKind) {
-        case 'files':
-            handleLiveFileRoomMessage(runtime, socket, message)
-            return
         case 'text':
         case 'drawing':
             await handlePadDocMessage(runtime, socket, message)

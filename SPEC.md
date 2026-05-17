@@ -11,7 +11,7 @@
 - `packages/protocol`: shared HTTP, WebSocket, and live-file message types.
 - `packages/testkit`: test-only helpers.
 
-The browser is static. It talks to the API over HTTP for tree data and WebSocket for real-time rooms. The API stores text and drawing documents in Postgres. File transfer metadata is held in memory and file bytes move peer-to-peer between browsers.
+The browser is static. It talks to the API over HTTP for tree data and WebSocket for real-time rooms. The API stores text and drawing documents in Postgres.
 
 ## Runtime Shape
 
@@ -24,7 +24,7 @@ The API exposes:
 - `GET /api/pads/:path/related` for related pad discovery.
 - `GET /ws/:room?client=:id` as a WebSocket upgrade endpoint.
 
-Room names are built as `/:path:text`, `/:path:drawing`, or `/:path:files`. The API parses the room name, checks origin and client IP policy, applies WebSocket rate limits, then opens the right in-memory room.
+Room names are built as `/:path:text` or `/:path:drawing`. The API parses the room name, checks origin and client IP policy, applies WebSocket rate limits, then opens the right in-memory room.
 
 The dashboard reads the same Postgres database through `DATABASE_URL`. Its `/api/stats` response is aggregate-only: totals, daily rows, hourly rows, and document mix. It must not return pad paths, root paths, or per-pad tables.
 
@@ -33,8 +33,6 @@ The dashboard reads the same Postgres database through `DATABASE_URL`. Its `/api
 Markdown uses a Yjs document in a `text` room. CodeMirror edits update the Yjs doc, and remote awareness tracks peer presence and selections.
 
 Drawing uses a separate Yjs document in a `drawing` room. The drawing pane opens its room only when the drawing tab is active.
-
-Files use a `files` room. The server tracks live file awareness and relays WebRTC-style signaling messages. It does not persist file metadata and does not store file bytes.
 
 Related pads are derived from normalized pad paths. A pad path has a root path and an optional parent path. The API returns pads from the same root path, capped by `MAX_RELATED_PADS`.
 

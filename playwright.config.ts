@@ -9,7 +9,7 @@ import {
 } from './tests/playwright-env'
 
 type PlaywrightTarget = 'docker' | 'e2e' | 'visual'
-type PlaywrightLane = 'shell' | 'text' | 'drawing' | 'files' | null
+type PlaywrightLane = 'shell' | 'text' | 'drawing' | null
 
 const target = readTarget(process.env.MPAD_PLAYWRIGHT_TARGET)
 const lane = readLane(process.env.MPAD_PLAYWRIGHT_LANE)
@@ -100,12 +100,7 @@ function readTarget(value: string | undefined): PlaywrightTarget {
 
 function readLane(value: string | undefined): PlaywrightLane {
     if (!value) return null
-    if (
-        value === 'shell' ||
-        value === 'text' ||
-        value === 'drawing' ||
-        value === 'files'
-    ) {
+    if (value === 'shell' || value === 'text' || value === 'drawing') {
         return value
     }
     throw new Error(`Unsupported MPAD_PLAYWRIGHT_LANE: ${value}`)

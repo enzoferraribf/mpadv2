@@ -2,7 +2,7 @@ import { assert } from './assert'
 import { type PadPath, padPath } from './pad-path'
 
 export type PadDocKind = 'text' | 'drawing'
-export type PadRoomKind = PadDocKind | 'files'
+export type PadRoomKind = PadDocKind
 
 export type PadRoom = {
     path: PadPath
@@ -18,9 +18,6 @@ export function parsePadRoomName(value: string): PadRoom {
     assert(index > 0, `Invalid room name: ${value}`)
     const path = padPath(value.slice(0, index))
     const kind = value.slice(index + 1)
-    assert(
-        kind === 'text' || kind === 'drawing' || kind === 'files',
-        `Unknown room kind: ${kind}`,
-    )
+    assert(kind === 'text' || kind === 'drawing', `Unknown room kind: ${kind}`)
     return { path, kind }
 }

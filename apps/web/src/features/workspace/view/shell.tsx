@@ -1,12 +1,10 @@
 import type {
-    PadWorkspaceFilesModel,
     PadWorkspaceModel,
     PadWorkspaceShellModel,
 } from '@/features/workspace/application/controller'
 import {
     DialogFallback,
     DrawingWorkspaceFallback,
-    FilesPaneFallback,
     TextWorkspaceFallback,
 } from '@/features/workspace/view/fallbacks'
 import { PadSidebar } from '@/features/workspace/view/sidebar'
@@ -28,11 +26,6 @@ const LazyTextWorkspace = lazy(() =>
     })),
 )
 
-const LazyFilesPane = lazyWithPreload(() =>
-    import('@/features/files').then((mod) => ({
-        default: mod.FilesPane,
-    })),
-)
 const LazyDrawingWorkspacePane = lazyWithPreload(() =>
     import('@/features/drawing').then((mod) => ({
         default: mod.DrawingWorkspacePane,
@@ -45,14 +38,12 @@ const LazyWorkspaceDialogs = lazyWithPreload(() =>
 )
 
 export function preloadPadPagePanels() {
-    void LazyFilesPane.preload()
     void LazyWorkspaceDialogs.preload()
 }
 
 export function PadPageDialogs(input: {
     shell: PadWorkspaceShellModel
     navigation: PadWorkspaceModel['navigation']
-    files: PadWorkspaceFilesModel
 }) {
     if (input.shell.view.dialog === null) return null
 
@@ -61,7 +52,6 @@ export function PadPageDialogs(input: {
             <LazyWorkspaceDialogs
                 shell={input.shell}
                 navigation={input.navigation}
-                files={input.files}
             />
         </Suspense>
     )
@@ -113,17 +103,6 @@ function readActivePanel(
         model.drawing.kind === 'ready' ? model.drawing.drawing : null
 
     switch (model.shell.view.activeTab) {
-        case 'files':
-            return (
-                <Suspense fallback={<FilesPaneFallback />}>
-                    <LazyFilesPane
-                        files={model.files.files}
-                        onDeleteFile={model.files.deleteFile}
-                        onDownloadFile={model.files.downloadFile}
-                        onUploadFile={model.files.uploadFile}
-                    />
-                </Suspense>
-            )
         case 'drawing':
             return (
                 <Suspense fallback={<DrawingWorkspaceFallback />}>

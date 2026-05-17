@@ -1,1 +1,1 @@
-export type FeatureLane = 'shell' | 'text' | 'drawing' | 'files'
+export type FeatureLane = 'shell' | 'text' | 'drawing'

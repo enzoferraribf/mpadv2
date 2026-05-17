@@ -680,112 +680,6 @@
         padding-left: 14px;
     }
 
-    /* ---- Files Pane (Finder grid) ---- */
-    .files-pane {
-        overflow-y: auto;
-        padding: 24px;
-    }
-
-    .files-pane.dragging {
-        outline: 2px dashed var(--stone-accent);
-        outline-offset: -2px;
-    }
-
-    .files-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 16px;
-    }
-
-    .files-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        padding: 12px 8px 10px;
-        border-radius: 6px;
-        position: relative;
-        transition: background 120ms ease;
-        cursor: pointer;
-        user-select: none;
-    }
-
-    .files-card:hover {
-        background: var(--stone-elevated);
-    }
-
-    .files-card-icon {
-        width: 56px;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        background: var(--stone-surface);
-        border: 1px solid var(--stone-border);
-        border-radius: 8px;
-    }
-
-    .files-card-name {
-        font-size: 11px;
-        font-family: var(--font-ui);
-        color: var(--stone-text);
-        text-align: center;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .files-card-size {
-        font-size: 10px;
-        font-family: var(--font-ui);
-        color: var(--stone-text-dim);
-    }
-
-    .files-card-delete {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        width: 18px;
-        height: 18px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: var(--stone-text-dim);
-        background: var(--stone-surface);
-        border: 1px solid var(--stone-border);
-        border-radius: 50%;
-        line-height: 1;
-    }
-
-    .files-card:hover .files-card-delete {
-        display: inline-flex;
-    }
-
-    .files-card-delete:hover {
-        color: var(--stone-danger);
-        border-color: var(--stone-danger);
-    }
-
-    .files-card-add .files-card-icon {
-        border-style: dashed;
-        color: var(--stone-text-dim);
-        font-size: 20px;
-    }
-
-    .files-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        font-size: 13px;
-        font-family: var(--font-ui);
-        color: var(--stone-text-dim);
-        cursor: pointer;
-    }
-
     /* Footer / Help */
     .pad-sidebar-footer {
         padding: 8px 12px;
@@ -1065,8 +959,7 @@
     .lazy-preview-block,
     .drawing-loader-toolbar span,
     .drawing-loader-shape,
-    .drawing-loader-line,
-    .files-card-skeleton .files-card-icon {
+    .drawing-loader-line {
         position: relative;
         overflow: hidden;
         background: var(--stone-elevated);
@@ -1079,8 +972,7 @@
     .lazy-preview-block::after,
     .drawing-loader-toolbar span::after,
     .drawing-loader-shape::after,
-    .drawing-loader-line::after,
-    .files-card-skeleton .files-card-icon::after {
+    .drawing-loader-line::after {
         content: "";
         position: absolute;
         inset: 0;
@@ -1101,8 +993,7 @@
     :root.dark .lazy-preview-block::after,
     :root.dark .drawing-loader-toolbar span::after,
     :root.dark .drawing-loader-shape::after,
-    :root.dark .drawing-loader-line::after,
-    :root.dark .files-card-skeleton .files-card-icon::after {
+    :root.dark .drawing-loader-line::after {
         background: linear-gradient(
             90deg,
             transparent,
@@ -1244,14 +1135,6 @@
         transform: rotate(-18deg);
         border-radius: 999px;
         background: var(--stone-accent-secondary);
-    }
-
-    .files-card-skeleton {
-        pointer-events: none;
-    }
-
-    .files-card-skeleton .files-card-icon {
-        border: 0;
     }
 
     @keyframes lazy-progress {

@@ -2,8 +2,7 @@ import { openBrowserRoom } from '@/shared/realtime/application/browser-room-runt
 import type { PadRoomSession } from '@/shared/realtime/domain/model'
 import type { PadPath } from '@mpad/core/pad-path'
 import type { PadRoomKind } from '@mpad/core/pad-room'
-import type { ServerRoomMessage } from '@mpad/protocol/room-message-codec'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type UseBrowserRoomSessionInput<
     TKind extends PadRoomKind,
@@ -22,7 +21,6 @@ export function useBrowserRoomSession<
     const [room, setRoom] = useState<PadRoomSession<TKind, TLocalState> | null>(
         null,
     )
-    const listenersRef = useRef(new Set<(message: ServerRoomMessage) => void>())
 
     useEffect(() => {
         if (!input.open) {
@@ -30,7 +28,7 @@ export function useBrowserRoomSession<
             return
         }
 
-        const runtime = openBrowserRoom(input, listenersRef.current, setRoom)
+        const runtime = openBrowserRoom(input, setRoom)
         return runtime.close
     }, [input.kind, input.open, input.path])
 

@@ -32,7 +32,6 @@ export function openBrowserRoom<
     TLocalState extends object,
 >(
     input: BrowserRoomInput<TKind, TLocalState>,
-    listeners: Set<(message: ServerRoomMessage) => void>,
     publish: (room: PadRoomSession<TKind, TLocalState> | null) => void,
 ) {
     const doc = new Doc()
@@ -52,10 +51,6 @@ export function openBrowserRoom<
     }
 
     const session = createSession(input.kind, roomName, doc, awareness, {
-        listen(listener) {
-            listeners.add(listener)
-            return () => listeners.delete(listener)
-        },
         sendBytes,
     })
 
@@ -107,7 +102,6 @@ export function openBrowserRoom<
         routeServerMessage({
             awareness,
             doc,
-            listeners,
             message: readServerRoomMessage(readSocketBytes(event.data)),
             sendBytes,
         })
@@ -155,7 +149,6 @@ export function openBrowserRoom<
             offDocSync()
             awareness.destroy()
             doc.destroy()
-            listeners.clear()
             publish(null)
         },
     }
@@ -190,7 +183,6 @@ function createSession<TKind extends PadRoomKind, TLocalState extends object>(
     doc: Doc,
     awareness: Awareness,
     io: {
-        listen: (listener: (message: ServerRoomMessage) => void) => () => void
         sendBytes: (bytes: Uint8Array) => void
     },
 ): PadRoomSession<TKind, TLocalState> {
@@ -207,9 +199,6 @@ function createSession<TKind extends PadRoomKind, TLocalState extends object>(
         },
         send(message) {
             io.sendBytes(encodeClientRoomMessage(message))
-        },
-        onMessage(listener) {
-            return io.listen(listener)
         },
     }
 }
@@ -250,7 +239,6 @@ function bindDocSync<TKind extends PadRoomKind, TLocalState extends object>(
 function routeServerMessage(input: {
     awareness: Awareness
     doc: Doc
-    listeners: Set<(message: ServerRoomMessage) => void>
     message: ServerRoomMessage
     sendBytes: (bytes: Uint8Array) => void
 }) {
@@ -266,9 +254,6 @@ function routeServerMessage(input: {
         }
         case 'awareness':
             applyAwarenessMessage(input.awareness, input.message.data, 'remote')
-            return
-        case 'file-signal':
-            for (const listener of input.listeners) listener(input.message)
             return
     }
 }

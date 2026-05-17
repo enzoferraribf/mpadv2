@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Real-time pads for markdown, drawing, live files, and related pages.
+  Real-time pads for markdown, drawing, and related pages.
 </p>
 
 ## What It Is
@@ -18,7 +18,6 @@ A pad has:
 
 - shared markdown with persisted reloads
 - one shared drawing surface
-- live peer-to-peer file transfer
 - related pad discovery from the same path tree
 - an aggregate dashboard for usage stats
 

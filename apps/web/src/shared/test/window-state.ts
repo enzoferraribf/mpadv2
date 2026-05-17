@@ -5,20 +5,13 @@ declare global {
         __mpad__?: {
             appendText: (content: string) => void
             getText: () => string
-            getFileCount: () => number
-            getFileConnection: () => string
             getDrawingConnection: () => string
             getDrawingElementCount: () => number
             getConnection: () => string
-            hasLocalFile: (name: string) => boolean
-            openFiles: () => void
             openDrawing: () => void
             insertTestArrow: () => Promise<void>
             insertTestRectangle: () => Promise<void>
             setText: (content: string) => void
-            uploadTestFile: () => Promise<void>
-            requestFile: (name: string) => void
-            deleteLocalFile: (name: string) => void
         }
     }
 }
@@ -29,23 +22,18 @@ export function publishWindowState(workspace: PadPageController) {
         return
     }
 
-    const { drawing, files, shell, text } = workspace
+    const { drawing, shell, text } = workspace
 
     window.__mpad__ = {
         appendText: (content: string) => {
             text.editor.appendText(content)
         },
         getText: () => text.editor.readContent(),
-        getFileCount: () => files.files.length,
-        getFileConnection: () => files.connection,
         getDrawingConnection: () =>
             drawing.kind === 'ready' ? drawing.connection : 'closed',
         getDrawingElementCount: () =>
             drawing.kind === 'ready' ? drawing.drawing.getElements().length : 0,
         getConnection: () => shell.status.connection,
-        hasLocalFile: (name: string) =>
-            files.files.some((file) => file.meta.name === name && file.isLocal),
-        openFiles: () => shell.commands.openDialog('files'),
         openDrawing: () => shell.commands.openTab('drawing'),
         insertTestArrow: async () => {
             if (!window.__mpadDrawingApi__)
@@ -78,21 +66,6 @@ export function publishWindowState(workspace: PadPageController) {
         },
         setText: (content: string) => {
             text.editor.setText(content)
-        },
-        uploadTestFile: async () => {
-            files.uploadFile(
-                new File(['hello file'], 'readme.txt', { type: 'text/plain' }),
-            )
-        },
-        requestFile: (name: string) => {
-            const file = files.files.find((value) => value.meta.name === name)
-            if (file) files.downloadFile(file)
-        },
-        deleteLocalFile: (name: string) => {
-            const file = files.files.find(
-                (value) => value.meta.name === name && value.isLocal,
-            )
-            if (file) files.deleteFile(file.meta.id)
         },
     }
 }

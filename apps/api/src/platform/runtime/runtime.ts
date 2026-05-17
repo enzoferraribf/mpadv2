@@ -1,8 +1,6 @@
 import type { PadPath } from '@mpad/core/pad-path'
 import { postgresDocRepository } from '#/db/doc-repo'
 import { ensurePad } from '#/db/tree-repo'
-import { createInMemoryFileRoomRegistry } from '#/files/memory-registry'
-import type { FileRoomRegistry } from '#/files/registry'
 import type { ServerConfig } from '#/platform/env'
 import { createRateLimiter } from '#/platform/runtime/rate-limit'
 import type { DocRepository } from '#/workspace/doc-model'
@@ -13,7 +11,6 @@ export type ServerRuntime = {
     docRepository: DocRepository
     docRoomRegistry: DocRoomRegistry
     ensurePadExists: (path: PadPath) => Promise<void>
-    fileRoomRegistry: FileRoomRegistry
     limits: ServerConfig['limits']
     rateLimiter: ReturnType<typeof createRateLimiter>
 }
@@ -30,7 +27,6 @@ export function createServerRuntime(
         docRepository: postgresDocRepository,
         docRoomRegistry: createInMemoryDocRoomRegistry(),
         ensurePadExists: ensurePad,
-        fileRoomRegistry: createInMemoryFileRoomRegistry(),
         limits,
         rateLimiter: createRateLimiter(limits),
     }
